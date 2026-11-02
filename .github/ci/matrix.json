@@ -1,0 +1,15 @@
+[
+  {"id": "linux-clang23", "runner": "ubuntu-26.04", "family": "clang", "cxx": "clang++-23", "expect": "23.", "configs": "Debug,Sanitize", "options": "--std=c++23", "tiers": ["pr", "full"]},
+  {"id": "linux-gcc13", "runner": "ubuntu-24.04", "family": "gcc", "cxx": "g++-13", "expect": "13.", "configs": "Debug,Release", "options": "", "tiers": ["pr", "full"]},
+  {"id": "macos-xcode26", "runner": "macos-26", "family": "apple", "cxx": "clang++", "xcode": "26.6", "expect": "21.", "configs": "Debug", "options": "--shared", "tiers": ["pr", "full"]},
+  {"id": "windows-vs2026", "runner": "windows-2025-vs2026", "family": "msvc", "expect": "19.5", "configs": "Debug", "options": "--exceptions", "tiers": ["pr", "full"]},
+  {"id": "linux-gcc16", "runner": "ubuntu-24.04", "container": "gcc:16.2@sha256:07280eb2e744f1b7a2d8d4a3894c089ea07266c109758afc388a634bd098e4eb", "family": "gcc", "cxx": "g++", "expect": "16.", "configs": "Debug,Release,RelDeb,Sanitize", "options": "--shared --exceptions --std=c++23", "tiers": ["full"]},
+  {"id": "linux-gcc13-lto", "runner": "ubuntu-24.04", "family": "gcc", "cxx": "g++-13", "expect": "13.", "configs": "RelDeb,Sanitize", "options": "--lto --std=c++23", "tiers": ["full"]},
+  {"id": "linux-clang17", "runner": "ubuntu-24.04", "family": "clang", "cxx": "clang++-17", "expect": "17.", "configs": "Debug,Release,Sanitize", "options": "--shared --exceptions", "tiers": ["full"]},
+  {"id": "linux-clang23-lto", "runner": "ubuntu-26.04", "family": "clang", "cxx": "clang++-23", "expect": "23.", "configs": "Release,RelDeb", "options": "--lto --assertions", "tiers": ["full"]},
+  {"id": "linux-no-tests", "runner": "ubuntu-24.04", "family": "gcc", "cxx": "g++-13", "expect": "13.", "configs": "Release", "options": "--no-tests", "tiers": ["full"]},
+  {"id": "macos-xcode16", "runner": "macos-15", "family": "apple", "cxx": "clang++", "xcode": "16.0", "expect": "16.", "configs": "Debug,Release,RelDeb", "options": "--assertions --exceptions --std=c++23", "tiers": ["full"]},
+  {"id": "macos-xcode26-lto", "runner": "macos-26", "family": "apple", "cxx": "clang++", "xcode": "26.6", "expect": "21.", "configs": "Release,Sanitize", "options": "--lto --std=c++23", "tiers": ["full"]},
+  {"id": "windows-vs2022", "runner": "windows-2022", "family": "msvc", "expect": "19.44", "configs": "Debug,Release", "options": "--shared --assertions --std=c++23", "tiers": ["full"]},
+  {"id": "windows-vs2026-lto", "runner": "windows-2025-vs2026", "family": "msvc", "expect": "19.5", "configs": "RelDeb,Sanitize", "options": "--shared --lto", "tiers": ["full"]}
+]

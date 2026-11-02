@@ -1,0 +1,298 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# forge's CI, as forge/docs/ci.md designs it:
+#
+#   plan ──► lint ──┬──► tidy ─────────────┐
+#                   └──► build-test (matrix) ┴──► ci-ok (or ci-pr) ──► nightly-report
+#
+# Draft PRs and pushes to main run the PR tier; ready PRs and the nightly run the full tier. Only
+# the full tier reports the ci-ok check that the ruleset on main requires.
+name: ci
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: The tier to run
+        type: choice
+        options: [full, pr]
+        default: full
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  # Runs on main are never cancelled: they save the caches.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      tier: ${{ steps.plan.outputs.tier }}
+      fail-fast: ${{ steps.plan.outputs.fail-fast }}
+      save-caches: ${{ steps.plan.outputs.save-caches }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/ci/matrix.json
+          sparse-checkout-cone-mode: false
+
+      - name: Choose the tier and its rows
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          DRAFT: ${{ github.event.pull_request.draft }}
+          REF: ${{ github.ref }}
+          INPUT_TIER: ${{ inputs.tier }}
+        run: |
+          case "$EVENT" in
+              pull_request) if [ "$DRAFT" = true ]; then tier=pr; else tier=full; fi ;;
+              push) tier=pr ;;
+              schedule) tier=full ;;
+              workflow_dispatch) tier=$INPUT_TIER ;;
+              *) echo "::error::no tier for $EVENT events"; exit 1 ;;
+          esac
+          # The nightly and manual runs report every broken row; the others stop at the first.
+          case "$EVENT" in
+              schedule | workflow_dispatch) fail_fast=false ;;
+              *) fail_fast=true ;;
+          esac
+          # A PR can only read the caches of main, so only main saves any.
+          if [ "$EVENT" != pull_request ] && [ "$REF" = refs/heads/main ]; then save=true; else save=false; fi
+          matrix=$(jq -c --arg tier "$tier" '[.[] | select(.tiers | index($tier))]' .github/ci/matrix.json)
+          {
+              echo "tier=$tier"
+              echo "fail-fast=$fail_fast"
+              echo "save-caches=$save"
+              echo "matrix=$matrix"
+          } >> "$GITHUB_OUTPUT"
+          echo "tier $tier: $(jq -r 'map(.id) | join(", ")' <<< "$matrix")"
+
+  lint:
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # x's floor, so that x's own tests run on the oldest Python it supports.
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.10"
+
+      - uses: ./.github/actions/setup
+        with:
+          image: ubuntu-24.04
+          save-caches: ${{ needs.plan.outputs.save-caches }}
+
+      - name: Format
+        run: ./x format --check
+
+      - name: Lint
+        run: ./x lint --only files,layering,workflows
+
+      - name: Test x
+        run: ./x test utils/xtool/test
+
+  tidy:
+    needs: [plan, lint]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      ROW_FAMILY: clang
+      ROW_CXX: clang++-23
+      ROW_EXPECT: "23."
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+
+      - name: Install the compiler
+        run: .github/ci/install-compiler.sh
+
+      - uses: ./.github/actions/setup
+        with:
+          image: ubuntu-26.04
+          save-caches: ${{ needs.plan.outputs.save-caches }}
+          filecheck: "false"
+
+      # Restored by prefix, so a PR starts from main's latest results.
+      - name: Restore the lint caches
+        id: restore-lint
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .forge/cache/tidy
+            .forge/cache/headers
+          key: lint-${{ hashFiles('.clang-tidy', 'utils/xtool/tools.json') }}-${{ github.run_id }}
+          restore-keys: lint-${{ hashFiles('.clang-tidy', 'utils/xtool/tools.json') }}-
+
+      - name: Lint headers and clang-tidy
+        run: ./x lint --only headers,clang-tidy --cxx "$ROW_CXX" --werror -c Debug,Release
+
+      - name: Save the lint caches
+        if: always() && needs.plan.outputs.save-caches == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .forge/cache/tidy
+            .forge/cache/headers
+          key: ${{ steps.restore-lint.outputs.cache-primary-key }}
+
+  build-test:
+    name: ${{ matrix.id }}
+    needs: [plan, lint]
+    runs-on: ${{ matrix.runner }}
+    # Rows without a container run on the runner itself. LeakSanitizer needs ptrace in one.
+    container:
+      image: ${{ matrix.container }} # zizmor: ignore[unpinned-images] matrix.json pins each by digest
+      options: --cap-add=SYS_PTRACE
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: ${{ fromJSON(needs.plan.outputs.fail-fast) }}
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      ROW_FAMILY: ${{ matrix.family }}
+      ROW_CXX: ${{ matrix.cxx }}
+      ROW_XCODE: ${{ matrix.xcode }}
+      ROW_EXPECT: ${{ matrix.expect }}
+      ROW_CONFIGS: ${{ matrix.configs }}
+      ROW_OPTIONS: ${{ matrix.options }}
+    steps:
+      - name: Install the container's packages
+        if: matrix.container
+        run: |
+          apt-get update -q
+          apt-get install -y -q --no-install-recommends ca-certificates cmake curl git gnupg jq \
+              python3 python3-venv xz-utils
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - if: ${{ !matrix.container }}
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+
+      - name: Install the compiler
+        run: .github/ci/install-compiler.sh
+
+      - uses: ./.github/actions/setup
+        with:
+          image: ${{ matrix.container || matrix.runner }}
+          save-caches: ${{ needs.plan.outputs.save-caches }}
+
+      - name: Choose the build options
+        run: |
+          if [ "$ROW_FAMILY" = msvc ]; then compiler="--cc msvc"; else compiler="--cxx $ROW_CXX"; fi
+          echo "X_OPTIONS=$compiler $ROW_OPTIONS --werror -c $ROW_CONFIGS" >> "$GITHUB_ENV"
+
+      # X_OPTIONS is split into words on purpose; no option value has spaces.
+      - name: Build
+        run: ./x build $X_OPTIONS
+
+      - name: Test
+        run: ./x test $X_OPTIONS --no-build
+
+      - name: Upload lit's output
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lit-output-${{ matrix.id }}
+          path: build*/**/Output/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The one required check. Its name depends on the tier, so a PR-tier pass can never satisfy the
+  # ruleset's ci-ok; if plan fails, the name is ci-pr and the PR stays blocked.
+  ci-ok:
+    name: ${{ needs.plan.outputs.tier == 'full' && 'ci-ok' || 'ci-pr' }}
+    if: always()
+    needs: [plan, lint, tidy, build-test]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - name: Summarize the jobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          TIER: ${{ needs.plan.outputs.tier }}
+        run: |
+          {
+              echo "### Tier: ${TIER:-none}"
+              echo
+              echo "| Job | Result |"
+              echo "|---|---|"
+              gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --paginate \
+                  --jq '.jobs[] | select(.name | test("^ci-(ok|pr)$") | not) | "| \(.name) | \(.conclusion // .status) |"'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check every job passed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          jq -r 'to_entries[] | "\(.key): \(.value.result)"' <<< "$RESULTS"
+          jq -e 'all(.[]; .result == "success")' <<< "$RESULTS" > /dev/null
+
+  # Keeps one issue labeled nightly-failure open while the nightly run fails.
+  nightly-report:
+    if: always() && github.event_name == 'schedule'
+    needs: ci-ok
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESULT: ${{ needs.ci-ok.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          issue=$(gh issue list --label nightly-failure --state open --json number --jq '.[0].number // empty')
+          if [ "$RESULT" = success ]; then
+              if [ -n "$issue" ]; then
+                  gh issue close "$issue" --comment "The nightly run passed again: $RUN_URL"
+              fi
+          elif [ -n "$issue" ]; then
+              gh issue comment "$issue" --body "Still failing: $RUN_URL"
+          else
+              gh label create nightly-failure --color B60205 --force \
+                  --description "The nightly CI run is failing"
+              gh issue create --label nightly-failure --title "The nightly CI run is failing" \
+                  --body "The nightly full-tier run failed: $RUN_URL. This issue closes when a nightly run passes."
+          fi

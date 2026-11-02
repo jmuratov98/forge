@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# The pinned actionlint predates these GitHub-hosted runner labels, so it is told about them here.
+# Remove a label once tools.json pins an actionlint that knows it.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04

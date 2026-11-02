@@ -24,8 +24,9 @@ from .ui import SetupRequired, XError
 
 # The downloaded tools, and the environment variable that replaces each one with a binary of the
 # user's choosing, for hosts without a pinned binary (premake has none for linux-aarch64).
-DOWNLOADED_TOOLS = ("premake5", "ninja")
-OVERRIDES = {"premake5": "FORGE_PREMAKE5", "ninja": "FORGE_NINJA"}
+DOWNLOADED_TOOLS = ("premake5", "ninja", "actionlint", "zizmor")
+OVERRIDES = {"premake5": "FORGE_PREMAKE5", "ninja": "FORGE_NINJA", "actionlint": "FORGE_ACTIONLINT",
+             "zizmor": "FORGE_ZIZMOR"}
 
 # The tools that live in the venv, as (wheel package, binary).
 WHEEL_TOOLS = {
@@ -58,7 +59,7 @@ def expected_tool_stamp(ctx: Context, name: str) -> dict[str, str] | None:
 
 
 def tool_status(ctx: Context, name: str) -> tuple[str, Path | None]:
-    """("ok" | "override" | "missing" | "stale" | "unsupported", path) for premake5 or ninja."""
+    """("ok" | "override" | "missing" | "stale" | "unsupported", path) for a downloaded tool."""
     override = os.environ.get(OVERRIDES[name])
     if override:
         return "override", Path(override)

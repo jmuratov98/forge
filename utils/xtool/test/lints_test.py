@@ -69,6 +69,9 @@ class Scope(unittest.TestCase):
         self.assertEqual(self.marker("x"), "#")
         self.assertEqual(self.marker("x.cmd"), "@rem")
         self.assertEqual(self.marker("utils/xtool/tools.json"), "")
+        self.assertEqual(self.marker(".github/workflows/ci.yml"), "#")
+        self.assertEqual(self.marker(".github/ci/install-compiler.sh"), "#")
+        self.assertEqual(self.marker(".github/ci/matrix.json"), "")
 
     def test_outside_the_scope(self):
         self.assertIsNone(self.marker("main.cpp"))
@@ -132,6 +135,54 @@ class Layering(unittest.TestCase):
         self.assertIn("forge.test", self.check("forge/unittests/ir/ir_test.cpp", "")[0][2])
         self.assertIn("has no 'lexer'",
                       self.check("forge/source/forge/ir/ir.cpp", '#include "forge/lexer/token.hpp"\n')[0][2])
+
+
+class Workflows(unittest.TestCase):
+    ROOT = Path("/repo")
+
+    def kind(self, relative):
+        return lints.workflow_kind(self.ROOT, self.ROOT / relative)
+
+    def test_kinds(self):
+        self.assertEqual(self.kind(".github/workflows/ci.yml"), "workflow")
+        self.assertEqual(self.kind(".github/workflows/release.yaml"), "workflow")
+        self.assertEqual(self.kind(".github/actions/filecheck/action.yml"), "action")
+        self.assertEqual(self.kind(".github/dependabot.yml"), "dependabot")
+
+    def test_other_files_are_not_checked(self):
+        self.assertIsNone(self.kind(".github/workflows/scripts/helper.yml"))
+        self.assertIsNone(self.kind(".github/ci/matrix.json"))
+        self.assertIsNone(self.kind(".github/ci/install-compiler.sh"))
+        self.assertIsNone(self.kind("forge/workflows/ci.yml"))
+
+    def test_actionlint_report(self):
+        report = [{"message": "job \"a\" needs job \"b\" which does not exist", "filepath": ".github/workflows/ci.yml",
+                   "line": 4, "column": 3, "kind": "job-needs"}]
+        [diagnostic] = lints.actionlint_diagnostics(self.ROOT, report)
+        self.assertEqual(diagnostic.format(lambda path: path.relative_to(self.ROOT).as_posix()),
+                         '.github/workflows/ci.yml:4:3: error: job "a" needs job "b" which does not exist '
+                         '[actionlint:job-needs]')
+        self.assertEqual(lints.actionlint_diagnostics(self.ROOT, None), [])
+
+    @staticmethod
+    def zizmor_finding(ident, row, column, ignored=False):
+        def location(kind, annotation, row, column):
+            return {"symbolic": {"key": {"Local": {"verbatim_path": ".github/workflows/ci.yml"}},
+                                 "annotation": annotation, "kind": kind},
+                    "concrete": {"location": {"start_point": {"row": row, "column": column}}}}
+        return {"ident": ident, "desc": "code injection via template expansion",
+                "url": f"https://docs.zizmor.sh/audits/#{ident}", "ignored": ignored,
+                "locations": [location("Hidden", "this step", 0, 0),
+                              location("Primary", "may expand into attacker-controllable code", row, column)]}
+
+    def test_zizmor_report_uses_the_primary_location_from_1(self):
+        [diagnostic] = lints.zizmor_diagnostics(self.ROOT, [self.zizmor_finding("template-injection", 8, 23)])
+        self.assertEqual((diagnostic.path, diagnostic.line, diagnostic.column, diagnostic.rule),
+                         (self.ROOT / ".github/workflows/ci.yml", 9, 24, "zizmor:template-injection"))
+        self.assertIn("may expand into attacker-controllable code", diagnostic.message)
+
+    def test_zizmor_ignored_findings_are_dropped(self):
+        self.assertEqual(lints.zizmor_diagnostics(self.ROOT, [self.zizmor_finding("artipacked", 1, 1, True)]), [])
 
 
 if __name__ == "__main__":

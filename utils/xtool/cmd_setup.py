@@ -4,7 +4,7 @@
 
 It works in two phases, because requests, which does the downloading, cannot download itself:
 phase A makes .forge/venv with pip, which installs the pinned wheels and requests among them, and
-phase B downloads premake5, ninja and googletest. When requests imports in the Python running x,
+phase B downloads premake5, ninja, actionlint, zizmor and googletest. When requests imports in the Python running x,
 phase B runs there; otherwise x runs itself again under the venv's Python for it.
 """
 
@@ -21,8 +21,8 @@ from .context import Context
 from .host import exe, host_key
 from .ui import QUIET, VERBOSE, VERY_VERBOSE, XError
 
-COMPONENTS = ("venv", "premake5", "ninja", "googletest")
-DOWNLOADED = ("premake5", "ninja", "googletest")
+DOWNLOADED = (*tools.DOWNLOADED_TOOLS, "googletest")
+COMPONENTS = ("venv", *DOWNLOADED)
 
 
 def component_list(text: str) -> list[str]:
@@ -36,8 +36,9 @@ def component_list(text: str) -> list[str]:
 def register(subparsers, common) -> None:
     parser = subparsers.add_parser(
         "setup", parents=[common], help="install the pinned tools, the venv and googletest",
-        description="Installs what tools.json pins: premake5 and ninja into .forge/tools, lit and "
-                    "the clang tools into .forge/venv, googletest into third_party/googletest. "
+        description="Installs what tools.json pins: premake5, ninja, actionlint and zizmor into "
+                    ".forge/tools, lit and the clang tools into .forge/venv, googletest into "
+                    "third_party/googletest. "
                     "A second run changes nothing unless tools.json did.")
     parser.add_argument("--only", type=component_list, metavar="LIST",
                         help=f"install only these, comma-separated: {', '.join(COMPONENTS)}")

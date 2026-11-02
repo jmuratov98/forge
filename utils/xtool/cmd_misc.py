@@ -17,7 +17,7 @@ from .context import Context, read_json
 from .host import WINDOWS, exe, host_key, venv_executable
 from .ui import SetupRequired, XError
 
-RUNNABLE = ("premake5", "ninja", "lit", "clang-format", "clang-tidy", "clang-apply-replacements",
+RUNNABLE = (*tools.DOWNLOADED_TOOLS, "lit", "clang-format", "clang-tidy", "clang-apply-replacements",
             "FileCheck", "python")
 
 

@@ -16,7 +16,7 @@ from .cmd_setup import global_flags
 from .context import Context
 from .host import venv_executable
 
-NAMES = ("premake5", "ninja", "googletest", "python")
+NAMES = (*tools.DOWNLOADED_TOOLS, "googletest", "python")
 
 
 def pin_name(text: str) -> str:
@@ -46,7 +46,7 @@ def run(ctx: Context, args: argparse.Namespace) -> int:
     http = download.session()
     downloads = ctx.cache / "downloads"
 
-    for name in ("premake5", "ninja"):
+    for name in tools.DOWNLOADED_TOOLS:
         if name not in names:
             continue
         spec = manifest[name]

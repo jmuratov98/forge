@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""The lints that need no compiler: file hygiene and component layering. Pure functions over file
-contents, so that utils/xtool/test can check each rule without a repository."""
+"""The lints that need no compiler: file hygiene, component layering, and turning actionlint's and
+zizmor's reports into diagnostics. Pure functions over file contents, so that utils/xtool/test can
+check each rule without a repository."""
 
 from __future__ import annotations
 
@@ -9,6 +10,7 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 SPDX = "SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception"
 
@@ -16,12 +18,13 @@ SPDX = "SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception"
 COMMENT_MARKERS = {
     ".hpp": "//", ".cpp": "//", ".h": "//", ".c": "//",
     ".lua": "--", ".py": "#", ".cfg": "#", ".cmd": "@rem", "x": "#",
+    ".yml": "#", ".yaml": "#", ".sh": "#",
 }
 # Checked for whitespace only: these formats have no comments to put an SPDX line in.
 WHITESPACE_ONLY = {".json"}
 
 # What the files lint covers, from the repository root.
-SCOPE_DIRS = ("forge", "premake", "utils")
+SCOPE_DIRS = (".github", "forge", "premake", "utils")
 SCOPE_FILES = ("x", "x.cmd", "x.py", "premake5.lua", "third_party/premake5.lua")
 # Test inputs are not code: they are exempt from formatting and the SPDX line, and may need tabs or
 # odd line endings. The lit configurations next to them are code.
@@ -202,4 +205,44 @@ def check_layering(root: Path, files: list[Path], components: dict[str, list[str
                 diagnostics.append(Diagnostic(file, number, column, f"a public header cannot include "
                                               f"the private header '{path}' (forge/source/{path})",
                                               "layering"))
+    return diagnostics
+
+
+def workflow_kind(root: Path, file: Path) -> str | None:
+    """What the workflows lint makes of a file: "workflow" for .github/workflows/*.yml, "action" for
+    a composite action's action.yml under .github, "dependabot" for .github/dependabot.yml, and
+    None for anything else."""
+    relative = _relative(root, file)
+    if not _under(relative, ".github") or file.suffix not in (".yml", ".yaml"):
+        return None
+    if file.parent == root / ".github" / "workflows":
+        return "workflow"
+    if file.stem == "action":
+        return "action"
+    if relative in (".github/dependabot.yml", ".github/dependabot.yaml"):
+        return "dependabot"
+    return None
+
+
+def actionlint_diagnostics(root: Path, findings: list[dict[str, Any]] | None) -> list[Diagnostic]:
+    """actionlint's `-format '{{json .}}'` report, whose paths are relative to `root`."""
+    return [Diagnostic(root / finding["filepath"], finding["line"], finding["column"], finding["message"],
+                       f"actionlint:{finding['kind']}") for finding in findings or []]
+
+
+def zizmor_diagnostics(root: Path, findings: list[dict[str, Any]]) -> list[Diagnostic]:
+    """zizmor's `--format json-v1` report, located at each finding's primary location. zizmor counts
+    rows and columns from 0, and reports findings that an ignore comment silenced as `ignored`."""
+    diagnostics = []
+    for finding in findings:
+        if finding.get("ignored"):
+            continue
+        locations = finding["locations"]
+        primary = next((location for location in locations if location["symbolic"]["kind"] == "Primary"),
+                       locations[0])
+        path = primary["symbolic"]["key"]["Local"]["verbatim_path"]
+        start = primary["concrete"]["location"]["start_point"]
+        message = f"{finding['desc']}: {primary['symbolic']['annotation']} (see {finding['url']})"
+        diagnostics.append(Diagnostic(root / path, start["row"] + 1, start["column"] + 1, message,
+                                      f"zizmor:{finding['ident']}"))
     return diagnostics

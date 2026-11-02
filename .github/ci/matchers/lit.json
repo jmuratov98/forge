@@ -1,0 +1,15 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "forge-lit",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^(FAIL|XPASS|UNRESOLVED|TIMEOUT): (.+?) \\(\\d+ of \\d+\\)$",
+          "code": 1,
+          "message": 2
+        }
+      ]
+    }
+  ]
+}

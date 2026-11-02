@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Bumps the SHA pins of the actions in .github, in one weekly PR. The cooldown waits a week
+# after a release before proposing it.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/setup
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]

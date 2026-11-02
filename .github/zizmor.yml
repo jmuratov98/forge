@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# zizmor's settings for ./x lint's workflows stage.
+rules:
+  # It asks for GitHub's `uses: $/path` form for in-repo actions, which the pinned actionlint
+  # does not understand yet. Enable it with an actionlint that does, and switch to $/.
+  self-repository:
+    disable: true

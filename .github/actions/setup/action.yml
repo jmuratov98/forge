@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Set up x
+description: >-
+  Registers the problem matchers, restores x's downloads and venv, runs ./x setup, and puts a
+  FileCheck built from the pinned LLVM source (.github/ci/filecheck.json) in FORGE_FILECHECK.
+  Caches are only saved when save-caches is true, which ci.yml sets on main.
+
+inputs:
+  image:
+    description: The runner label or container image, which keys the caches of what is built on it.
+    required: true
+  save-caches:
+    description: "'true' to save the caches this job had to fill."
+    default: "false"
+  filecheck:
+    description: "'false' for a job that runs no lit tests."
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Register the problem matchers
+      shell: bash
+      run: |
+        for matcher in gcc msvc lit; do
+            echo "::add-matcher::$GITHUB_WORKSPACE/.github/ci/matchers/$matcher.json"
+        done
+
+    - name: Find Python's version
+      id: python
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" = Windows ]; then python=python; else python=python3; fi
+        echo "version=$("$python" -c 'import sys; print("%d.%d" % sys.version_info[:2])')" >> "$GITHUB_OUTPUT"
+
+    - name: Restore x's downloads and venv
+      id: restore-x
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          .forge/cache/downloads
+          .forge/venv
+        key: x-${{ inputs.image }}-${{ runner.arch }}-py${{ steps.python.outputs.version }}-${{ hashFiles('utils/xtool/tools.json') }}
+
+    - name: Install x's tools
+      shell: bash
+      run: ./x setup
+
+    - name: Save x's downloads and venv
+      if: inputs.save-caches == 'true' && steps.restore-x.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          .forge/cache/downloads
+          .forge/venv
+        key: ${{ steps.restore-x.outputs.cache-primary-key }}
+
+    - name: Restore FileCheck
+      id: restore-filecheck
+      if: inputs.filecheck == 'true'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: .forge/ci/filecheck
+        key: filecheck-${{ inputs.image }}-${{ runner.arch }}-${{ hashFiles('.github/ci/filecheck.json', '.github/ci/build-filecheck.sh') }}
+
+    - name: Build FileCheck
+      if: inputs.filecheck == 'true' && steps.restore-filecheck.outputs.cache-hit != 'true'
+      shell: bash
+      run: .github/ci/build-filecheck.sh .forge/ci/filecheck
+
+    - name: Save FileCheck
+      if: >-
+        inputs.filecheck == 'true' && inputs.save-caches == 'true'
+        && steps.restore-filecheck.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: .forge/ci/filecheck
+        key: ${{ steps.restore-filecheck.outputs.cache-primary-key }}
+
+    # The value is a fixed path in the workspace, and ci.yml has no trigger that runs other
+    # people's code with write access.
+    - name: Use FileCheck
+      if: inputs.filecheck == 'true'
+      shell: bash
+      run: | # zizmor: ignore[github-env]
+        if [ "$RUNNER_OS" = Windows ]; then suffix=.exe; else suffix=; fi
+        echo "FORGE_FILECHECK=$GITHUB_WORKSPACE/.forge/ci/filecheck/bin/FileCheck$suffix" >> "$GITHUB_ENV"

@@ -14,5 +14,5 @@
 # STD:         argument --std: invalid choice: 'c++17'{{.*}} (choose from {{'?}}c++20{{'?}}, {{'?}}c++23{{'?}})
 # CONFIG:      x: error: unknown configuration 'fast': choose from Debug, Release, RelDeb, Sanitize or all
 # QUIET:       -q/--quiet and -v/--verbose cannot be combined
-# STAGES:      argument --only: choose from files, layering, headers, clang-tidy
+# STAGES:      argument --only: choose from files, layering, workflows, headers, clang-tidy
 # PASSTHROUGH: format takes no arguments after --

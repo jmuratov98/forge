@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""./x lint: four stages, cheapest first, all of which run so that one run reports everything.
+"""./x lint: five stages, cheapest first, all of which run so that one run reports everything.
 
 files       hygiene that needs no compiler: SPDX line, #pragma once, whitespace, line endings
 layering    includes follow the component graph in forge/premake5.lua
+workflows   the pinned actionlint and zizmor over the GitHub Actions files in .github
 headers     each header compiles on its own, included twice
 clang-tidy  the pinned clang-tidy over the compile database, with results cached by content
 """
@@ -28,7 +29,7 @@ from .context import Context, read_json, write_if_changed
 from .host import WINDOWS
 from .ui import XError
 
-STAGES = ("files", "layering", "headers", "clang-tidy")
+STAGES = ("files", "layering", "workflows", "headers", "clang-tidy")
 
 # A diagnostic's location, which clang-tidy gives relative to the compile command's directory.
 LOCATION = re.compile(r"^([^\s:][^:]*):(\d+):(\d+): ")
@@ -78,6 +79,8 @@ def run(ctx: Context, args: argparse.Namespace) -> int:
             problems += lint_files(ctx, files, args.fix)
         elif stage == "layering":
             problems += lint_layering(ctx, files)
+        elif stage == "workflows":
+            problems += lint_workflows(ctx, files)
         else:
             if build is None:
                 build = buildopts.resolve(ctx, args)
@@ -116,6 +119,38 @@ def lint_layering(ctx: Context, files: list[Path]) -> int:
     components = {component["name"]: component["dependencies"] for component in data["components"]}
     tests = {test["name"]: test["dependencies"] for test in data["tests"]}
     return report(ctx, lints.check_layering(ctx.root, files, components, tests))
+
+
+def lint_workflows(ctx: Context, files: list[Path]) -> int:
+    """actionlint checks workflows; zizmor audits workflows, composite actions and dependabot.yml for
+    security problems, offline. Both run from the root, where actionlint finds the local actions a
+    workflow uses. actionlint would also run shellcheck and pyflakes if they happen to be on PATH,
+    which would make the result depend on the machine, so they are turned off."""
+    kinds = {file: lints.workflow_kind(ctx.root, file) for file in files}
+    audited = [file.relative_to(ctx.root).as_posix() for file, kind in kinds.items() if kind]
+    workflows = [file.relative_to(ctx.root).as_posix() for file, kind in kinds.items() if kind == "workflow"]
+    if not audited:
+        ctx.ui.detail("lint: no GitHub Actions files to check")
+        return 0
+
+    diagnostics = []
+    if workflows:
+        completed = ctx.ui.run([tools.require_tool(ctx, "actionlint"), "-no-color", "-shellcheck=", "-pyflakes=",
+                                "-format", "{{json .}}", *workflows],
+                               cwd=ctx.root, capture=True, mutates=False, check=False)
+        # 1 means it found problems; 2 and 3 that it could not run.
+        if completed.returncode not in (0, 1):
+            raise XError(f"actionlint failed with exit code {completed.returncode}")
+        diagnostics += lints.actionlint_diagnostics(ctx.root, json.loads(completed.stdout or "[]"))
+    problems = report(ctx, diagnostics)
+
+    completed = ctx.ui.run([tools.require_tool(ctx, "zizmor"), "--quiet", "--offline", "--no-exit-codes",
+                            "--strict-collection", "--format", "json-v1", *audited],
+                           cwd=ctx.root, capture=True, mutates=False, check=False)
+    # A file zizmor cannot parse fails the run; actionlint has reported why above.
+    if completed.returncode != 0:
+        raise XError(f"zizmor failed with exit code {completed.returncode}")
+    return problems + report(ctx, lints.zizmor_diagnostics(ctx.root, json.loads(completed.stdout or "[]")))
 
 
 def site_value(site_config: Path, name: str) -> Any:
