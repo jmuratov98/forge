@@ -1,0 +1,10 @@
+# x's tools, venv and caches; ./x setup recreates them.
+/.forge/
+# Build directories, one per set of build options (forge/docs/x.md).
+/build/
+/build-*/
+# Downloaded by ./x setup, never vendored.
+/third_party/googletest/
+# Written by ./x configure for clangd.
+/compile_commands.json
+/.cache/

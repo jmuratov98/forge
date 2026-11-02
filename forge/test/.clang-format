@@ -1,0 +1,4 @@
+# Files under forge/test are test inputs, not code: -verify carets point at exact columns, and
+# lexer and preprocessor tests need layouts that formatting would change.
+DisableFormat: true
+SortIncludes: Never

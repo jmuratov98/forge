@@ -1,0 +1,81 @@
+---
+# Curated set; every enabled check fails the build (WarningsAsErrors '*'), so a check
+# only belongs here if we are willing to block a merge on it.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  performance-*,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  readability-*,
+  -readability-braces-around-statements,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-special-member-functions,
+  cppcoreguidelines-virtual-class-destructor
+
+WarningsAsErrors: '*'
+
+# Project code and tests; third-party and build output are excluded.
+HeaderFilterRegex: '.*/forge/(include|source)/.*|.*/tests?/.*'
+ExcludeHeaderFilterRegex: '.*/(third_party|build|bin)/.*'
+
+FormatStyle: file
+
+CheckOptions:
+  # Disabled-check rationale lives in the check list above:
+  #  - easily-swappable-parameters: too noisy for IR/AST builders
+  #  - misc-include-cleaner: false positives on std headers; IWYU is handled in review
+  #  - misc-no-recursion: AST/IR walks are recursive by nature
+  #  - non-private-member-variables: conflicts with plain-data structs
+  #  - braces-around-statements: clang-format InsertBraces is the single source of truth
+
+  # Naming: snake_case everywhere; only template parameters are CamelCase.
+  - { key: readability-identifier-naming.NamespaceCase,                 value: lower_case }
+  - { key: readability-identifier-naming.ClassCase,                     value: lower_case }
+  - { key: readability-identifier-naming.StructCase,                    value: lower_case }
+  - { key: readability-identifier-naming.UnionCase,                     value: lower_case }
+  - { key: readability-identifier-naming.EnumCase,                      value: lower_case }
+  - { key: readability-identifier-naming.EnumConstantCase,              value: lower_case }
+  - { key: readability-identifier-naming.TypedefCase,                   value: lower_case }
+  - { key: readability-identifier-naming.TypeAliasCase,                 value: lower_case }
+  - { key: readability-identifier-naming.ConceptCase,                   value: lower_case }
+  - { key: readability-identifier-naming.FunctionCase,                  value: lower_case }
+  - { key: readability-identifier-naming.MethodCase,                    value: lower_case }
+  - { key: readability-identifier-naming.VariableCase,                  value: lower_case }
+  - { key: readability-identifier-naming.ParameterCase,                 value: lower_case }
+  - { key: readability-identifier-naming.TemplateParameterCase,         value: CamelCase }
+  - { key: readability-identifier-naming.TemplateTemplateParameterCase, value: CamelCase }
+  - { key: readability-identifier-naming.ValueTemplateParameterCase,    value: CamelCase }
+
+  # Prefixes: m_ non-static members, s_ static class members, g_ globals.
+  # Public struct fields are deliberately left prefix-free so plain-data structs stay plain.
+  - { key: readability-identifier-naming.PrivateMemberCase,             value: lower_case }
+  - { key: readability-identifier-naming.PrivateMemberPrefix,           value: m_ }
+  - { key: readability-identifier-naming.ProtectedMemberCase,           value: lower_case }
+  - { key: readability-identifier-naming.ProtectedMemberPrefix,         value: m_ }
+  - { key: readability-identifier-naming.PublicMemberCase,              value: lower_case }
+  - { key: readability-identifier-naming.ClassMemberCase,               value: lower_case }
+  - { key: readability-identifier-naming.ClassMemberPrefix,             value: s_ }
+  - { key: readability-identifier-naming.GlobalVariableCase,            value: lower_case }
+  - { key: readability-identifier-naming.GlobalVariablePrefix,          value: g_ }
+  - { key: readability-identifier-naming.GlobalConstantCase,            value: lower_case }
+  - { key: readability-identifier-naming.GlobalConstantPrefix,          value: g_ }
+
+  # Macros: UPPER_CASE with the FORGE_ prefix.
+  - { key: readability-identifier-naming.MacroDefinitionCase,           value: UPPER_CASE }
+  - { key: readability-identifier-naming.MacroDefinitionPrefix,         value: FORGE_ }
+
+  # Other check tuning
+  - { key: readability-implicit-bool-conversion.AllowPointerConditions, value: true }
+  - { key: performance-move-const-arg.CheckTriviallyCopyableMove,       value: false }
+...

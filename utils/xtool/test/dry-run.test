@@ -1,0 +1,23 @@
+# --dry-run prints the commands that would change anything and runs none of them: here, the premake
+# and ninja command lines that build options turn into, and the build directory they choose.
+#
+# REQUIRES: premake, ninja
+# RUN: rm -rf %t
+# RUN: %x -n build --build-dir %t/b --std=c++23 --shared -c release,DEBUG | FileCheck %s --check-prefix=OPTIONS
+# RUN: not ls %t
+# RUN: %x -n build --no-tests --sanitizers=address,undefined -c all | FileCheck %s --check-prefix=NAMED
+# RUN: %x -n build --std=c++20 | FileCheck %s --check-prefix=DEFAULT
+# RUN: %x -n build --build-dir %t/b -- -k 0 | FileCheck %s --check-prefix=PASSTHROUGH
+#
+# OPTIONS:      ==> configuring {{.*}}b
+# OPTIONS-NEXT: $ {{.*}}premake5{{(.exe)?}} --file={{.*}}premake5.lua --to={{.*}}b --shared --std=c++23 ninja{{$}}
+# OPTIONS:      ==> building {{.*}}b (Release, Debug)
+# OPTIONS-NEXT: $ {{.*}}ninja{{(.exe)?}} -C {{.*}}b Release Debug{{$}}
+#
+# NAMED:        --to={{.*}}build-no-tests-sanitizers-address+undefined --no-tests --sanitizers=address,undefined ninja{{$}}
+# NAMED:        ninja{{(.exe)?}} -C {{.*}}build-no-tests-sanitizers-address+undefined Debug Release RelDeb Sanitize{{$}}
+#
+# A default value names no directory part and passes no argument.
+# DEFAULT:      ninja{{(.exe)?}} -C {{.*}}build Debug{{$}}
+#
+# PASSTHROUGH:  ninja{{(.exe)?}} -C {{.*}}b Debug -k 0{{$}}

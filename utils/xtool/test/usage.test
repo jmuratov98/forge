@@ -1,0 +1,18 @@
+# Mistakes on the command line are reported in x's words, with what would have been accepted. The
+# forge options and their allowed values come from premake/options.lua. (Python 3.14 and newer add
+# a "maybe you meant" to argparse's invalid-choice message.)
+#
+# REQUIRES: premake
+# RUN: not %x build --bogus 2>&1 | FileCheck %s --check-prefix=UNKNOWN
+# RUN: not %x build --std=c++17 2>&1 | FileCheck %s --check-prefix=STD
+# RUN: not %x build -c fast 2>&1 | FileCheck %s --check-prefix=CONFIG
+# RUN: not %x -q build -v 2>&1 | FileCheck %s --check-prefix=QUIET
+# RUN: not %x lint --only spelling 2>&1 | FileCheck %s --check-prefix=STAGES
+# RUN: not %x format -- extra 2>&1 | FileCheck %s --check-prefix=PASSTHROUGH
+#
+# UNKNOWN:     unrecognized arguments: --bogus
+# STD:         argument --std: invalid choice: 'c++17'{{.*}} (choose from {{'?}}c++20{{'?}}, {{'?}}c++23{{'?}})
+# CONFIG:      x: error: unknown configuration 'fast': choose from Debug, Release, RelDeb, Sanitize or all
+# QUIET:       -q/--quiet and -v/--verbose cannot be combined
+# STAGES:      argument --only: choose from files, layering, headers, clang-tidy
+# PASSTHROUGH: format takes no arguments after --
