@@ -133,7 +133,10 @@ struct module_search {
     std::optional<std::uintptr_t> relative;
 };
 
-int find_module(dl_phdr_info* info, std::size_t /*size*/, void* data) noexcept {
+// The pointer stays non-const: dl_iterate_phdr's callback type takes a dl_phdr_info*.
+int find_module(dl_phdr_info* info, // NOLINT(misc-const-correctness)
+                std::size_t /*size*/,
+                void* data) noexcept {
     auto& search = *static_cast<module_search*>(data);
     for (std::size_t i = 0; i < info->dlpi_phnum; ++i) {
         const ElfW(Phdr) & segment = info->dlpi_phdr[i];
@@ -258,7 +261,7 @@ std::optional<std::uintptr_t> resolve_module(std::uintptr_t address,
                                              std::span<char> path) noexcept {
     copy_path("", path);
 #  if FORGE_HOST_LINUX
-    module_search search{address, path, std::nullopt};
+    module_search search{.address = address, .path = path, .relative = std::nullopt};
     dl_iterate_phdr(&find_module, &search);
     return search.relative;
 #  else

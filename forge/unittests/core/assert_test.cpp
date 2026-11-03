@@ -24,7 +24,11 @@ template <>
 struct std::formatter<forge::fails_when_formatted> {
     static constexpr auto parse(std::format_parse_context& context) { return context.begin(); }
 
-    static auto format(forge::fails_when_formatted /*unused*/, std::format_context& context) {
+    // A template over the context, as std::formattable needs: it tries format() with an
+    // unspecified output iterator, which libc++ before 19 makes char* rather than the iterator
+    // of std::format_context, so a format() taking only std::format_context& is not formattable.
+    template <typename Context>
+    static auto format(forge::fails_when_formatted /*unused*/, Context& context) {
         FORGE_ASSERT(false, "inside a formatter");
         return context.out();
     }

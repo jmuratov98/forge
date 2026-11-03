@@ -143,8 +143,8 @@ class context_entry // NOLINT(misc-multiple-inheritance)
                   "a context entry's print function takes a forge::context_sink&");
 
 public:
-    explicit context_entry(Print print) noexcept(std::is_nothrow_move_constructible_v<Print>)
-        : detail::context_entry_print<Print>{std::move(print)}, context_node(&write) {}
+    explicit context_entry(Print function) noexcept(std::is_nothrow_move_constructible_v<Print>)
+        : detail::context_entry_print<Print>{std::move(function)}, context_node(&write) {}
 
 private:
     static void write(const context_node& node, context_sink& out) noexcept {
