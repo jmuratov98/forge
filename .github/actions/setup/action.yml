@@ -3,7 +3,8 @@
 name: Set up x
 description: >-
   Registers the problem matchers, restores x's downloads and venv, runs ./x setup, and puts a
-  FileCheck built from the pinned LLVM source (.github/ci/filecheck.json) in FORGE_FILECHECK.
+  FileCheck and an llvm-symbolizer built from the pinned LLVM source (.github/ci/filecheck.json) in
+  FORGE_FILECHECK and FORGE_SYMBOLIZER_PATH.
   Caches are only saved when save-caches is true, which ci.yml sets on main.
 
 inputs:
@@ -85,4 +86,7 @@ runs:
       shell: bash
       run: | # zizmor: ignore[github-env]
         if [ "$RUNNER_OS" = Windows ]; then suffix=.exe; else suffix=; fi
-        echo "FORGE_FILECHECK=$GITHUB_WORKSPACE/.forge/ci/filecheck/bin/FileCheck$suffix" >> "$GITHUB_ENV"
+        {
+            echo "FORGE_FILECHECK=$GITHUB_WORKSPACE/.forge/ci/filecheck/bin/FileCheck$suffix"
+            echo "FORGE_SYMBOLIZER_PATH=$GITHUB_WORKSPACE/.forge/ci/filecheck/bin/llvm-symbolizer$suffix"
+        } >> "$GITHUB_ENV"

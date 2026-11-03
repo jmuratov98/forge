@@ -97,6 +97,7 @@ def run(ctx: Context, args: argparse.Namespace) -> int:
         # x's own tests run x's build commands with the same tools.
         "FORGE_PREMAKE5": str(tools.require_tool(ctx, "premake5")),
         "FORGE_NINJA": str(tools.require_tool(ctx, "ninja")),
+        **tools.symbolizer_environment(),
     }
     xtool_suite = ctx.code_root / "utils" / "xtool" / "test"
 

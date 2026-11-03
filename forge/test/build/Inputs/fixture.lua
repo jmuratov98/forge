@@ -11,6 +11,8 @@ fixture = {}
 -- the table forge.emit takes for third_party.
 function fixture.workspace(sources)
     forge.root = path.join(_OPTIONS.to, "tree")
+    os.mkdir(forge.root)
+    io.writefile(path.join(forge.root, "VERSION"), "1.2.3-fixture\n")
     for _, name in ipairs(sources) do
         local dir = path.join(forge.root, "forge/source/forge", name)
         os.mkdir(dir)

@@ -2,9 +2,12 @@
 
 #include "forge/core/assert.hpp"
 
+#include "report_matchers.hpp"
+
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <cstdlib>
 #include <format>
 #include <type_traits>
 
@@ -63,7 +66,9 @@ concept corners_is_constant = requires { typename std::integral_constant<int, co
 static_assert(corners(shape::square) == 4);
 static_assert(!corners_is_constant<static_cast<shape>(7)>);
 
-int not_written_yet() {
+// Never inlined, so that it has a frame of its own in a stack trace and a name in the symbol table,
+// which llvm-symbolizer reads where there is no debug information, as in Release.
+FORGE_NOINLINE int not_written_yet() {
     FORGE_TODO();
 }
 
@@ -87,9 +92,12 @@ TEST(assertions, passing_checks) {
     EXPECT_EQ(corners(shape::circle), 0);
 }
 
-// ThreadSanitizer does not support the fork that death tests use. The regular expressions stay
-// within what gtest supports on Windows: no brackets, and `.` does not match a newline.
+// ThreadSanitizer does not support the fork that death tests use. The regular expressions given
+// as strings stay within what gtest supports on Windows: no brackets, and `.` does not match a
+// newline. Those given to has_lines are std::regex.
 #if GTEST_HAS_DEATH_TEST && !FORGE_TSAN_ENABLED
+
+using test::has_lines;
 
 #  if FORGE_ASSERTIONS_ENABLED
 #    define FORGE_TEST_ZERO 0
@@ -128,6 +136,23 @@ TEST(assertions, unreachable_traps) {
 TEST(assertions, todo_reports_in_every_build) {
     EXPECT_DEATH(static_cast<void>(not_written_yet()), "internal error: not yet implemented");
     EXPECT_DEATH(FORGE_TODO("lowering {}", "switch"), "message: lowering switch");
+}
+
+// Frame 0 is the function with the failed check, whatever helpers the check went through.
+TEST(assertions, failure_reports_stack_trace) {
+    EXPECT_DEATH(
+        static_cast<void>(not_written_yet()),
+        has_lines({"  stack trace:", R"(    #0 forge_core_unittests\S*\+0x[0-9a-f]+( .*)?)"}));
+}
+
+// Where there is debug information, the symbolizer reports the inlined todo_reached first; the
+// report leaves out entries in forge::detail, so that #0 is the function with the check.
+TEST(assertions, stack_trace_names_failing_function) {
+    if (std::getenv("FORGE_SYMBOLIZER_PATH") == nullptr) {
+        GTEST_SKIP() << "set FORGE_SYMBOLIZER_PATH to an llvm-symbolizer to run this test";
+    }
+    EXPECT_DEATH(static_cast<void>(not_written_yet()),
+                 has_lines({R"(    #0 forge_core_unittests\S*\+0x[0-9a-f]+ .*not_written_yet.*)"}));
 }
 #endif
 

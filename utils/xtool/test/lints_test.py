@@ -92,6 +92,37 @@ class Scope(unittest.TestCase):
         self.assertEqual(lints.check_kind(self.ROOT, self.ROOT / "forge/source/forge/core/x.cpp"), [])
 
 
+class Version(unittest.TestCase):
+    def rules(self, data: bytes) -> list[str]:
+        return [d.rule for d in lints.check_version(Path("VERSION"), data)]
+
+    def test_base_versions(self):
+        for text in ("0.1.0", "0.1.0-dev", "1.20.3-rc.1", "1.0.0-0.3.7", "1.0.0-x-y.7z.92", "10.0.0-0a"):
+            self.assertEqual(self.rules(text.encode() + b"\n"), [], text)
+
+    def test_rejected(self):
+        cases = {
+            "no newline": b"0.1.0",
+            "two lines": b"0.1.0\n0.2.0\n",
+            "whitespace": b" 0.1.0\n",
+            "CRLF": b"0.1.0\r\n",
+            "build metadata": b"0.1.0+20261102\n",
+            "leading zero": b"01.1.0\n",
+            "numeric pre-release with a leading zero": b"0.1.0-01\n",
+            "empty pre-release identifier": b"0.1.0-rc..1\n",
+            "two parts": b"0.1\n",
+            "empty": b"",
+        }
+        for name, data in cases.items():
+            self.assertEqual(self.rules(data), ["version"], name)
+
+    def test_checked_as_version_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "VERSION").write_bytes(b"0.1.0-dev\n")
+            self.assertEqual(lints.check_file(root, root / "VERSION"), [])
+
+
 class Layering(unittest.TestCase):
     COMPONENTS = {"support": [], "core": ["support"], "ir": ["core"]}
     TESTS = {"core": ["core"]}

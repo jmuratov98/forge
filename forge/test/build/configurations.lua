@@ -1,7 +1,8 @@
 -- What each configuration and option compiles a forge project with. RelDeb is Release plus debug
 -- info at the same optimization level, unlike CMake's RelWithDebInfo. forge's warning policy and
 -- --werror reach forge projects only: forge.baseline(), all that a third-party project applies,
--- carries none of it.
+-- carries none of it. Unwind tables are in forge.baseline(), so that a stack trace does not stop
+-- at the first third-party frame.
 --
 -- RUN: rm -rf %t
 -- RUN: %premake --file=%s --to=%t/default --cc=clang --os=linux ninja
@@ -12,7 +13,7 @@
 
 -- DEFAULT:      cxxflags_forge_core_Debug = -O0 -g -Wall -Wextra -std=c++20 -fno-exceptions -fno-rtti
 -- DEFAULT-SAME: -D"FORGE_EXCEPTIONS_ENABLED=0" -D"FORGE_DEBUG=1" -D"FORGE_RELEASE=0" -D"FORGE_RELDEB=0" -D"FORGE_SANITIZE=0" -D"FORGE_ASSERTIONS_ENABLED=1" -D"_GLIBCXX_ASSERTIONS" -D"_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE" -D"FORGE_SHARED=0" -D"FORGE_BUILDING_SHARED=0"
--- DEFAULT-SAME: -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wnon-virtual-dtor -Woverloaded-virtual -Wimplicit-fallthrough -Wold-style-cast -Wundef{{$}}
+-- DEFAULT-SAME: -fasynchronous-unwind-tables -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wnon-virtual-dtor -Woverloaded-virtual -Wimplicit-fallthrough -Wold-style-cast -Wundef{{$}}
 -- DEFAULT:      cxxflags_forge_core_Release = [[OPT:-O[^ ]+]] -Wall
 -- DEFAULT-SAME: -fno-rtti
 -- DEFAULT-SAME: -D"FORGE_DEBUG=0" -D"FORGE_RELEASE=1" -D"FORGE_RELDEB=0" -D"FORGE_SANITIZE=0" -D"NDEBUG" -D"FORGE_ASSERTIONS_ENABLED=0" -D"FORGE_SHARED=0"
@@ -32,6 +33,7 @@
 
 -- THIRD-PARTY:      cxxflags_third_party_stub_Debug = -O0 -g -w -std=c++23 -fno-rtti -D"FORGE_EXCEPTIONS_ENABLED=1" -D"FORGE_DEBUG=1"
 -- THIRD-PARTY-SAME: -D"FORGE_ASSERTIONS_ENABLED=1"
+-- THIRD-PARTY-SAME: -fasynchronous-unwind-tables
 
 dofile(path.join(_SCRIPT_DIR, "Inputs/fixture.lua"))
 

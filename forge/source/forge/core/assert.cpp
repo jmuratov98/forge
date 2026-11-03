@@ -2,13 +2,20 @@
 
 #include "forge/core/assert.hpp"
 
+#include "forge/core/report.hpp"
+#include "forge/core/stacktrace.hpp"
+#include "forge/core/version.hpp"
+
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <format>
 #include <mutex>
 #include <source_location>
+#include <span>
 #include <string_view>
 
 namespace forge::detail {
@@ -60,26 +67,74 @@ private:
     std::size_t m_size = 0;
 };
 
+constinit thread_local bool g_holding_report_lock = false;
+
+// A function's static, so that it is initialized before any check can fail, even one in the
+// initializer of another static.
+std::mutex& report_mutex() noexcept {
+    static std::mutex mutex;
+    return mutex;
+}
+
+// [context.report] paragraph 1: missing features are not bugs, so FORGE_TODO asks for no report.
+void append_banner(report_text& text, failure_kind kind) {
+    const std::string_view url = bug_report_url();
+    if (kind == failure_kind::todo) {
+        if (url.empty()) {
+            text.append("  forge does not support this yet.\n");
+        } else {
+            std::format_to(text.out(),
+                           "  forge does not support this yet; see {} for what is planned.\n",
+                           url);
+        }
+    } else if (url.empty()) {
+        text.append(
+            "  PLEASE report this bug to the forge developers, with this report and the input "
+            "that caused it.\n");
+    } else {
+        std::format_to(
+            text.out(),
+            "  PLEASE submit a bug report to {} and include this report and the input that "
+            "caused it.\n",
+            url);
+    }
+}
+
 } // namespace
+
+report_lock::report_lock() noexcept {
+    // A check that fails while this thread writes a report, e.g. in the formatter of a message
+    // argument or in a context entry's print function.
+    if (g_holding_report_lock) {
+        std::fputs("internal error: a check failed while reporting a failed check\n", stderr);
+        std::abort();
+    }
+    report_mutex().lock();
+    g_holding_report_lock = true;
+}
+
+report_lock::~report_lock() {
+    g_holding_report_lock = false;
+    report_mutex().unlock();
+}
+
+bool report_lock::held() noexcept {
+    return g_holding_report_lock;
+}
 
 void report_failure(failure_kind kind,
                     const char* condition,
                     std::source_location location,
                     std::string_view format,
                     std::format_args args) noexcept {
-    // A check that fails while its report is being written, e.g. in the formatter of a message
-    // argument, would otherwise recurse until the stack overflows.
-    static thread_local bool reporting = false;
-    if (reporting) {
-        std::fputs("internal error: a check failed while reporting a failed check\n", stderr);
-        std::abort();
-    }
-    reporting = true;
+    // The trace comes first, before anything allocates or locks. Skipping one frame, this
+    // function's, makes frame 0 the function with the failed check, since the helpers that
+    // call this one are inlined into it.
+    std::array<std::uintptr_t, g_report_frames + 1> frames{};
+    const std::size_t frame_count = stacktrace::capture(frames, 1);
 
-    // Reports from several threads would interleave. The first thread to fail keeps the lock
-    // until it aborts the process; the others wait here.
-    static std::mutex mutex;
-    mutex.lock();
+    // The first thread to fail keeps the lock until it aborts the process; others wait here.
+    const report_lock lock;
 
     // No column: inside a macro, Clang gives the column of the invocation's closing parenthesis
     // and GCC that of the macro's name.
@@ -106,10 +161,20 @@ void report_failure(failure_kind kind,
     text.append("  in function: ");
     text.append(location.function_name());
     text.append('\n');
+    text.append("  forge version: ");
+    text.append(version());
+    text.append('\n');
+    append_banner(text, kind);
 
-    // TODO: print a backtrace.
-
+    // From the most certain to the least: the text allocates nothing; the context runs print
+    // functions; the trace allocates and runs llvm-symbolizer. Each part is out before the next
+    // starts, so whatever fails, what came before has been reported.
     text.write_to(stderr);
+    std::fflush(stderr);
+    write_context(stderr);
+    stacktrace::print(stderr,
+                      std::span(frames).first(std::min(frame_count, g_report_frames)),
+                      frame_count > g_report_frames);
     std::abort();
 }
 

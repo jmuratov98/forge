@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Builds FileCheck from the llvm-project source release that filecheck.json pins, into
-# DESTINATION/bin. CI runs it when its cache has no FileCheck for the runner image, so every row
-# uses the same FileCheck; it runs the same way locally:
+# Builds FileCheck and llvm-symbolizer from the llvm-project source release that filecheck.json
+# pins, into DESTINATION/bin. CI runs it when its cache has no build for the runner image, so every
+# row uses the same tools; it runs the same way locally:
 #
 #   .github/ci/build-filecheck.sh .forge/ci/filecheck
 #
 # Only llvm/, cmake/, third-party/ and libc/ (whose headers LLVM's Support library includes) are
-# extracted, without their tests, and only the FileCheck target is built. cmake picks its default generator: Makefiles, or the newest Visual Studio on
-# Windows, which finds MSVC without vcvarsall.
+# extracted, without their tests, and only the two tools' targets are built. cmake picks its
+# default generator: Makefiles, or the newest Visual Studio on Windows, which finds MSVC without
+# vcvarsall. llvm-symbolizer reads PDB files with LLVM's own reader rather than the DIA SDK, whose
+# DLL a runner may not have registered.
 set -euo pipefail
 
 if [ $# -ne 1 ]; then
@@ -23,14 +25,14 @@ url=$(jq -r .url "$here/filecheck.json" | sed "s/{version}/$version/g")
 sha256=$(jq -r .sha256 "$here/filecheck.json")
 
 work=${RUNNER_TEMP:-${TMPDIR:-/tmp}}/forge-filecheck-$version
-binary=FileCheck
+suffix=
 tar_options=()
 case "$(uname -s)" in
     MINGW* | MSYS* | CYGWIN*)
         # Git Bash: D:/a/... paths suit both its tools and native cmake, and its GNU tar would
         # take the D: of an archive path for a remote host.
         work=$(cygpath -m "$work")
-        binary=FileCheck.exe
+        suffix=.exe
         tar_options=(--force-local)
         ;;
 esac
@@ -71,15 +73,18 @@ cmake -S "$work/$source/llvm" -B "$work/build" \
     -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF \
     -DLLVM_INCLUDE_DOCS=OFF -DLLVM_ENABLE_BINDINGS=OFF \
     -DLLVM_ENABLE_ZLIB=OFF -DLLVM_ENABLE_ZSTD=OFF -DLLVM_ENABLE_LIBXML2=OFF \
-    -DLLVM_ENABLE_LIBEDIT=OFF -DLLVM_ENABLE_LIBPFM=OFF
-cmake --build "$work/build" --config Release --target FileCheck --parallel
+    -DLLVM_ENABLE_LIBEDIT=OFF -DLLVM_ENABLE_LIBPFM=OFF -DLLVM_ENABLE_DIA_SDK=OFF
+cmake --build "$work/build" --config Release --target FileCheck llvm-symbolizer --parallel
 
-built=$(find "$work/build" -type f -name "$binary" -path "*bin*" | head -n 1)
-if [ -z "$built" ]; then
-    echo "error: the build produced no $binary" >&2
-    exit 1
-fi
 mkdir -p "$destination/bin"
-cp "$built" "$destination/bin/$binary"
-"$destination/bin/$binary" --version
+for tool in FileCheck llvm-symbolizer; do
+    binary=$tool$suffix
+    built=$(find "$work/build" -type f -name "$binary" -path "*bin*" | head -n 1)
+    if [ -z "$built" ]; then
+        echo "error: the build produced no $binary" >&2
+        exit 1
+    fi
+    cp "$built" "$destination/bin/$binary"
+    "$destination/bin/$binary" --version
+done
 rm -rf "${work:?}/$source" "$work/build"

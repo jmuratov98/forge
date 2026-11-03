@@ -78,6 +78,13 @@ for _, name in ipairs({ "gcc", "clang" }) do
     end)
 end
 
+-- No binary is stripped, as with premake's Clang toolset and with CMake: premake's GCC toolset
+-- strips one whose symbols are "Off" or "Default" (-s, or -Wl,-x on macOS), and a stack trace from
+-- a stripped binary names whatever symbol is left nearest to each address, usually the wrong one.
+-- The table holds gcc.ldsymbols itself, so overriding that function would change nothing.
+premake.tools.gcc.ldflags.symbols.Off = nil
+premake.tools.gcc.ldflags.symbols.Default = nil
+
 local function source_dir(name)
     return path.join(forge.root, "forge/source/forge", name)
 end
@@ -234,7 +241,7 @@ end
 
 -- Settings every project applies in its own scope, third_party included: anything
 -- that must agree across every object file linked together (standard, RTTI,
--- exceptions, configuration, sanitizers, LTO) plus the output layout.
+-- exceptions, configuration, sanitizers, LTO), unwind tables, plus the output layout.
 function forge.baseline()
     targetdir "%{wks.location}/%{cfg.buildcfg}/bin"
     objdir "%{wks.location}/%{cfg.buildcfg}/obj/%{prj.name}"
@@ -252,6 +259,13 @@ function forge.baseline()
         defines { "FORGE_EXCEPTIONS_ENABLED=0" }
     end
 
+    -- Stack traces (docs/stacktrace.md) unwind with these tables, which Clang leaves out on
+    -- arm64 macOS when exceptions are off; a trace stops at the first frame without them, so
+    -- third_party needs them too. MSVC always has them on x64 and arm64.
+    filter "toolset:not msc*"
+        buildoptions { "-fasynchronous-unwind-tables" }
+    filter {}
+
     -- RelDeb is exactly Release plus debug info, unlike CMake's RelWithDebInfo, which
     -- drops to -O2 and so often fails to reproduce what Release does.
     filter "configurations:Debug"
@@ -259,6 +273,7 @@ function forge.baseline()
         optimize "Off"
         symbols "On"
 
+    -- Release has no debug information but keeps its symbol table; see the end of this file.
     filter "configurations:Release"
         defines(configuration_defines("Release"))
         defines { "NDEBUG" }
@@ -299,6 +314,85 @@ function forge.baseline()
             linktimeoptimization "On"
         filter {}
     end
+end
+
+-- The version (docs/version.md). VERSION holds the base version; premake adds the build timestamp
+-- and the bug-report URL, and writes all three to <location>/generated/forge/core/version.inc.
+-- Only forge/source/forge/core/version.cpp includes it, so a new timestamp recompiles one file.
+-- ./x lint checks VERSION with the same rules (utils/xtool/lints.py), before a build needs it.
+
+-- A SemVer numeric identifier: digits, without a leading zero.
+local function is_numeric_identifier(text)
+    return text:match("^%d+$") ~= nil and (text == "0" or text:sub(1, 1) ~= "0")
+end
+
+-- A SemVer base version: X.Y.Z, then optionally "-" and dot-separated pre-release identifiers of
+-- letters, digits and "-", the all-digit ones without a leading zero. No build metadata.
+local function is_base_version(text)
+    local core, prerelease = text, nil
+    local dash = text:find("-", 1, true)
+    if dash then
+        core, prerelease = text:sub(1, dash - 1), text:sub(dash + 1)
+    end
+    local major, minor, patch = core:match("^(%d+)%.(%d+)%.(%d+)$")
+    if not (major and is_numeric_identifier(major) and is_numeric_identifier(minor)
+            and is_numeric_identifier(patch)) then
+        return false
+    end
+    if prerelease then
+        for identifier in (prerelease .. "."):gmatch("([^.]*)%.") do
+            if identifier == "" or identifier:find("[^%w%-]")
+                    or (identifier:match("^%d+$") and not is_numeric_identifier(identifier)) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+local function base_version()
+    local file = path.join(forge.root, "VERSION")
+    local text = io.readfile(file)
+    local line = text and text:match("^([^\n]*)\n$")
+    if not line or not is_base_version(line) then
+        fail("forge: %s must hold one line with a SemVer base version, such as 0.1.0-dev, and a "
+            .. "newline (docs/version.md)", file)
+    end
+    return line
+end
+
+-- UTC, from SOURCE_DATE_EPOCH when it is set, so that a build can be reproduced.
+local function build_timestamp()
+    local epoch = os.getenv("SOURCE_DATE_EPOCH")
+    if epoch then
+        if not epoch:match("^%d+$") then
+            fail("forge: SOURCE_DATE_EPOCH must be a whole number of seconds, not '%s'", epoch)
+        end
+        return os.date("!%Y%m%dT%H%M%SZ", tonumber(epoch))
+    end
+    return os.date("!%Y%m%dT%H%M%SZ")
+end
+
+local function bug_report_url()
+    local url = _OPTIONS["bug-report-url"] or ""
+    if url:find("%c") then
+        fail("--bug-report-url: the URL contains a control character")
+    end
+    return url
+end
+
+local function c_string(value)
+    return '"' .. value:gsub("\\", "\\\\"):gsub('"', '\\"') .. '"'
+end
+
+local function version_inc()
+    return table.concat({
+        "// Generated by premake/forge.lua from VERSION (docs/version.md); regenerate instead of editing.",
+        "#define FORGE_DETAIL_VERSION_BASE " .. c_string(base_version()),
+        "#define FORGE_DETAIL_VERSION_BUILD " .. c_string(build_timestamp()),
+        "#define FORGE_DETAIL_BUG_REPORT_URL " .. c_string(bug_report_url()),
+        "",
+    }, "\n")
 end
 
 -- Settings shared by every forge project (libraries and tests), never third_party.
@@ -384,6 +478,23 @@ local function index(descriptions)
     return components, component_names, tests
 end
 
+-- For the projects that link a binary. On macOS the debug information stays in the object files,
+-- where llvm-symbolizer does not look: it reads a .dSYM bundle next to the binary, which dsymutil
+-- makes in every configuration that has debug information.
+local function debug_information_bundle()
+    filter { "system:macosx", "configurations:not Release" }
+        postbuildcommands { "dsymutil %{cfg.buildtarget.abspath}" }
+    filter {}
+end
+
+-- <location>/generated holds what premake writes for core (version.inc). Only core gets it as an
+-- include directory, so nothing else can come to depend on generated code.
+local function generated_includes(name)
+    if name == "core" then
+        includedirs { "%{wks.location}/generated" }
+    end
+end
+
 local function emit_static(component_names)
     local linkable = {}
     for _, name in ipairs(component_names) do
@@ -394,6 +505,7 @@ local function emit_static(component_names)
             kind(sources and "StaticLib" or "None")
             files(component_files(name))
             common()
+            generated_includes(name)
     end
     return linkable
 end
@@ -404,9 +516,11 @@ local function emit_shared(component_names)
         for _, name in ipairs(component_names) do
             files(component_files(name))
             sources = sources or has_sources(name)
+            generated_includes(name)
         end
         kind(sources and "SharedLib" or "None")
         common(true)
+        debug_information_bundle()
         visibility "Hidden"
         inlinesvisibility "Hidden"
     return sources
@@ -428,6 +542,7 @@ local function emit_test(test, libraries, third_party)
         filter "system:linux"
             links { "pthread" }
         filter {}
+        debug_information_bundle()
     group ""
 end
 
@@ -542,6 +657,7 @@ local function add_configuration_site_configs(site_configs, wks, cfg)
     if emitted_unittests then
         add(path.join(base, "unittests"), {
             header,
+            "config.forge_source_root = " .. python_string(forge.root),
             "config.forge_bin_dir = " .. python_string(cfg.targetdir),
             "config.forge_features = " .. python_list(features(configuration)),
             "lit_config.load_config(config, "
@@ -563,17 +679,33 @@ local function site_configs()
     return result
 end
 
--- premake.action.call runs the action, after every project is baked. The site configs are worked
--- out before it runs, because the ninja action deletes "None" projects such as forge_host_tests
--- from the workspace, and written after it succeeds. clean and forge-describe get none. An
--- unchanged file is left alone, so that lit and editors do not see it as new.
+-- What premake writes besides the action's own files, as { dir, name, text }: every
+-- configuration's lit site configs, and version.inc.
+local function generated_files()
+    local result = {}
+    for _, site_config in ipairs(site_configs()) do
+        table.insert(result, { dir = site_config.dir, name = "lit.site.cfg.py", text = site_config.text })
+    end
+    local text = version_inc()
+    for wks in premake.global.eachWorkspace() do
+        table.insert(result, { dir = path.join(wks.location, "generated/forge/core"), name = "version.inc",
+                               text = text })
+    end
+    return result
+end
+
+-- premake.action.call runs the action, after every project is baked. The generated files are
+-- worked out before it runs, because the ninja action deletes "None" projects such as
+-- forge_host_tests from the workspace, and so that an invalid VERSION stops premake before it
+-- writes anything; they are written after it succeeds. clean and forge-describe get none. An
+-- unchanged file is left alone, so that lit, editors and ninja do not see it as new.
 premake.override(premake.action, "call", function(base, name)
-    local pending = (name ~= "clean" and name ~= "forge-describe") and site_configs() or {}
+    local pending = (name ~= "clean" and name ~= "forge-describe") and generated_files() or {}
     base(name)
-    for _, site_config in ipairs(pending) do
-        os.mkdir(site_config.dir)
-        local file = path.join(site_config.dir, "lit.site.cfg.py")
-        if os.writefile_ifnotequal(site_config.text, file) < 0 then
+    for _, generated in ipairs(pending) do
+        os.mkdir(generated.dir)
+        local file = path.join(generated.dir, generated.name)
+        if os.writefile_ifnotequal(generated.text, file) < 0 then
             fail("forge: cannot write %s", file)
         end
     end

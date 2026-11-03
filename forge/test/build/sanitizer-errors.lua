@@ -13,11 +13,8 @@
 -- THREAD-ADDRESS: --sanitizers: thread cannot be combined with address
 -- VISUAL-STUDIO: --sanitizers: Visual Studio only supports address
 
-require "premake/options"
-require "premake/forge"
+dofile(path.join(_SCRIPT_DIR, "Inputs/fixture.lua"))
 
-workspace "fixture"
-    configurations { "Debug", "Sanitize" }
-    location(_OPTIONS.to)
+fixture.workspace({})
 
 forge.emit({ forge.component { "core" } }, nil)

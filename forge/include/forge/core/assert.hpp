@@ -75,38 +75,46 @@ namespace forge::detail {
 
 enum class failure_kind : std::uint8_t { assertion, unreachable, todo };
 
-// Prints the report for a failed check and aborts. `condition` is the assertion's text, and
-// null for the other kinds; `format` is empty when the check has no message.
-[[noreturn]] FORGE_COLD FORGE_API void report_failure(failure_kind kind,
-                                                      const char* condition,
-                                                      std::source_location location,
-                                                      std::string_view format,
-                                                      std::format_args args) noexcept;
+// Prints the report for a failed check, with a stack trace, and aborts. `condition` is the
+// assertion's text, and null for the other kinds; `format` is empty when the check has no
+// message. The trace skips exactly one frame, this function's own, so it is never inlined,
+// not even by link-time optimization.
+[[noreturn]] FORGE_COLD FORGE_NOINLINE FORGE_API void
+report_failure(failure_kind kind,
+               const char* condition,
+               std::source_location location,
+               std::string_view format,
+               std::format_args args) noexcept;
 
 // One function per kind of check, so that a check failing during constant evaluation is named
 // in the compiler's error: "non-constexpr function 'assertion_failed' cannot be used in a
-// constant expression".
+// constant expression". Always inlined, so that the first frame of the report's stack trace is
+// the function with the failed check rather than one of these. MSVC does not inline in Debug
+// builds whatever it is told; there, the first frame is one of these.
 template <typename... Args>
-[[noreturn]] FORGE_COLD void assertion_failed(const char* condition,
-                                              std::source_location location,
-                                              std::format_string<Args...> format = "",
-                                              Args&&... args) noexcept {
+[[noreturn]] FORGE_COLD FORGE_ALWAYS_INLINE void
+assertion_failed(const char* condition,
+                 std::source_location location,
+                 std::format_string<Args...> format = "",
+                 Args&&... args) noexcept {
     report_failure(
         failure_kind::assertion, condition, location, format.get(), std::make_format_args(args...));
 }
 
 template <typename... Args>
-[[noreturn]] FORGE_COLD void unreachable_reached(std::source_location location,
-                                                 std::format_string<Args...> format = "",
-                                                 Args&&... args) noexcept {
+[[noreturn]] FORGE_COLD FORGE_ALWAYS_INLINE void
+unreachable_reached(std::source_location location,
+                    std::format_string<Args...> format = "",
+                    Args&&... args) noexcept {
     report_failure(
         failure_kind::unreachable, nullptr, location, format.get(), std::make_format_args(args...));
 }
 
 template <typename... Args>
-[[noreturn]] FORGE_COLD void todo_reached(std::source_location location,
-                                          std::format_string<Args...> format = "",
-                                          Args&&... args) noexcept {
+[[noreturn]] FORGE_COLD FORGE_ALWAYS_INLINE void
+todo_reached(std::source_location location,
+             std::format_string<Args...> format = "",
+             Args&&... args) noexcept {
     report_failure(
         failure_kind::todo, nullptr, location, format.get(), std::make_format_args(args...));
 }

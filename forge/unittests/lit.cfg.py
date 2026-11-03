@@ -22,7 +22,22 @@ config.test_source_root = config.forge_bin_dir
 config.test_exec_root = config.forge_bin_dir
 config.available_features.update(config.forge_features)
 
-# lit runs tests in a clean environment; sanitizer settings are what a developer would want kept.
-for name in ("ASAN_OPTIONS", "UBSAN_OPTIONS", "TSAN_OPTIONS", "LSAN_OPTIONS"):
+# On macOS each binary has a .dSYM bundle next to it, holding a file with the binary's name that is
+# not a test. lit's excludes are names, not patterns.
+if os.path.isdir(config.forge_bin_dir):
+    config.excludes = [name for name in os.listdir(config.forge_bin_dir) if name.endswith(".dSYM")]
+
+# Where version_test reads VERSION.
+config.environment["FORGE_SOURCE_ROOT"] = config.forge_source_root
+
+# lit runs tests in a clean environment; sanitizer settings are what a developer would want kept,
+# and FORGE_SYMBOLIZER_PATH turns on the tests that need llvm-symbolizer (docs/stacktrace.md).
+for name in (
+    "ASAN_OPTIONS",
+    "UBSAN_OPTIONS",
+    "TSAN_OPTIONS",
+    "LSAN_OPTIONS",
+    "FORGE_SYMBOLIZER_PATH",
+):
     if name in os.environ:
         config.environment[name] = os.environ[name]
