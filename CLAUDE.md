@@ -86,8 +86,10 @@ GTEST_FILTER='assertions.*' ./x test forge/unittests/core   # GoogleTest cases
 `.github/workflows/ci.yml` reads rows from `.github/ci/matrix.json`. Draft PRs and pushes run the
 `pr` tier, ready PRs and nightly the `full` tier; the required check is `ci-ok`. Format and the
 compiler-free lints run once; `headers,clang-tidy` run per compiler; then `./x build` and
-`./x test --no-build` per row. FileCheck in CI is built from pinned llvm-project
-(`.github/ci/build-filecheck.sh`). Compiler floor: GCC 13, Clang 17, AppleClang 16, MSVC 19.44.
+`./x test --no-build` per row. CI never builds LLVM: FileCheck and llvm-symbolizer are conda-forge's
+`llvmdev` at the version `.github/ci/llvm-tools.json` pins, installed from lockfiles by
+`.github/ci/install-llvm-tools.sh` (`--lock` regenerates them). Compiler floor: GCC 13, Clang 17,
+AppleClang 16, MSVC 19.44.
 
 ## Conventions not obvious from tooling
 

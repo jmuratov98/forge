@@ -2,19 +2,17 @@
 
 name: Set up x
 description: >-
-  Registers the problem matchers, restores x's downloads and venv, runs ./x setup, and puts a
-  FileCheck and an llvm-symbolizer built from the pinned LLVM source (.github/ci/filecheck.json) in
+  Registers the problem matchers, restores x's downloads and venv, runs ./x setup, and installs
+  the pinned FileCheck and llvm-symbolizer (.github/ci/llvm-tools.json) from conda-forge into
   FORGE_FILECHECK and FORGE_SYMBOLIZER_PATH.
-  Caches are only saved when save-caches is true, which ci.yml sets on main.
+  Every run saves the caches it missed, so a pull request starts from main's caches and fills its
+  own.
 
 inputs:
   image:
     description: The runner label or container image, which keys the caches of what is built on it.
     required: true
-  save-caches:
-    description: "'true' to save the caches this job had to fill."
-    default: "false"
-  filecheck:
+  llvm-tools:
     description: "'false' for a job that runs no lit tests."
     default: "true"
 
@@ -49,7 +47,7 @@ runs:
       run: ./x setup
 
     - name: Save x's downloads and venv
-      if: inputs.save-caches == 'true' && steps.restore-x.outputs.cache-hit != 'true'
+      if: steps.restore-x.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
@@ -57,36 +55,42 @@ runs:
           .forge/venv
         key: ${{ steps.restore-x.outputs.cache-primary-key }}
 
-    - name: Restore FileCheck
-      id: restore-filecheck
-      if: inputs.filecheck == 'true'
+    # What is cached is the compressed packages and micromamba, not the larger installed prefix.
+    - name: Restore the LLVM tools' packages
+      id: restore-llvm-tools
+      if: inputs.llvm-tools == 'true'
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: .forge/ci/filecheck
-        key: filecheck-${{ inputs.image }}-${{ runner.arch }}-${{ hashFiles('.github/ci/filecheck.json', '.github/ci/build-filecheck.sh') }}
+        path: .forge/ci/conda-pkgs
+        key: llvm-tools-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/ci/llvm-tools.json', '.github/ci/llvm-tools/*.txt') }}
 
-    - name: Build FileCheck
-      if: inputs.filecheck == 'true' && steps.restore-filecheck.outputs.cache-hit != 'true'
+    - name: Install the LLVM tools
+      if: inputs.llvm-tools == 'true'
       shell: bash
-      run: .github/ci/build-filecheck.sh .forge/ci/filecheck
+      run: .github/ci/install-llvm-tools.sh .forge/ci/llvm-tools
 
-    - name: Save FileCheck
-      if: >-
-        inputs.filecheck == 'true' && inputs.save-caches == 'true'
-        && steps.restore-filecheck.outputs.cache-hit != 'true'
+    - name: Save the LLVM tools' packages
+      if: inputs.llvm-tools == 'true' && steps.restore-llvm-tools.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: .forge/ci/filecheck
-        key: ${{ steps.restore-filecheck.outputs.cache-primary-key }}
+        path: .forge/ci/conda-pkgs
+        key: ${{ steps.restore-llvm-tools.outputs.cache-primary-key }}
 
-    # The value is a fixed path in the workspace, and ci.yml has no trigger that runs other
-    # people's code with write access.
-    - name: Use FileCheck
-      if: inputs.filecheck == 'true'
+    # These override the llvm-23 that the clang rows install from apt.llvm.org, which is a 23.1.5
+    # snapshot, so every row runs the same tools. The value is a fixed path in the workspace, and
+    # ci.yml has no trigger that runs other people's code with write access.
+    - name: Use the LLVM tools
+      if: inputs.llvm-tools == 'true'
       shell: bash
       run: | # zizmor: ignore[github-env]
-        if [ "$RUNNER_OS" = Windows ]; then suffix=.exe; else suffix=; fi
+        if [ "$RUNNER_OS" = Windows ]; then
+            filecheck=Library/bin/FileCheck.exe
+            symbolizer=Library/bin/llvm-symbolizer.exe
+        else
+            filecheck=libexec/llvm/FileCheck
+            symbolizer=bin/llvm-symbolizer
+        fi
         {
-            echo "FORGE_FILECHECK=$GITHUB_WORKSPACE/.forge/ci/filecheck/bin/FileCheck$suffix"
-            echo "FORGE_SYMBOLIZER_PATH=$GITHUB_WORKSPACE/.forge/ci/filecheck/bin/llvm-symbolizer$suffix"
+            echo "FORGE_FILECHECK=$GITHUB_WORKSPACE/.forge/ci/llvm-tools/$filecheck"
+            echo "FORGE_SYMBOLIZER_PATH=$GITHUB_WORKSPACE/.forge/ci/llvm-tools/$symbolizer"
         } >> "$GITHUB_ENV"

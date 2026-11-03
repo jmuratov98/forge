@@ -1,6 +1,6 @@
 [
   {"id": "linux-clang23", "runner": "ubuntu-26.04", "family": "clang", "cxx": "clang++-23", "expect": "23.", "configs": "Debug,Sanitize", "options": "--std=c++23", "tiers": ["pr", "full"]},
-  {"id": "linux-gcc13", "runner": "ubuntu-24.04", "family": "gcc", "cxx": "g++-13", "expect": "13.", "configs": "Debug,Release", "options": "", "tiers": ["pr", "full"]},
+  {"id": "linux-gcc13", "runner": "ubuntu-24.04", "family": "gcc", "cxx": "g++-13", "expect": "13.", "python": "3.10", "configs": "Debug,Release", "options": "", "tiers": ["pr", "full"]},
   {"id": "macos-xcode26", "runner": "macos-26", "family": "apple", "cxx": "clang++", "xcode": "26.6", "expect": "21.", "configs": "Debug", "options": "--shared", "tiers": ["pr", "full"]},
   {"id": "windows-vs2026", "runner": "windows-2025-vs2026", "family": "msvc", "expect": "19.5", "configs": "Debug", "options": "--exceptions", "tiers": ["pr", "full"]},
   {"id": "linux-gcc16", "runner": "ubuntu-24.04", "container": "gcc:16.2@sha256:07280eb2e744f1b7a2d8d4a3894c089ea07266c109758afc388a634bd098e4eb", "family": "gcc", "cxx": "g++", "expect": "16.", "configs": "Debug,Release,RelDeb,Sanitize", "options": "--shared --exceptions --std=c++23", "tiers": ["full"]},

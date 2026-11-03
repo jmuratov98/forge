@@ -339,9 +339,9 @@ The symbolizer shall not be downloaded. When it is found, `./x test` and `./x ru
 runs it. `./x setup` and `./x doctor`
 shall report whether it was found. Its absence is a warning.
 
-4 CI shall build the `llvm-symbolizer` target from the llvm-project source release that
-`.github/ci/filecheck.json` pins, with `.github/ci/build-filecheck.sh`, install it next to
-FileCheck, and set `FORGE_SYMBOLIZER_PATH` to it (`.github/actions/setup/action.yml`).
+4 CI shall install the `llvm-symbolizer` of the LLVM version that `.github/ci/llvm-tools.json`
+pins, together with FileCheck, with `.github/ci/install-llvm-tools.sh`, and set
+`FORGE_SYMBOLIZER_PATH` to it (`.github/actions/setup/action.yml`).
 
 5 No binary shall be stripped of its symbol table, in any configuration and with any toolset.
 

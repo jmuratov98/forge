@@ -183,16 +183,18 @@ def find_llvm_tool(name: str, variable: str) -> Path | None:
 
 
 def find_filecheck() -> Path | None:
-    """FileCheck is not downloaded: LLVM ships it only in release archives of over a gigabyte, and
-    the FileCheck on PyPI is a reimplementation without features the tests use. The in-tree
+    """FileCheck is not downloaded: LLVM's release archives leave it out (their builds keep
+    LLVM_INSTALL_UTILS off), and the FileCheck on PyPI is a reimplementation without features the
+    tests use. CI installs conda-forge's llvmdev (.github/ci/install-llvm-tools.sh). The in-tree
     FileCheck that testing.md plans will replace this search."""
     return find_llvm_tool("FileCheck", "FORGE_FILECHECK")
 
 
 def find_symbolizer() -> Path | None:
     """llvm-symbolizer, which forge runs to put names and lines in stack traces
-    (docs/stacktrace.md). It is not downloaded, for FileCheck's reason; without it traces show
-    addresses only, and the tests that need names skip."""
+    (docs/stacktrace.md). It is not downloaded: x does not fetch a package manager's LLVM for one
+    binary (CI gets it with FileCheck). Without it traces show addresses only, and the tests that
+    need names skip."""
     found = find_llvm_tool(exe("llvm-symbolizer"), "FORGE_SYMBOLIZER_PATH")
     return found if found is not None and found.is_file() else None
 
