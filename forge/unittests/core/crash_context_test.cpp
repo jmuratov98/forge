@@ -164,14 +164,18 @@ TEST(context_report, entry_ending_while_a_task_inherits_it) {
 
 #if FORGE_HOST_POSIX
 TEST(context_dump, written_at_the_next_entry_after_the_signal) {
+#  if FORGE_HOST_MACOS
+    constexpr int signal_number = SIGINFO;
+#  else
+    constexpr int signal_number = SIGUSR1;
+#  endif
+    // enable_context_dump takes over only the default disposition, and a test may inherit
+    // another: GitHub's macOS runners start processes with SIGINFO not at SIG_DFL.
+    ASSERT_NE(std::signal(signal_number, SIG_DFL), SIG_ERR);
     ASSERT_TRUE(enable_context_dump());
     // A thread's first entry only records the dump requests it has seen.
     const context_entry outer([](context_sink& out) { out.write("waiting for a dump"); });
-#  if FORGE_HOST_MACOS
-    std::raise(SIGINFO);
-#  else
-    std::raise(SIGUSR1);
-#  endif
+    std::raise(signal_number);
     testing::internal::CaptureStderr();
     {
         const context_entry inner([](context_sink& out) { out.write("after the request"); });

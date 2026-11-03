@@ -420,9 +420,12 @@ local function common(building_shared)
             "-Wundef",
         }
     -- C4668, MSVC's -Wundef, stays off: the Windows SDK headers trigger it. forge/core/
-    -- config.hpp requires the conforming preprocessor.
+    -- config.hpp requires the conforming preprocessor. The _CRT_ macros silence C4996 on
+    -- std::getenv, std::tmpfile and the like: they are standard, and the _s replacements it asks
+    -- for are not portable. LLVM defines the same macros.
     filter "toolset:msc*"
         buildoptions { "/permissive-", "/Zc:preprocessor" }
+        defines { "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
     filter {}
 
     if _OPTIONS.werror then

@@ -61,15 +61,32 @@
 #define FORGE_TODO(...)                                                                            \
     ::forge::detail::todo_reached(::std::source_location::current() __VA_OPT__(, ) __VA_ARGS__)
 
+// An assertion's condition is often constant: a sizeof check, a configuration macro, a template
+// argument. That is no mistake, so MSVC's C4127 "conditional expression is constant" is silenced
+// around the check's `if`, and stays on everywhere else. Only MSVC gets pragmas here: GCC and
+// Clang have no such warning in forge's set, and GCC has mishandled _Pragma in macro arguments,
+// which is where tests put FORGE_ASSERT (EXPECT_DEATH).
+#if FORGE_COMPILER_MSVC
+#  define FORGE_DETAIL_CONSTANT_CONDITION_BEGIN                                                    \
+      FORGE_WARNINGS_PUSH                                                                          \
+      FORGE_WARNING_IGNORE_MSVC(4127)
+#  define FORGE_DETAIL_CONSTANT_CONDITION_END FORGE_WARNINGS_POP
+#else
+#  define FORGE_DETAIL_CONSTANT_CONDITION_BEGIN
+#  define FORGE_DETAIL_CONSTANT_CONDITION_END
+#endif
+
 // FORGE_ASSERT stringizes cond itself, because by the time an argument reaches this macro its
 // macros are expanded. `if (cond) {} else` rather than `if (!(cond))`, whose parentheses would
 // hide -Wparentheses on a mistyped FORGE_ASSERT(x = 0).
 #define FORGE_DETAIL_ASSERT(cond, text, ...)                                                       \
+    FORGE_DETAIL_CONSTANT_CONDITION_BEGIN                                                          \
     if (cond) [[likely]] {                                                                         \
     } else {                                                                                       \
         ::forge::detail::assertion_failed(                                                         \
             text, ::std::source_location::current() __VA_OPT__(, ) __VA_ARGS__);                   \
-    }
+    }                                                                                              \
+    FORGE_DETAIL_CONSTANT_CONDITION_END
 
 namespace forge::detail {
 
