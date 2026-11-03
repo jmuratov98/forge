@@ -212,8 +212,10 @@ jobs:
       - name: Build
         run: ./x build $X_OPTIONS
 
+      # -v makes lit print a failing test's output, which is otherwise only in the uploaded
+      # artifact, and not even there for a GoogleTest failure.
       - name: Test
-        run: ./x test $X_OPTIONS --no-build
+        run: ./x -v test $X_OPTIONS --no-build
 
       - name: Upload lit's output
         if: failure()

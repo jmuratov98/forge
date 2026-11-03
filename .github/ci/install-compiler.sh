@@ -36,8 +36,10 @@ install_from_apt_llvm_org() {
     echo "deb [signed-by=/usr/share/keyrings/apt-llvm-org.gpg] https://apt.llvm.org/$codename/ llvm-toolchain-$codename-$major main" |
         as_root tee /etc/apt/sources.list.d/apt-llvm-org.list > /dev/null
     as_root apt-get update -q
-    # llvm-N has llvm-ar-N and the LTO linker plugin.
-    as_root apt-get install -y -q --no-install-recommends "clang-$major" "llvm-$major" "lld-$major"
+    # llvm-N has llvm-ar-N and the LTO linker plugin; libclang-rt-N-dev has the sanitizers'
+    # runtimes and headers, which clang-N alone lacks.
+    as_root apt-get install -y -q --no-install-recommends "clang-$major" "llvm-$major" "lld-$major" \
+        "libclang-rt-$major-dev"
 }
 
 case "$ROW_FAMILY" in
