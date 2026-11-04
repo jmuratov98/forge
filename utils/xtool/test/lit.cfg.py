@@ -29,6 +29,15 @@ config.environment.pop("CXX", None)
 system = {"darwin": "macos", "linux": "linux", "win32": "windows"}.get(sys.platform, sys.platform)
 config.available_features.add("host-" + system)
 
+# On Windows x finds MSVC with vswhere and vcvarsall.bat, and Visual Studio's setup API and the
+# batch file find the installations through these, which lit does not pass on.
+if system == "windows":
+    for name in ("ProgramData", "ProgramFiles", "ProgramFiles(x86)", "ProgramW6432",
+                 "CommonProgramFiles", "CommonProgramFiles(x86)", "windir", "LOCALAPPDATA",
+                 "APPDATA"):
+        if os.environ.get(name):
+            config.environment[name] = os.environ[name]
+
 # ./x test passes the premake and ninja it uses; the tests that run x's build commands need them.
 for name, feature in (("FORGE_PREMAKE5", "premake"), ("FORGE_NINJA", "ninja")):
     if os.environ.get(name):
