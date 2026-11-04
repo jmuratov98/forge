@@ -18,7 +18,7 @@ from .host import WINDOWS, exe, host_key, venv_executable
 from .ui import SetupRequired, XError
 
 RUNNABLE = (*tools.DOWNLOADED_TOOLS, "lit", "clang-format", "clang-tidy", "clang-apply-replacements",
-            "FileCheck", "python")
+            "FileCheck", "llvm-symbolizer", "python")
 
 
 def register(subparsers, common, describe_data) -> None:
@@ -82,13 +82,20 @@ def tool_path(ctx: Context, name: str) -> Path:
         return tools.wheel_tool(ctx, name)
     if name == "FileCheck":
         return tools.require_filecheck()
+    if name == "llvm-symbolizer":
+        symbolizer = tools.find_symbolizer()
+        if symbolizer is None:
+            raise SetupRequired("llvm-symbolizer not found: install LLVM (brew install llvm, or apt "
+                                "install llvm-<N>), or set FORGE_SYMBOLIZER_PATH to an llvm-symbolizer")
+        return symbolizer
     tools.require_venv(ctx)
     return venv_executable(ctx.venv, name)
 
 
 def run_tool(ctx: Context, args: argparse.Namespace) -> int:
     argv = [tool_path(ctx, args.tool), *args.arguments, *args.passthrough]
-    return ctx.ui.run(argv, check=False).returncode
+    # A forge program that lit or python starts writes its stack traces with names.
+    return ctx.ui.run(argv, env=tools.symbolizer_environment(), check=False).returncode
 
 
 def compiler_candidates() -> list[str]:
@@ -125,10 +132,10 @@ def run_doctor(ctx: Context, args: argparse.Namespace) -> int:
     rows: list[tuple[str, str, str]] = []
     missing = False
 
-    def add(name: str, status: str, detail: str) -> None:
+    def add(name: str, status: str, detail: str, *, required: bool = True) -> None:
         nonlocal missing
         rows.append((name, status, detail))
-        missing = missing or status not in ("ok", "override", "found")
+        missing = missing or (required and status not in ("ok", "override", "found"))
 
     rows.append(("host", host_key(), f"Python {sys.version.split()[0]} ({sys.executable})"))
     for name in tools.DOWNLOADED_TOOLS:
@@ -146,6 +153,11 @@ def run_doctor(ctx: Context, args: argparse.Namespace) -> int:
     filecheck = tools.find_filecheck()
     add("FileCheck", "found" if filecheck else "missing",
         str(filecheck) if filecheck else "install LLVM, or set FORGE_FILECHECK")
+    # Optional: without it, stack traces show addresses only and the tests that need names skip.
+    symbolizer = tools.find_symbolizer()
+    add("llvm-symbolizer", "found" if symbolizer else "not found",
+        str(symbolizer) if symbolizer else "stack traces will have no names: install LLVM, or set "
+        "FORGE_SYMBOLIZER_PATH", required=False)
 
     width = max(len(name) for name, _, _ in rows)
     for name, status, detail in rows:

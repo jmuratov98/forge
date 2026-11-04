@@ -4,6 +4,7 @@
 
 """Build options: premake arguments, build directory names, configurations, compilers, targets."""
 
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -65,21 +66,26 @@ class Configs(unittest.TestCase):
         self.assertIn("Debug, Release, RelDeb, Sanitize or all", str(raised.exception))
 
 
+def in_bin(directory: str, name: str) -> str:
+    """A path joined the way compiler_siblings joins them, so that the tests hold on Windows."""
+    return os.path.join(os.sep, directory, "bin", name)
+
+
 class Compilers(unittest.TestCase):
     def test_versioned_gcc_has_versioned_siblings(self):
-        exists = {"/opt/bin/gcc-16", "/opt/bin/gcc-ar-16"}.__contains__
-        self.assertEqual(buildopts.compiler_siblings("/opt/bin/g++-16", "gcc", exists),
-                         ("/opt/bin/gcc-16", "/opt/bin/gcc-ar-16"))
+        exists = {in_bin("opt", "gcc-16"), in_bin("opt", "gcc-ar-16")}.__contains__
+        self.assertEqual(buildopts.compiler_siblings(in_bin("opt", "g++-16"), "gcc", exists),
+                         (in_bin("opt", "gcc-16"), in_bin("opt", "gcc-ar-16")))
 
     def test_clang_finds_an_unversioned_llvm_ar(self):
-        exists = {"/llvm/bin/clang", "/llvm/bin/llvm-ar"}.__contains__
-        self.assertEqual(buildopts.compiler_siblings("/llvm/bin/clang++", "clang", exists),
-                         ("/llvm/bin/clang", "/llvm/bin/llvm-ar"))
+        exists = {in_bin("llvm", "clang"), in_bin("llvm", "llvm-ar")}.__contains__
+        self.assertEqual(buildopts.compiler_siblings(in_bin("llvm", "clang++"), "clang", exists),
+                         (in_bin("llvm", "clang"), in_bin("llvm", "llvm-ar")))
 
     def test_without_an_lto_archiver_falls_back_to_ar(self):
-        exists = {"/usr/bin/clang"}.__contains__
-        self.assertEqual(buildopts.compiler_siblings("/usr/bin/clang++", "clang", exists),
-                         ("/usr/bin/clang", "ar"))
+        exists = {in_bin("usr", "clang")}.__contains__
+        self.assertEqual(buildopts.compiler_siblings(in_bin("usr", "clang++"), "clang", exists),
+                         (in_bin("usr", "clang"), "ar"))
 
     def test_an_unrecognized_name_has_no_c_compiler(self):
         self.assertEqual(buildopts.compiler_siblings("/usr/bin/c++", "gcc", lambda path: True),

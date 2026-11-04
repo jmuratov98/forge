@@ -20,13 +20,14 @@
 -- DEBUG:      config.forge_configuration = "Debug"
 -- DEBUG:      config.forge_features = ["debug", "host-std-c++20", "asserts"]
 -- DEBUG:      config.forge_host_cxx = ["clang++", "-O0", "-g", "-Wall", "-Wextra", "-std=c++20", "-fno-exceptions", "-fno-rtti", "-DFORGE_EXCEPTIONS_ENABLED=0", "-DFORGE_DEBUG=1",
--- DEBUG-SAME: "-I{{[^"]*}}/default/tree/forge/include", "-I{{[^"]*}}/default/tree/forge/source", "-Wpedantic",
+-- DEBUG-SAME: "-I{{[^"]*}}/default/tree/forge/include", "-I{{[^"]*}}/default/tree/forge/source", "-fasynchronous-unwind-tables", "-Wpedantic",
 -- DEBUG-SAME: "-Wundef"]
 -- DEBUG:      config.forge_host_cxx_family = "clang"
 -- DEBUG:      lit_config.load_config(config, "{{.*}}/default/tree/forge/test/lit.cfg.py")
 
 -- RELEASE: config.forge_features = ["release", "host-std-c++20"]
 
+-- UNITTESTS: config.forge_source_root = "{{.*}}/default/tree"
 -- UNITTESTS: config.forge_bin_dir = "{{.*}}/default/Sanitize/bin"
 -- UNITTESTS: config.forge_features = ["sanitize", "host-std-c++20", "asserts", "asan", "ubsan"]
 -- UNITTESTS: lit_config.load_config(config, "{{.*}}/default/tree/forge/unittests/lit.cfg.py")

@@ -82,6 +82,7 @@ def run(ctx: Context, args: argparse.Namespace) -> int:
             if completed.returncode:
                 return completed.returncode
     report_filecheck(ctx)
+    report_symbolizer(ctx)
     return 0
 
 
@@ -227,3 +228,13 @@ def report_filecheck(ctx: Context) -> None:
                     "or apt install llvm-<N>-tools), or set FORGE_FILECHECK to a FileCheck binary")
     else:
         ctx.ui.info(f"FileCheck: {filecheck}")
+
+
+def report_symbolizer(ctx: Context) -> None:
+    symbolizer = tools.find_symbolizer()
+    if symbolizer is None:
+        ctx.ui.warn("llvm-symbolizer not found, so forge's stack traces will show addresses without "
+                    "names: install LLVM (brew install llvm, or apt install llvm-<N>), or set "
+                    "FORGE_SYMBOLIZER_PATH to an llvm-symbolizer")
+    else:
+        ctx.ui.info(f"llvm-symbolizer: {symbolizer}")

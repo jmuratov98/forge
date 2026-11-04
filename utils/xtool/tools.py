@@ -155,32 +155,55 @@ def googletest_status(ctx: Context) -> str:
     return "ok" if stamp == expected_googletest_stamp(ctx) else "stale"
 
 
-def find_filecheck() -> Path | None:
-    """FileCheck is not downloaded: LLVM ships it only in release archives of over a gigabyte, and
-    the FileCheck on PyPI is a reimplementation without features the tests use. The in-tree
-    FileCheck that testing.md plans will replace this search."""
-    configured = os.environ.get("FORGE_FILECHECK")
+def find_llvm_tool(name: str, variable: str) -> Path | None:
+    """An LLVM tool that is not downloaded: the one `variable` names, else the first on PATH, in
+    Homebrew's llvm, or in /usr/lib/llvm-<N> (Debian's apt.llvm.org packages), newest first."""
+    configured = os.environ.get(variable)
     if configured:
         return Path(configured)
-    found = shutil.which("FileCheck")
+    found = shutil.which(name)
     if found:
         return Path(found)
 
     candidates = []
     prefixes = [os.environ.get("HOMEBREW_PREFIX", ""), "/opt/homebrew", "/usr/local"]
     for prefix in filter(None, prefixes):
-        candidates.append(Path(prefix) / "opt" / "llvm" / "bin" / "FileCheck")
+        candidates.append(Path(prefix) / "opt" / "llvm" / "bin" / name)
 
     def llvm_version(path: str) -> int:
         match = re.search(r"llvm-(\d+)", path)
         return int(match.group(1)) if match else 0
 
-    candidates += [Path(path) for path in sorted(glob.glob("/usr/lib/llvm-*/bin/FileCheck"),
+    candidates += [Path(path) for path in sorted(glob.glob(f"/usr/lib/llvm-*/bin/{name}"),
                                                  key=llvm_version, reverse=True)]
     for candidate in candidates:
         if candidate.is_file():
             return candidate
     return None
+
+
+def find_filecheck() -> Path | None:
+    """FileCheck is not downloaded: LLVM's release archives leave it out (their builds keep
+    LLVM_INSTALL_UTILS off), and the FileCheck on PyPI is a reimplementation without features the
+    tests use. CI installs conda-forge's llvmdev (.github/ci/install-llvm-tools.sh). The in-tree
+    FileCheck that testing.md plans will replace this search."""
+    return find_llvm_tool("FileCheck", "FORGE_FILECHECK")
+
+
+def find_symbolizer() -> Path | None:
+    """llvm-symbolizer, which forge runs to put names and lines in stack traces
+    (docs/stacktrace.md). It is not downloaded: x does not fetch a package manager's LLVM for one
+    binary (CI gets it with FileCheck). Without it traces show addresses only, and the tests that
+    need names skip."""
+    found = find_llvm_tool(exe("llvm-symbolizer"), "FORGE_SYMBOLIZER_PATH")
+    return found if found is not None and found.is_file() else None
+
+
+def symbolizer_environment() -> dict[str, str]:
+    """What ./x test and ./x run add to the environment of the programs they run, so that forge's
+    stack traces find llvm-symbolizer wherever x found it."""
+    symbolizer = find_symbolizer()
+    return {"FORGE_SYMBOLIZER_PATH": str(symbolizer)} if symbolizer else {}
 
 
 def require_filecheck() -> Path:

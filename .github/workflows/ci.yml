@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# forge's CI, as forge/docs/ci.md designs it:
+# forge's CI:
 #
 #   plan ──► lint ──┬──► tidy ─────────────┐
 #                   └──► build-test (matrix) ┴──► ci-ok (or ci-pr) ──► nightly-report
@@ -28,7 +28,7 @@ permissions: {}
 
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
-  # Runs on main are never cancelled: they save the caches.
+  # Runs on main are never cancelled, so each push's results stay complete.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
@@ -44,7 +44,6 @@ jobs:
     outputs:
       tier: ${{ steps.plan.outputs.tier }}
       fail-fast: ${{ steps.plan.outputs.fail-fast }}
-      save-caches: ${{ steps.plan.outputs.save-caches }}
       matrix: ${{ steps.plan.outputs.matrix }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -58,7 +57,6 @@ jobs:
         env:
           EVENT: ${{ github.event_name }}
           DRAFT: ${{ github.event.pull_request.draft }}
-          REF: ${{ github.ref }}
           INPUT_TIER: ${{ inputs.tier }}
         run: |
           case "$EVENT" in
@@ -73,13 +71,10 @@ jobs:
               schedule | workflow_dispatch) fail_fast=false ;;
               *) fail_fast=true ;;
           esac
-          # A PR can only read the caches of main, so only main saves any.
-          if [ "$EVENT" != pull_request ] && [ "$REF" = refs/heads/main ]; then save=true; else save=false; fi
           matrix=$(jq -c --arg tier "$tier" '[.[] | select(.tiers | index($tier))]' .github/ci/matrix.json)
           {
               echo "tier=$tier"
               echo "fail-fast=$fail_fast"
-              echo "save-caches=$save"
               echo "matrix=$matrix"
           } >> "$GITHUB_OUTPUT"
           echo "tier $tier: $(jq -r 'map(.id) | join(", ")' <<< "$matrix")"
@@ -95,7 +90,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # x's floor, so that x's own tests run on the oldest Python it supports.
+      # x's floor, so that x's setup, format and lint run on the oldest Python it supports. Its
+      # own tests run on the floor in the linux-gcc13 row.
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.10"
@@ -103,16 +99,13 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           image: ubuntu-24.04
-          save-caches: ${{ needs.plan.outputs.save-caches }}
+          llvm-tools: "false"
 
       - name: Format
         run: ./x format --check
 
       - name: Lint
         run: ./x lint --only files,layering,workflows
-
-      - name: Test x
-        run: ./x test utils/xtool/test
 
   tidy:
     needs: [plan, lint]
@@ -139,8 +132,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           image: ubuntu-26.04
-          save-caches: ${{ needs.plan.outputs.save-caches }}
-          filecheck: "false"
+          llvm-tools: "false"
 
       # Restored by prefix, so a PR starts from main's latest results.
       - name: Restore the lint caches
@@ -157,7 +149,7 @@ jobs:
         run: ./x lint --only headers,clang-tidy --cxx "$ROW_CXX" --werror -c Debug,Release
 
       - name: Save the lint caches
-        if: always() && needs.plan.outputs.save-caches == 'true'
+        if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -202,7 +194,7 @@ jobs:
       - if: ${{ !matrix.container }}
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.14"
+          python-version: ${{ matrix.python || '3.14' }}
 
       - name: Install the compiler
         run: .github/ci/install-compiler.sh
@@ -210,7 +202,6 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           image: ${{ matrix.container || matrix.runner }}
-          save-caches: ${{ needs.plan.outputs.save-caches }}
 
       - name: Choose the build options
         run: |
@@ -221,8 +212,10 @@ jobs:
       - name: Build
         run: ./x build $X_OPTIONS
 
+      # -v makes lit print a failing test's output, which is otherwise only in the uploaded
+      # artifact, and not even there for a GoogleTest failure.
       - name: Test
-        run: ./x test $X_OPTIONS --no-build
+        run: ./x -v test $X_OPTIONS --no-build
 
       - name: Upload lit's output
         if: failure()

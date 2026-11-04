@@ -70,7 +70,9 @@ class Extraction(unittest.TestCase):
 
     def test_absolute_path_is_refused(self):
         archive = self.base / "a.tar.gz"
-        make_tar(archive, [(str(self.base / "evil"), b"x")])
+        # With forward slashes, as an archive names members: on Windows, the backslashes of
+        # str() would be refused by an earlier check, and this one would go untested.
+        make_tar(archive, [((self.base / "evil").as_posix(), b"x")])
         self.assert_refused(archive, "points outside the archive")
 
     def test_links_are_refused(self):

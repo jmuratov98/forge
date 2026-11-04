@@ -126,6 +126,23 @@ def fix_content(data: bytes, marker: str) -> bytes:
     return ("\n".join(lines) + "\n").encode("utf-8") if lines else b""
 
 
+# A SemVer 2.0 base version: a version core, then optionally a pre-release version; no build
+# metadata. premake/forge.lua applies the same rules when it reads VERSION.
+_NUMERIC_IDENTIFIER = r"(?:0|[1-9][0-9]*)"
+_PRERELEASE_IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)"
+BASE_VERSION = re.compile(rf"{_NUMERIC_IDENTIFIER}\.{_NUMERIC_IDENTIFIER}\.{_NUMERIC_IDENTIFIER}"
+                          rf"(?:-{_PRERELEASE_IDENTIFIER}(?:\.{_PRERELEASE_IDENTIFIER})*)?")
+
+
+def check_version(path: Path, data: bytes) -> list[Diagnostic]:
+    """VERSION is one line with a base version and a newline (docs/version.md)."""
+    text = data.decode("utf-8", errors="replace")
+    if text.count("\n") == 1 and text.endswith("\n") and BASE_VERSION.fullmatch(text[:-1]):
+        return []
+    return [Diagnostic(path, 1, 1, "VERSION must hold one line with a SemVer base version, such as "
+                       "0.1.0-dev, and a newline", "version")]
+
+
 def check_kind(root: Path, file: Path) -> list[Diagnostic]:
     """forge/include and forge/source hold C++ headers and sources only."""
     relative = _relative(root, file)
@@ -136,6 +153,8 @@ def check_kind(root: Path, file: Path) -> list[Diagnostic]:
 
 
 def check_file(root: Path, file: Path) -> list[Diagnostic]:
+    if _relative(root, file) == "VERSION":
+        return check_version(file, file.read_bytes())
     diagnostics = check_kind(root, file)
     marker = comment_marker(root, file)
     if marker is not None:

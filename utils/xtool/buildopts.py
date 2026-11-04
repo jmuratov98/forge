@@ -33,7 +33,9 @@ PREMAKE_TOOLSETS = {"clang": "clang", "gcc": "gcc", "msvc": "msc"}
 
 
 def premake_inputs(root: Path) -> list[Path]:
-    files = [root / "premake5.lua", root / "forge" / "premake5.lua", root / "third_party" / "premake5.lua"]
+    """The files premake reads. VERSION is one: premake writes the version into the build."""
+    files = [root / "premake5.lua", root / "forge" / "premake5.lua", root / "third_party" / "premake5.lua",
+             root / "VERSION"]
     files += sorted((root / "premake").glob("*.lua"))
     return [file for file in files if file.is_file()]
 

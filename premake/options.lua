@@ -90,3 +90,13 @@ newoption {
     description     = "Archiver to run instead of the toolset's ar (gcc-ar with --lto on gcc)",
     category        = "Forge toolchain"
 }
+
+-- docs/version.md. A category of its own, so ./x does not mirror it: it is a packager's setting
+-- rather than a build variant, and a URL would make a poor build-directory name. Packagers pass
+-- it to premake directly, as LLVM's take BUG_REPORT_URL.
+newoption {
+    trigger         = "bug-report-url",
+    value           = "URL",
+    description     = "Where failure reports ask users to report bugs (default: none)",
+    category        = "Forge packaging"
+}
