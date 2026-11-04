@@ -542,6 +542,11 @@ local function emit_test(test, libraries, third_party)
         links(libraries)
         links(third_party.googletest.links)
 
+        -- main is gtest_main's, in googletest's library. Without /SUBSYSTEM, which premake's msc
+        -- toolset leaves out for a ConsoleApp, MSVC's linker looks for main only in the objects to
+        -- pick the entry point, and fails with LNK1561.
+        filter "toolset:msc*"
+            linkoptions { "/SUBSYSTEM:CONSOLE" }
         filter "system:linux"
             links { "pthread" }
         filter {}
