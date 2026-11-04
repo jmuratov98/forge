@@ -266,6 +266,13 @@ function forge.baseline()
         buildoptions { "-fasynchronous-unwind-tables" }
     filter {}
 
+    -- One C runtime for the whole program (/MD), as CMake and LLVM default to: with cl.exe's own
+    -- default, /MT, a --shared libforge has a CRT of its own, so a FILE* or a heap block from the
+    -- program is invalid in it. The release CRT in every configuration, as before; the debug CRT
+    -- would also change _ITERATOR_DEBUG_LEVEL.
+    staticruntime "Off"
+    runtime "Release"
+
     -- RelDeb is exactly Release plus debug info, unlike CMake's RelWithDebInfo, which
     -- drops to -O2 and so often fails to reproduce what Release does.
     filter "configurations:Debug"

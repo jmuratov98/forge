@@ -150,13 +150,20 @@ TEST(assertions, failure_reports_stack_trace) {
 }
 
 // Where there is debug information, the symbolizer reports the inlined todo_reached first; the
-// report leaves out entries in forge::detail, so that #0 is the function with the check.
+// report leaves out entries in forge::detail, so that #0 is the function with the check. MSVC
+// Release links no PDB, the only place where a Windows binary keeps its function names
+// ([stacktrace.build] paragraph 5); skipped by the preprocessor, because MSVC warns about the code
+// after an unconditional GTEST_SKIP.
 TEST(assertions, stack_trace_names_failing_function) {
+#  if FORGE_COMPILER_MSVC && FORGE_RELEASE
+    GTEST_SKIP() << "MSVC Release links no PDB, so frames have no names";
+#  else
     if (std::getenv("FORGE_SYMBOLIZER_PATH") == nullptr) {
         GTEST_SKIP() << "set FORGE_SYMBOLIZER_PATH to an llvm-symbolizer to run this test";
     }
     EXPECT_DEATH(static_cast<void>(not_written_yet()),
                  has_lines({R"(    #0 forge_core_unittests\S*\+0x[0-9a-f]+ .*not_written_yet.*)"}));
+#  endif
 }
 #endif
 

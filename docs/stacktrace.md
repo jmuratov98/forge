@@ -352,7 +352,9 @@ pins, together with FileCheck, with `.github/ci/install-llvm-tools.sh`, and set
 [Note 2: Premake's GCC toolset links with `-s` (`-Wl,-x` on macOS) when symbols are `Off` or
 `Default`, as in Release; `premake/forge.lua` removes those flags. The symbolizer names a function
 of a stripped binary after whatever symbol is left nearest to its address, which is usually another
-function. Premake's Clang toolset and CMake do not strip. — end note]
+function. Premake's Clang toolset and CMake do not strip. A PE image has no symbol table: MSVC
+keeps function names only in the PDB, which configurations without debug information (Release) do
+not write, so with MSVC in Release frames show their module and offset only. — end note]
 
 6 On macOS, the build shall run `dsymutil` on each binary it links, in every configuration that has
 debug information.
@@ -377,17 +379,20 @@ and file and line are unknown. — end note]
   frame in the form of [stacktrace.format] paragraph 2, without function or location, and nothing
   else, and frame 0 is in the test executable;
 - (1.8) `print` with `truncated` writes `    (more frames not shown)` last;
-- (1.9) when `FORGE_SYMBOLIZER_PATH` is set, and skipped otherwise: frame 0 of a capture in a test
-  names the test's function and, except in Release, which has no debug information, its file and
-  the line of the call.
+- (1.9) when `FORGE_SYMBOLIZER_PATH` is set, and skipped otherwise and with MSVC in Release
+  ([stacktrace.build] paragraph 5): frame 0 of a capture in a test names the test's function and,
+  except in Release, which has no debug information, its file and the line of the call;
+- (1.10) under the same conditions: in a capture from a `FORGE_NOINLINE` function in
+  `forge::detail`, that function's frame is left out, so frame 0 names the test's function
+  ([stacktrace.symbolize] paragraph 6).
 
 2 The death tests in `forge/unittests/core/assert_test.cpp` check the following:
 
 - (2.1) in every configuration, that a `FORGE_TODO` report contains `  stack trace:` followed by a
   line `    #0 ` and the executable's module name;
-- (2.2) when `FORGE_SYMBOLIZER_PATH` is set, and skipped otherwise, that the same report's frame 0
-  names the function with the check. That function is `FORGE_NOINLINE`, so that its name is in the
-  symbol table in every configuration.
+- (2.2) when `FORGE_SYMBOLIZER_PATH` is set, and skipped otherwise and with MSVC in Release, that
+  the same report's frame 0 names the function with the check. That function is `FORGE_NOINLINE`,
+  so that its name is in the symbol table in every configuration.
 
 3 The death tests match whole lines with `std::regex` (`forge/unittests/core/report_matchers.hpp`):
 GoogleTest's regular expressions are POSIX ones on Linux and macOS, where `.` also matches a newline,

@@ -193,7 +193,19 @@ TEST(stacktrace_print, says_when_frames_are_not_shown) {
     EXPECT_EQ(lines[2], "    (more frames not shown)");
 }
 
+// MSVC Release links no PDB, the only place where a Windows binary keeps its function names
+// ([stacktrace.build] paragraph 5), so there the tests that check names are skipped. Skipped by the
+// preprocessor: MSVC warns about the code after an unconditional GTEST_SKIP.
+#if FORGE_COMPILER_MSVC && FORGE_RELEASE
+#  define FORGE_TEST_FRAMES_HAVE_NAMES 0
+#else
+#  define FORGE_TEST_FRAMES_HAVE_NAMES 1
+#endif
+
 TEST(stacktrace_print, names_functions_with_a_symbolizer) {
+#if !FORGE_TEST_FRAMES_HAVE_NAMES
+    GTEST_SKIP() << "MSVC Release links no PDB, so frames have no names";
+#else
     if (std::getenv("FORGE_SYMBOLIZER_PATH") == nullptr) {
         GTEST_SKIP() << "set FORGE_SYMBOLIZER_PATH to an llvm-symbolizer to run this test";
     }
@@ -211,13 +223,18 @@ TEST(stacktrace_print, names_functions_with_a_symbolizer) {
         << lines[1];
     // The location is the call's line rather than the next one: the address looked up is one
     // before the return address. Release has no debug information.
-#if !FORGE_RELEASE
+#  if !FORGE_RELEASE
     EXPECT_TRUE(matches(lines[1], std::format(R"(.*stacktrace_test\.cpp:{}(:\d+)?)", capture_line)))
         << lines[1];
+#  endif
 #endif
 }
 
+// Without names, print cannot tell a forge::detail frame from any other.
 TEST(stacktrace_print, leaves_out_leading_forge_detail_frames) {
+#if !FORGE_TEST_FRAMES_HAVE_NAMES
+    GTEST_SKIP() << "MSVC Release links no PDB, so frames have no names";
+#else
     if (std::getenv("FORGE_SYMBOLIZER_PATH") == nullptr) {
         GTEST_SKIP() << "set FORGE_SYMBOLIZER_PATH to an llvm-symbolizer to run this test";
     }
@@ -232,6 +249,7 @@ TEST(stacktrace_print, leaves_out_leading_forge_detail_frames) {
         lines[1],
         R"(    #0 forge_core_unittests\S*\+0x[0-9a-f]+ .*leaves_out_leading_forge_detail_frames_Test::TestBody.*)"))
         << lines[1];
+#endif
 }
 
 } // namespace
