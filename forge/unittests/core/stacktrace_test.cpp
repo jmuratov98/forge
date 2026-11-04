@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -19,6 +20,21 @@
 #include <span>
 #include <string>
 #include <vector>
+
+namespace forge::detail {
+namespace {
+
+// A capture from a function in forge::detail with a frame of its own, as the helpers of a failed
+// check have in MSVC Debug builds. The fence keeps the capture from being a tail call, which would
+// replace this frame.
+FORGE_NOINLINE std::size_t capture_in_detail(std::span<std::uintptr_t> frames) {
+    const std::size_t count = stacktrace::capture(frames);
+    std::atomic_signal_fence(std::memory_order_seq_cst);
+    return count;
+}
+
+} // namespace
+} // namespace forge::detail
 
 namespace forge::stacktrace {
 namespace {
@@ -199,6 +215,23 @@ TEST(stacktrace_print, names_functions_with_a_symbolizer) {
     EXPECT_TRUE(matches(lines[1], std::format(R"(.*stacktrace_test\.cpp:{}(:\d+)?)", capture_line)))
         << lines[1];
 #endif
+}
+
+TEST(stacktrace_print, leaves_out_leading_forge_detail_frames) {
+    if (std::getenv("FORGE_SYMBOLIZER_PATH") == nullptr) {
+        GTEST_SKIP() << "set FORGE_SYMBOLIZER_PATH to an llvm-symbolizer to run this test";
+    }
+    const scoped_environment_variable enabled("FORGE_DISABLE_SYMBOLIZATION", nullptr);
+    std::array<std::uintptr_t, 2> frames{};
+    ASSERT_EQ(forge::detail::capture_in_detail(frames), 2U);
+
+    // The forge::detail frame is left out, so this test is #0.
+    const std::vector<std::string> lines = lines_of(printed(frames, false));
+    ASSERT_EQ(lines.size(), 2U);
+    EXPECT_TRUE(matches(
+        lines[1],
+        R"(    #0 forge_core_unittests\S*\+0x[0-9a-f]+ .*leaves_out_leading_forge_detail_frames_Test::TestBody.*)"))
+        << lines[1];
 }
 
 } // namespace

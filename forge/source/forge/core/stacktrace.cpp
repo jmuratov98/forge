@@ -185,6 +185,23 @@ void drop_detail_entries(std::vector<entry>& entries) {
     entries.erase(entries.begin(), first_kept);
 }
 
+// MSVC does not inline in Debug builds whatever it is told, so there the same helpers are frames
+// of their own rather than entries of frame 0. Leading frames with nothing but forge::detail
+// entries are dropped as well, as long as one frame is left, so that #0 names the function with
+// the check with every compiler and in every configuration.
+void drop_detail_frames(std::vector<frame>& frames) {
+    if (frames.empty()) {
+        return;
+    }
+    const auto first_kept =
+        std::find_if_not(frames.begin(), std::prev(frames.end()), [](const frame& f) {
+            return !f.entries.empty() && std::ranges::all_of(f.entries, [](const entry& e) {
+                return in_forge_detail(e.function);
+            });
+        });
+    frames.erase(frames.begin(), first_kept);
+}
+
 // Reads the responses to the frames in `requested`, in order ([stacktrace.symbolize] paragraph 5),
 // up to the first that is incomplete or does not match, and returns how many it read.
 std::size_t read_responses(std::string_view output,
@@ -301,6 +318,7 @@ std::string frame_line(std::size_t index, std::size_t k, const frame& f, const e
 void print(std::FILE* file, std::span<const std::uintptr_t> frames, bool truncated) noexcept {
     std::vector<frame> resolved = resolve(frames);
     const symbolization result = symbolize(resolved);
+    drop_detail_frames(resolved);
 
     write_line(file, "  stack trace:");
     for (std::size_t i = 0; i < resolved.size(); ++i) {

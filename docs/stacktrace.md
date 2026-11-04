@@ -222,14 +222,18 @@ denotes an unknown line or column.
 
 6 Before a response is used, its leading entries whose function line names a function in namespace
 `forge::detail` are removed, as long as one entry remains. A function line names such a function if
-`forge::detail::` occurs in it before the first `(`, at its start or after a space.
+`forge::detail::` occurs in it before the first `(`, at its start or after a space. After the
+responses are read, the leading physical frames all of whose entries name such a function are
+removed, as long as one frame remains; the frames that remain are counted from 0 in
+[stacktrace.format].
 
 [Note 2: The helpers through which a failed check reaches `report_failure` are always inlined into
 the function with the check ([stacktrace.report] paragraph 1). Where there is debug information,
 the symbolizer reports them as the innermost entries of frame 0, which would make the function the
 reader is looking for `#0.1`. Clang's `nodebug` attribute would keep them out of the debug
 information, but GCC has no equivalent, so they are removed here, the same way for every compiler.
-— end note]
+MSVC does not inline in Debug builds, so there the helpers are frames of their own, which are
+removed the same way. — end note]
 
 7 If the child has not produced a response for every line written in (4) within 10 seconds of its
 creation, the implementation terminates the child.
@@ -416,7 +420,7 @@ expensive and may fail. This document does the same: [stacktrace.capture] agains
 | This document | LLVM | Reason |
 |---|---|---|
 | No in-process symbol information ([stacktrace.symbolize] paragraph 10) | Falls back to `dladdr` or DbgHelp | `dladdr` reports wrong names for hidden and internal functions. |
-| Inlined `forge::detail` entries are left out ([stacktrace.symbolize] paragraph 6) | Writes every entry the symbolizer reports | Frame 0 of a failure report names the function with the check, with every compiler. |
+| Leading `forge::detail` entries and frames are left out ([stacktrace.symbolize] paragraph 6) | Writes every entry the symbolizer reports | Frame 0 of a failure report names the function with the check, with every compiler and configuration. |
 | Call-site addresses ([stacktrace.defs] 2.2) | Raw return addresses | A frame copied from a report symbolizes to the line of the call. |
 | Module-relative addresses only ([stacktrace.format] paragraph 3) | Absolute and module-relative | Absolute addresses differ between runs. |
 | Capture into a buffer the caller provides | `backtrace` into a fixed array | The same function serves signal handlers and stored traces. |

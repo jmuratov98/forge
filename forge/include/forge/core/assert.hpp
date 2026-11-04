@@ -50,12 +50,14 @@
 
 // A trap, not FORGE_BUILTIN_UNREACHABLE: reaching it ends the program instead of being
 // undefined behaviour. An expression in both builds, so code that compiles in one compiles in
-// the other.
+// the other. FORGE_BUILTIN_UNREACHABLE follows the trap only to say that it does not return:
+// MSVC's code generator does not know that of __fastfail, and warns (C4715) that a function
+// ending in FORGE_UNREACHABLE does not return a value on every path.
 #  define FORGE_UNREACHABLE(...)                                                                   \
       (::forge::is_constant_evaluated()                                                            \
            ? ::forge::detail::unreachable_reached(::std::source_location::current() __VA_OPT__(, ) \
                                                       __VA_ARGS__)                                 \
-           : FORGE_BUILTIN_TRAP())
+           : (FORGE_BUILTIN_TRAP(), FORGE_BUILTIN_UNREACHABLE()))
 #endif
 
 #define FORGE_TODO(...)                                                                            \
