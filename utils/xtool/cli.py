@@ -13,7 +13,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import buildopts, cmd_build, cmd_format, cmd_lint, cmd_misc, cmd_pin, cmd_setup, cmd_test
+from . import buildopts, cmd_build, cmd_format, cmd_lint, cmd_misc, cmd_pin, cmd_setup, cmd_test, host
 from .context import Context
 from .ui import NORMAL, QUIET, Ui, XError
 
@@ -89,6 +89,9 @@ def main(code_root: str, argv: list[str]) -> int:
     ctx = Context(root, code, make_ui(early))
 
     try:
+        # Every command, --help included: on MSYS2's Python, host_key, the venv and every path x
+        # passes on would be wrong.
+        host.require_native_python()
         if command in BUILD_COMMANDS:
             try:
                 ctx.describe_data = buildopts.describe(ctx)

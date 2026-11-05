@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""The machine x runs on: its key in tools.json, executable names, and the MSVC environment."""
+"""The machine x runs on: its key in tools.json, the Python x needs on it, executable names, venv
+layouts, and the MSVC environment."""
 
 from __future__ import annotations
 
@@ -30,12 +31,54 @@ def host_key() -> str:
     return f"{system}-{arch}"
 
 
+def foreign_python(platform_name: str, version: str, system: str) -> str | None:
+    """What kind of Python `sys.platform`, `sys.version` and `platform.system()` describe, when it
+    is a Windows Python that cannot run x: MSYS2's or Cygwin's, POSIX builds that see a Cygwin host,
+    for which tools.json pins no tools, or a MinGW build, such as MSYS2's ucrt64, mingw64 and
+    clang64 Pythons. All of them make venvs with the POSIX layout (bin/, not Scripts\\), and none
+    installs the Windows wheels that tools.json pins for clang-format and clang-tidy. None for any
+    other Python: CPython as python.org builds it for Windows, with MSVC, and every Python on other
+    hosts."""
+    if platform_name in ("cygwin", "msys"):
+        # MSYS2's runtime calls itself MINGW64_NT and the like in its MinGW shells; Cygwin's is
+        # always CYGWIN_NT.
+        return "Cygwin's Python" if system.upper().startswith("CYGWIN") else "MSYS2's Python"
+    if platform_name == "win32" and "MSC v." not in version:
+        return "a MinGW build of Python"
+    return None
+
+
+def require_native_python() -> None:
+    """Stops x on a Python that foreign_python names. The ./x script looks for a native one first,
+    but `python3 x.py`, x.cmd without the py launcher, or a PATH without a native Python still
+    reach one."""
+    kind = foreign_python(sys.platform, sys.version, platform.system())
+    if kind is not None:
+        raise SetupRequired(
+            "x needs a native Windows Python 3.10 or newer, python.org's or the Python install "
+            f"manager's, and {sys.executable} is {kind}, which cannot make the venv x needs. "
+            "Install a native Python: ./x finds it as python, python3 or py on PATH (an MSYS2 shell "
+            "keeps Windows' PATH only with MSYS2_PATH_TYPE=inherit), and x.cmd through py")
+
+
 def exe(name: str) -> str:
     return name + ".exe" if WINDOWS else name
 
 
 def venv_executable(venv: Path, name: str) -> Path:
     return venv / ("Scripts" if WINDOWS else "bin") / exe(name)
+
+
+# The Pythons that make venvs with the other layout, which this Python cannot use. Elsewhere it is
+# a Windows Python, in a checkout that WSL shares with Windows.
+FOREIGN_VENV_MAKERS = "MSYS2's, Cygwin's or a MinGW Python" if WINDOWS else "a Windows Python"
+
+
+def is_foreign_venv(venv: Path) -> bool:
+    """Whether one of FOREIGN_VENV_MAKERS made `venv`: it has the other layout's directory and not
+    this one's Python."""
+    return (not venv_executable(venv, "python").is_file()
+            and (venv / ("bin" if WINDOWS else "Scripts")).is_dir())
 
 
 def msvc_environment(ui: Ui, cache: Path) -> dict[str, str]:

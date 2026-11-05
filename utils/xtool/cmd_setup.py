@@ -18,7 +18,7 @@ from pathlib import Path
 
 from . import tools
 from .context import Context
-from .host import exe, host_key
+from .host import FOREIGN_VENV_MAKERS, exe, host_key
 from .ui import QUIET, VERBOSE, VERY_VERBOSE, XError
 
 DOWNLOADED = (*tools.DOWNLOADED_TOOLS, "googletest")
@@ -96,7 +96,10 @@ def setup_venv(ctx: Context) -> None:
     if unpinned:
         raise XError(f"tools.json has no hashes for {', '.join(unpinned)}: run ./x pin python")
 
-    ctx.ui.step(f"{'creating' if status == 'missing' else 'recreating'} {ctx.rel(ctx.venv)}")
+    action = {"missing": "creating", "stale": "recreating", "foreign": "replacing"}[status]
+    ctx.ui.step(f"{action} {ctx.rel(ctx.venv)}")
+    if status == "foreign":
+        ctx.ui.info(f"it was made by {tools.venv_maker(ctx)}, {FOREIGN_VENV_MAKERS}")
     if ctx.venv.exists() and not ctx.ui.dry_run:
         shutil.rmtree(ctx.venv)
     completed = ctx.ui.run([sys.executable, "-m", "venv", ctx.venv], replay=True, check=False)

@@ -14,7 +14,7 @@ from pathlib import Path
 from . import buildopts, cmd_build, cmd_format, cmd_lint, cmd_test, tools
 from .buildopts import MARKER
 from .context import Context, read_json
-from .host import WINDOWS, exe, host_key, venv_executable
+from .host import FOREIGN_VENV_MAKERS, WINDOWS, exe, host_key, venv_executable
 from .ui import SetupRequired, XError
 
 RUNNABLE = (*tools.DOWNLOADED_TOOLS, "lit", "clang-format", "clang-tidy", "clang-apply-replacements",
@@ -145,7 +145,14 @@ def run_doctor(ctx: Context, args: argparse.Namespace) -> int:
     venv = tools.venv_status(ctx)
     packages = ", ".join(f"{name} {spec['version']}" for name, spec in ctx.manifest["python"].items()
                          if name in ("lit", "clang-format", "clang-tidy"))
-    add("venv", venv, f"{ctx.rel(ctx.venv)} ({packages})" if venv == "ok" else "run ./x setup")
+    maker = tools.venv_maker(ctx)
+    if venv == "ok":
+        detail = f"{ctx.rel(ctx.venv)} ({packages}) on {maker}"
+    elif venv == "foreign":
+        detail = f"made by {maker}, {FOREIGN_VENV_MAKERS}: run ./x setup to replace it"
+    else:
+        detail = f"made by {maker}: run ./x setup" if maker else "run ./x setup"
+    add("venv", venv, detail)
     googletest = tools.googletest_status(ctx)
     add("googletest", "ok" if googletest == "foreign" else googletest,
         f"{ctx.manifest['googletest']['version']} {ctx.rel(tools.googletest_dir(ctx))}"

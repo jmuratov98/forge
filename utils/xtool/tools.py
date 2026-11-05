@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from .context import Context, read_json
-from .host import WINDOWS, exe, host_key, venv_executable
+from .host import FOREIGN_VENV_MAKERS, WINDOWS, exe, host_key, is_foreign_venv, venv_executable
 from .ui import SetupRequired, XError
 
 # The downloaded tools, and the environment variable that replaces each one with a binary of the
@@ -108,9 +108,27 @@ def venv_python(ctx: Context) -> Path:
     return venv_executable(ctx.venv, "python")
 
 
+def venv_maker(ctx: Context) -> str | None:
+    """The Python that made the venv, as its pyvenv.cfg records it, for messages: its version and
+    executable (which Python 3.11 and newer write), else its directory. None without a venv."""
+    try:
+        text = (ctx.venv / "pyvenv.cfg").read_text()
+    except OSError:
+        return None
+    config = {}
+    for line in text.splitlines():
+        key, equals, value = line.partition("=")
+        if equals:
+            config[key.strip()] = value.strip()
+    return f"Python {config.get('version', '?')} ({config.get('executable') or config.get('home', '?')})"
+
+
 def venv_status(ctx: Context) -> str:
-    """"ok" | "missing" | "stale". The venv is stale when x runs on another Python minor version
-    than the one that made it, or when tools.json pins other packages."""
+    """"ok" | "missing" | "stale" | "foreign". The venv is stale when x runs on another Python minor
+    version than the one that made it, or when tools.json pins other packages, and foreign when a
+    Python with the other venv layout made it (host.is_foreign_venv)."""
+    if is_foreign_venv(ctx.venv):
+        return "foreign"
     stamp = read_json(ctx.venv / STAMP)
     if stamp is None or not venv_python(ctx).is_file():
         return "missing"
@@ -120,7 +138,8 @@ def venv_status(ctx: Context) -> str:
 def require_venv(ctx: Context) -> Path:
     status = venv_status(ctx)
     if status != "ok":
-        state = "is not set up" if status == "missing" else "is out of date"
+        state = {"missing": "is not set up", "stale": "is out of date",
+                 "foreign": f"was made by {venv_maker(ctx)}, {FOREIGN_VENV_MAKERS}"}[status]
         raise SetupRequired(f"the Python environment in {ctx.rel(ctx.venv)} {state}: run ./x setup")
     return venv_python(ctx)
 
