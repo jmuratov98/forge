@@ -2134,7 +2134,7 @@ inline constexpr bool g_formattable = std::is_default_constructible_v<std::forma
 // unreachable, also makes constant evaluation (the compile-time format-string check) fail.
 struct format_without_spec {
     static constexpr std::format_parse_context::iterator parse(std::format_parse_context& ctx) {
-        const auto* const it = ctx.begin();
+        const std::format_parse_context::iterator it = ctx.begin();
         if (it != ctx.end() && *it != '}') {
 #if FORGE_EXCEPTIONS_ENABLED
             throw std::format_error("result, success and failure take no format-spec");
