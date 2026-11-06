@@ -1,6 +1,9 @@
 // The ill-formed uses of result that docs/result.md lists fail to compile, and the well-formed
 // neighbours of each do not. Every compiler prints the message of a static_assert; for a returned
-// argument that is neither a value nor an error, each has its own words.
+// argument that is neither a value nor an error, each has its own words. A format-spec fails the
+// constant evaluation in format_without_spec::parse: GCC and MSVC name it in their call stacks,
+// while Clang calls it `parse` but shows the failing line, which holds the message. MSVC shows no
+// source lines, so it never prints the message.
 //
 // DEFINE: %{compile} = %host_cxx_syntax %s
 // RUN: %{compile} -DCASE=0
@@ -19,7 +22,7 @@
 // RETURN: {{no viable conversion|could not convert|cannot convert}}
 // DELETED: {{deleted function}}
 // TRANSFORM: cannot return a reference from an rvalue result
-// FORMAT: result, success and failure take no format-spec
+// FORMAT: {{format_without_spec::parse|result, success and failure take no format-spec}}
 
 #include "forge/core/result.hpp"
 
