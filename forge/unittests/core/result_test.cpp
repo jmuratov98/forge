@@ -102,6 +102,7 @@ static_assert(*size_zero() == 0);
 static_assert(*double_one() == 1.0);
 static_assert(both().has_value());
 static_assert(result<int, double>(3.5).value() == 3);
+static_assert(result<int, std::errc>(std::size_t{3}).value() == 3);
 
 static_assert(!std::is_convertible_v<const char*, result<bool, std::string_view>>);
 static_assert(std::is_convertible_v<failure<std::string_view>, result<bool, std::string_view>>);

@@ -18,7 +18,8 @@
 
 // result(U&&) and assignment initialize the value with the argument as written, so a conversion
 // that -Wconversion would flag is the caller's choice (`return 0;` for a std::size_t value is
-// well-formed by [result.reqs]); the warning would otherwise point into this header.
+// well-formed by [result.reqs]); the warning would otherwise point into this header. MSVC splits
+// what -Wconversion covers into C4244 (arithmetic) and C4267 (from std::size_t).
 FORGE_WARNINGS_PUSH
 FORGE_WARNING_IGNORE_CLANG("-Wconversion")
 FORGE_WARNING_IGNORE_CLANG("-Wsign-conversion")
@@ -26,6 +27,8 @@ FORGE_WARNING_IGNORE_CLANG("-Wfloat-conversion")
 FORGE_WARNING_IGNORE_GCC("-Wconversion")
 FORGE_WARNING_IGNORE_GCC("-Wsign-conversion")
 FORGE_WARNING_IGNORE_GCC("-Wfloat-conversion")
+FORGE_WARNING_IGNORE_MSVC(4244)
+FORGE_WARNING_IGNORE_MSVC(4267)
 
 namespace forge {
 
