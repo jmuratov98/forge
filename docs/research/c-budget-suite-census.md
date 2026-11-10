@@ -1,0 +1,403 @@
+# C budget-suite census
+
+Research for GitHub issue #10, "Milestone-1 C slice definition". Throwaway branch `research/c-budget-suite-census`; never merged, no PR. This file is generated: `c-budget-suite-census/scripts/report.py` fills the tables in `c-budget-suite-census/scripts/main.md`, so edit the template, not this file.
+
+**Question.** Milestone 1 compiles C for aarch64-unknown-linux-gnu (Ubuntu 26.04: GCC 15.2, glibc 2.43, binutils 2.46) at `-O0`. What do the C programs in llvm-test-suite's CTMark and Benchmarks trees need from a C compiler? Which ISO C revision, which GNU extensions, and do they use `long double`, `__int128`, `_Complex`, VLAs, atomics or threads? Do they compile under GCC 15's default `gnu23`? Parts B and C take lighter passes over GCC's C torture tests and glibc's C-mode header steering. This note records facts only. It makes no decisions and recommends nothing.
+
+**Method in one paragraph.** All inputs are primary: llvm-test-suite's own CMake files and sources, and Ubuntu 26.04's own glibc headers (section 0). Nothing from a download was built or executed. CMake files were read as text by `enumerate.py`, which evaluates a fixed configuration: ARCH=AArch64, TARGET_OS=Linux, little-endian, default problem size, `TEST_SUITE_BENCHMARKING_ONLY` off. Features were found three ways:
+
+1. `scan.py` greps every file a program reaches through quoted `#include`s. Comments are stripped and string contents blanked. It sees every `#if` branch.
+2. `pp.py` greps the `gcc-16 -E` output, keeping only lines from the program's own files. It sees only the branches GCC's identity selects, but it also sees system-header macros that expand in program code.
+3. `diag.py` runs `-fsyntax-only` with Apple clang 17 retargeted to `aarch64-unknown-linux-gnu`, and with Homebrew GCC 16 on Darwin. Both use `-nostdinc` against Ubuntu's glibc 2.43 and kernel headers. Only diagnostics located in files under the test-suite tree are kept.
+
+Every number below comes from that data.
+
+## 0. Sources and versions
+
+| Input | Version | Where | Integrity |
+|---|---|---|---|
+| llvm-test-suite | `main` at **`2ecf20c22c4c25051026fa450e0b0beb7d922209`** (2026-11-08, "[CTMark] Add beman.execution as a modern C++ benchmark (#512)") | `https://github.com/llvm/llvm-test-suite`, `git clone --depth 1 --filter=blob:none --sparse` | git object hashes |
+| libc6-dev (arm64) | **2.43-2ubuntu2.4** (resolute-updates and resolute-security) | `http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6-dev_2.43-2ubuntu2.4_arm64.deb`, 1843700 bytes | SHA256 `f6f7705d3e6bb982c173a42cc5b2516eddebe2d846c4861ee7d7c9d66ebee916`; matches the `Packages.gz` entry |
+| linux-libc-dev (arm64) | 7.0.0-43.43 (resolute-updates and resolute-security) | `.../pool/main/l/linux/linux-libc-dev_7.0.0-43.43_arm64.deb`, 1859028 bytes | SHA256 `3d6313ac30170df8614618fd1aeb864606c378d90aa18e5d2012aad46861d753`; matches the index |
+
+- **Sparse checkout.** The requested paths were `CTMark/`, `SingleSource/Benchmarks/`, `MultiSource/Benchmarks/`, `cmake/` and the top-level `CMakeLists.txt`. Four of CTMark's six C programs are symlinks into `MultiSource/Applications/` (section 1.2), so those four directories were added: `ClamAV/`, `SPASS/`, `sqlite3/` and `JM/lencod/`. Four intermediate `CMakeLists.txt` files were added so the inherited scope is visible: `SingleSource/`, `MultiSource/`, `MultiSource/Applications/` and `MultiSource/Applications/JM/`. Nothing else outside the request was checked out.
+- **Ubuntu indexes.** The indexes are `dists/{resolute,resolute-updates,resolute-security}/main/binary-arm64/Packages.gz`. Each SHA256 matches its `Release` file. resolute-updates `Release` is dated 10 Nov 2026 11:02:35 UTC (`Packages.gz` `b7740a25…accb`), resolute-security 10 Nov 2026 10:29:21 UTC (`7cc3d5d0…ee11`), resolute 23 Apr 2026 (`1095e9e8…e297`). The release pocket has libc6-dev 2.43-2ubuntu2. The earlier note `docs/research/host-header-extensions.md` (branch `research/host-header-extensions`, section 0) found its `/usr/include` byte-identical to 2.43-2ubuntu2.4.
+- **Tools.** Apple clang 17.0.0 (clang-1700.0.13.5), run with `--target=aarch64-unknown-linux-gnu -nostdinc` plus its own resource headers. Homebrew GCC 16.1.0 (`aarch64-apple-darwin24`), run with `-nostdinc` plus its own `include/` directory. GCC was given the Linux identity: `-U__APPLE__ -U__MACH__ -U__APPLE_CC__ -D__linux__ -D__gnu_linux__ -D__unix__ -D__ELF__ -funsigned-char`. Both force-include glibc's `stdc-predef.h`, as GCC does on glibc systems. Python 3.15.1 ran the scripts, always with `python3 -I`.
+- **Scripts.** All are in `c-budget-suite-census/scripts/`; each docstring gives its arguments. The pipeline is: `enumerate.py`, then `scan.py`, then `pp.py`, then `diag.py` once per configuration in section 4, then `longdouble.py`, then `report.py`. Part B uses `torture.py`; Part C uses `glibc_c.py`.
+
+## 1. The programs
+
+### 1.1 Counts
+
+| Measure | Value |
+|---|---|
+| Test programs the fixed configuration defines under the scanned trees | 320 |
+| C programs (every source `.c`) | **252** |
+| C++ programs | 66 |
+| Mixed C and C++ (not counted as C) | 2: CLAMR, 7zip-benchmark |
+| Distinct program files reached (`.c` sources, `#include`d `.c`, local headers) | 2212 |
+| Lines in those distinct `.c` files | **692,051** |
+| Lines in those distinct local headers | 119,478 |
+| Total lines of C (distinct `.c` + `.h`) | **811,529** |
+
+| Suite directory | C programs |
+|---|---|
+| `MA/ClamAV` | 1 |
+| `MA/JM` | 1 |
+| `MA/SPASS` | 1 |
+| `MA/sqlite3` | 1 |
+| `MS/ASCI_Purple` | 1 |
+| `MS/ASC_Sequoia` | 3 |
+| `MS/BitBench` | 4 |
+| `MS/DOE-ProxyApps-C` | 7 |
+| `MS/Fhourstones` | 1 |
+| `MS/Fhourstones-3.1` | 1 |
+| `MS/FreeBench` | 7 |
+| `MS/MallocBench` | 3 |
+| `MS/McCat` | 10 |
+| `MS/MiBench` | 17 |
+| `MS/NPB-serial` | 1 |
+| `MS/Olden` | 10 |
+| `MS/Prolangs-C` | 16 |
+| `MS/Ptrdist` | 5 |
+| `MS/Rodinia` | 4 |
+| `MS/SciMark2-C` | 1 |
+| `MS/TSVC` | 36 |
+| `MS/Trimaran` | 6 |
+| `MS/VersaBench` | 5 |
+| `MS/llubenchmark` | 1 |
+| `MS/mafft` | 1 |
+| `MS/mediabench` | 6 |
+| `MS/nbench` | 1 |
+| `MS/sim` | 1 |
+| `SS/BenchmarkGame` | 8 |
+| `SS/CoyoteBench` | 3 |
+| `SS/Dhrystone` | 2 |
+| `SS/Linpack` | 1 |
+| `SS/McGill` | 4 |
+| `SS/Misc` | 27 |
+| `SS/Polybench` | 30 |
+| `SS/Shootout` | 14 |
+| `SS/Stanford` | 11 |
+
+"Program" means one test executable. A `llvm_multisource()` call is one program. A `llvm_singlesource()` directory gives one program per source file (`cmake/modules/SingleMultiSource.cmake`, `llvm_singlesource` and `llvm_multisource`). The counts are for the configuration in the method paragraph. Programs that CMake adds only on other targets are not included, for example `aarch64-init-cpu-features.c` in `SingleSource/Benchmarks/Misc`, which is added only when `__init_cpu_features` links (`HAS_AARCH64_FMV`). Five `check_*` results had to be assumed for Ubuntu 26.04 arm64 with GCC; they are listed in `enumerate.py`'s `TRUTH` table. The two that change membership are:
+- `HAVE_SGTTY_INCLUDE` is true, because libc6-dev 2.43 ships `/usr/include/sgtty.h`. This adds office-ispell.
+- `HAVE_RE_COMP` is true, because glibc's libc exports `re_comp`. This adds plot2fig and archie. That one was not verified against a libc6 binary (section 9).
+
+Line counts are physical lines (`\n` count). The totals count each distinct file once, because Polybench's 30 programs, for example, share `utilities/polybench.h`. Per-program counts in section 3 include every file that program reaches.
+
+### 1.2 CTMark
+
+`CTMark/CMakeLists.txt` adds eleven subdirectories. Each `CTMark/<name>` entry is a git symlink (mode `120000`) into the MultiSource tree. CTMark therefore builds the very same `CMakeLists.txt`, sources and flags as the MultiSource entry; it is a subset, not a copy. Six of the eleven are C:
+
+| CTMark entry | Symlink target | Test target | `.c` files | Lines (.c + local .h) | std the suite passes |
+|---|---|---|---|---|---|
+| `CTMark/consumer-typeset` | `../MultiSource/Benchmarks/MiBench/consumer-typeset` | `consumer-typeset` | 51 | 42,454 | c99 (CFLAGS) |
+| `CTMark/mafft` | `../MultiSource/Benchmarks/mafft` | `pairlocalalign` | 29 | 38,498 | gnu17 (C_STANDARD 17) |
+| `CTMark/ClamAV` | `../MultiSource/Applications/ClamAV` | `clamscan` | 99 | 81,762 | gnu17 (C_STANDARD 17) |
+| `CTMark/SPASS` | `../MultiSource/Applications/SPASS` | `SPASS` | 51 | 82,077 | gnu17 (C_STANDARD 17) |
+| `CTMark/sqlite3` | `../MultiSource/Applications/sqlite3` | `sqlite3` | 2 | 89,311 | gnu17 (C_STANDARD 17) |
+| `CTMark/lencod` | `../MultiSource/Applications/JM/lencod` | `lencod` | 55 | 63,262 | gnu17 (C_STANDARD 17) |
+
+The other five are C++ (Bullet, tramp3d-v4, kimwitu++ and beman-execution) or mixed C and C++ (7zip). `CTMark/README.md` says the subset is meant for compile-time measurement (`-DTEST_SUITE_SUBDIRS=.../CTMark -DTEST_SUITE_RUN_BENCHMARKS=0`). The top-level `CMakeLists.txt` drops `CTMark` from the default subdirectory list, so a default configure builds these programs only through MultiSource.
+
+## 2. What the suite does globally for C
+
+From the top-level `CMakeLists.txt` and `cmake/modules/`:
+
+- **No default `-std=`.** `project(test-suite C CXX)` sets no `CMAKE_C_STANDARD`, so each program gets the compiler's default dialect. That is gnu23 for GCC 15 (`gcc-16 -dM -E` here reports `__STDC_VERSION__ 202311L`) and gnu17 for clang. A program opts out with `set_property(TARGET … PROPERTY C_STANDARD N)`. With CMake's default `C_EXTENSIONS` (ON), that becomes `-std=gnuN`. 73 of the 252 C programs set it, and two more put `-std=c99` in their `CFLAGS` (section 3.1).
+- **`add_definitions(-DNDEBUG)`** (top-level `CMakeLists.txt`). "The test-suite is designed to be built in release mode anyway and falls over unless -DNDEBUG is set". `CMAKE_BUILD_TYPE` defaults to `Release`. Every compile here passes `-DNDEBUG`.
+- **`add_definitions(-w)`** while `TEST_SUITE_SUPPRESS_WARNINGS` is ON, which is the default. It suppresses warnings only. GCC 14+ turns `-Wimplicit-function-declaration`, `-Wimplicit-int`, `-Wint-conversion`, `-Wincompatible-pointer-types` and `-Wreturn-mismatch` into errors, and `-w` does not silence them: a probe with gcc-16 `-w` still reports them as `error:`. The suite works around this program by program: `-Wno-implicit-int` (50 programs), `-Wno-error=incompatible-pointer-types` (69), `-Wno-int-conversion` (6), `-Wno-implicit-function-declaration` (9).
+- **`add_definitions(-Werror=date-time)`** for reproducible builds.
+- **Flags are applied to every source.** `llvm_test_executable_no_test` (`cmake/modules/TestSuite.cmake`) appends `CFLAGS`, `CPPFLAGS`, `CXXFLAGS` and `FFLAGS` to the target's `COMPILE_FLAGS` property, so `CXXFLAGS` also reach C files. `LDFLAGS` go to `LINK_LIBRARIES`.
+- **Verification.** `llvm_test_traditional` (`cmake/modules/SingleMultiSource.cmake`) runs the program in its source directory and, when `HASH_PROGRAM_OUTPUT` is set, hashes the output. Unless `NO_REFERENCE_OUTPUT` is set, it diffs the output against `<name>.reference_output`, with optional `.little-endian`, `.small`/`.large` or `.<TARGET_OS>` variants. The diff tool is `fpcmp`, with `-r FP_TOLERANCE` (relative), `-a FP_ABSTOLERANCE` (absolute) and `-i` on Windows.
+- **Other globals.** PowerPC adds `-ffp-contract=off`. AIX adds `-D_XOPEN_SOURCE=700`; z/OS adds `-D_ALL_SOURCE`. `TEST_SUITE_DISABLE_PIE` adds `-Wl,-no_pie` only on non-AArch64 Apple, and its "TODO" says nothing is done on Linux. None of these apply to aarch64 Linux.
+- **No GCC-version-specific flags.** Nothing in `cmake/` or the top-level file tests the C compiler's version or adds flags for newer GCC or clang. The only compiler-ID test for C is clang-cl (`/FIstdio.h`). The GCC 14 and GCC 15 adaptations are all per program: the `-Wno-*` flags above and the `C_STANDARD` pins.
+
+## 3. Per-program flags
+
+### 3.1 Flag frequencies
+
+`-D`/`-U`/`-I` flags are per program and listed in 3.3. This table counts the other flags across the 252 C programs. "std" rows give the dialect the suite asks for.
+
+| Flag | Programs | Which (up to 12) |
+|---|---|---|
+| `link -lm` | 200 |  |
+| `std not pinned (compiler default)` | 177 | fasta, fannkuch, n-body, nsieve-bits, partialsums, puzzle, recursive, spectral-norm, almabench, huffbench, lpbench, linpack-pc … |
+| `-Wno-error=incompatible-pointer-types` | 69 | correlation, covariance, gemm, gemver, gesummv, symm, syr2k, syrk, trmm, 2mm, 3mm, atax … |
+| `-Wno-implicit-int` | 50 | dry, fldry, ReedSolomon, evalloop, fbench, ffbench, flops-1, flops-2, flops-3, flops-4, flops-5, flops-6 … |
+| `std gnu99 via C_STANDARD` | 38 | ControlFlow-dbl, ControlFlow-flt, ControlLoops-dbl, ControlLoops-flt, CrossingThresholds-dbl, CrossingThresholds-flt, Equivalencing-dbl, Equivalencing-flt, Expansion-dbl, Expansion-flt, GlobalDataFlow-dbl, GlobalDataFlow-flt … |
+| `std gnu17 via C_STANDARD` | 33 | dry, fldry, flops, Shootout-methcall, Shootout-objinst, smg2000, five11, fhourstones, gs, cfrac, imp, trie … |
+| `-ffp-contract=off` | 15 | linpack-pc, correlation, covariance, gemver, gesummv, symm, trmm, 2mm, 3mm, atax, bicg, gramschmidt … |
+| `-Wno-implicit-function-declaration` | 9 | gs, mybison, plot2fig, archie, anagram, yacr2, nbench, network-patricia, office-ispell |
+| `-fcommon` | 8 | IRSmk, bh, timberwolfmc, compiler, loader, simulator, miniAMR, lencod |
+| `-Wno-int-conversion` | 6 | mybison, assembler, football, unix-smail, beamformer, Recurrences-flt |
+| `std c99 via -std= in CFLAGS` | 2 | CoMD, consumer-typeset |
+| `std gnu89 via C_STANDARD` | 2 | espresso, cdecl |
+| `-Wno-incompatible-function-pointer-types` | 1 | unix-tbl |
+| `-fno-strict-aliasing` | 1 | SPASS |
+
+### 3.2 Reference outputs and tolerances
+
+Every one of the 252 C programs has a reference output, and none sets `NO_REFERENCE_OUTPUT`. 52 also set `HASH_PROGRAM_OUTPUT`. fpcmp tolerances appear in 3.3's last column: `r` is `FP_TOLERANCE`, `a` is `FP_ABSTOLERANCE`, "exact" means neither is set. The 30 Polybench programs pass `-DFP_ABSTOLERANCE=1e-5` with `add_definitions`. That is a macro for the program's own comparison code (for example `adi.c:202` `double AbsTolerance = FP_ABSTOLERANCE;`), not an fpcmp option; they are verified by hash.
+
+### 3.3 Table
+
+Directories are abbreviated: `SS` = `SingleSource/Benchmarks`, `MS` = `MultiSource/Benchmarks`, `MA` = `MultiSource/Applications`. CTMark's six are in bold. `-DNDEBUG` (global) is omitted. "Lines" is `.c` plus local headers reached by that program.
+
+| # | Program | Directory | `.c` | Lines | std | `-D`/`-U`/`-I` | `-W`/`-f`/other | Link | Reference output; fpcmp |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | **clamscan** (CTMark ClamAV) | `MA/ClamAV` | 99 | 81,762 | gnu17 (C_STANDARD 17) | `-DHAVE_CONFIG_H` `-DDONT_LOCK_DBDIRS` `-DC_LINUX` `-DFPU_WORDS_BIGENDIAN=0` `-DWORDS_BIGENDIAN=0` + 2 `-I` | `-Wno-error=incompatible-pointer-types` `target_link_libraries(${Intl_LIBRARIES}) after find_package(Intl): empty on glibc, whose libc holds libintl` | — | yes; exact |
+| 2 | **lencod** (CTMark lencod) | `MA/JM/lencod` | 55 | 63,262 | gnu17 (C_STANDARD 17) | `-D__USE_LARGEFILE64` `-D_FILE_OFFSET_BITS=64` | `-fcommon` | -lm | yes; r 0.025 |
+| 3 | **SPASS** (CTMark SPASS) | `MA/SPASS` | 51 | 82,077 | gnu17 (C_STANDARD 17) | `-DCLOCK_NO_TIMING` | `-fno-strict-aliasing` | -lm | yes; hash |
+| 4 | **sqlite3** (CTMark sqlite3) | `MA/sqlite3` | 2 | 89,311 | gnu17 (C_STANDARD 17) | `-DSTDC_HEADERS=1` `-DHAVE_SYS_TYPES_H=1` `-DHAVE_SYS_STAT_H=1` `-DHAVE_STDLIB_H=1` `-DHAVE_STRING_H=1` `-DHAVE_MEMORY_H=1` `-DHAVE_STRINGS_H=1` `-DHAVE_INTTYPES_H=1` `-DHAVE_STDINT_H=1` `-DHAVE_UNISTD_H=1` `-DSQLITE_OMIT_LOAD_EXTENSION=1` `-DSQLITE_THREADSAFE=0` + 1 `-I` | — | — | yes; r 1.0e-9 |
+| 5 | smg2000 | `MS/ASCI_Purple/SMG2000` | 53 | 27,907 | gnu17 (C_STANDARD 17) | `-D_POSIX_SOURCE` `-DHYPRE_TIMING` `-DHYPRE_SEQUENTIAL` + 1 `-I` | — | -lm | yes; exact |
+| 6 | AMGmk | `MS/ASC_Sequoia/AMGmk` | 8 | 3,127 | — | — | — | -lm | yes; exact |
+| 7 | CrystalMk | `MS/ASC_Sequoia/CrystalMk` | 6 | 416 | — | — | — | -lm | yes; exact |
+| 8 | IRSmk | `MS/ASC_Sequoia/IRSmk` | 3 | 454 | — | — | `-fcommon` | -lm | yes; exact |
+| 9 | drop3 | `MS/BitBench/drop3` | 1 | 104 | — | — | — | — | yes; exact |
+| 10 | five11 | `MS/BitBench/five11` | 1 | 195 | gnu17 (C_STANDARD 17) | — | — | — | yes; exact |
+| 11 | uudecode | `MS/BitBench/uudecode` | 1 | 177 | — | — | `-Wno-implicit-int` | — | yes; exact |
+| 12 | uuencode | `MS/BitBench/uuencode` | 1 | 201 | — | — | `-Wno-implicit-int` | — | yes; exact |
+| 13 | CoMD | `MS/DOE-ProxyApps-C/CoMD` | 14 | 5,666 | c99 (CFLAGS) | `-DDOUBLE` | — | -lm | yes; exact |
+| 14 | PathFinder | `MS/DOE-ProxyApps-C/Pathfinder` | 15 | 5,634 | gnu17 (C_STANDARD 17) | — | — | -lm | yes; exact |
+| 15 | rsbench | `MS/DOE-ProxyApps-C/RSBench` | 7 | 1,169 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; exact |
+| 16 | SimpleMOC | `MS/DOE-ProxyApps-C/SimpleMOC` | 11 | 3,952 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; exact |
+| 17 | XSBench | `MS/DOE-ProxyApps-C/XSBench` | 6 | 1,339 | — | `-DVERIFICATION` | — | -lm | yes; exact |
+| 18 | miniAMR | `MS/DOE-ProxyApps-C/miniAMR` | 14 | 4,070 | — | — + 1 `-I` | `-fcommon` | -lm | yes; exact |
+| 19 | miniGMG | `MS/DOE-ProxyApps-C/miniGMG` | 6 | 3,797 | — | `-D__PRINT_NORM` | — | -lm | yes; a 0.00000001 |
+| 20 | fhourstones | `MS/Fhourstones` | 4 | 514 | gnu17 (C_STANDARD 17) | `-DUNIX` `-DTRANSIZE=1050011` `-DPROBES=8` `-DREPORTPLY=8` | — | — | yes; exact |
+| 21 | fhourstones3.1 | `MS/Fhourstones-3.1` | 1 | 451 | — | — | — | — | yes; exact |
+| 22 | analyzer | `MS/FreeBench/analyzer` | 5 | 922 | — | `-DVERSION="1.00"` `-DCOMPDATE="today"` `-DCFLAGS=""` `-DHOSTNAME="thishost"` | — | — | yes; exact |
+| 23 | distray | `MS/FreeBench/distray` | 1 | 447 | — | `-DVERSION="1.00"` `-DCOMPDATE="today"` `-DCFLAGS=""` `-DHOSTNAME="thishost"` | — | -lm | yes; hash |
+| 24 | fourinarow | `MS/FreeBench/fourinarow` | 1 | 702 | — | `-DVERSION="1.00"` `-DCOMPDATE="today"` `-DCFLAGS=""` `-DHOSTNAME="thishost"` | — | — | yes; exact |
+| 25 | mason | `MS/FreeBench/mason` | 1 | 385 | — | `-DVERSION="1.00"` `-DCOMPDATE="today"` `-DCFLAGS=""` `-DHOSTNAME="thishost"` | — | — | yes; exact |
+| 26 | neural | `MS/FreeBench/neural` | 1 | 785 | — | `-DVERSION="1.00"` `-DCOMPDATE="today"` `-DCFLAGS=""` `-DHOSTNAME="thishost"` | — | -lm | yes; exact |
+| 27 | pcompress2 | `MS/FreeBench/pcompress2` | 5 | 903 | — | `-DVERSION="1.00"` `-DCOMPDATE="today"` `-DCFLAGS=""` `-DHOSTNAME="thishost"` | — | — | yes; exact |
+| 28 | pifft | `MS/FreeBench/pifft` | 2 | 4,185 | — | `-DVERSION="1.00"` `-DCOMPDATE="today"` `-DCFLAGS=""` `-DHOSTNAME="thishost"` | — | -lm | yes; exact |
+| 29 | cfrac | `MS/MallocBench/cfrac` | 28 | 4,074 | gnu17 (C_STANDARD 17) | `-DNOMEMOPT` | — | -lm | yes; exact |
+| 30 | espresso | `MS/MallocBench/espresso` | 41 | 14,936 | gnu89 (C_STANDARD 90) | `-DNOMEMOPT` | — | — | yes; exact |
+| 31 | gs | `MS/MallocBench/gs` | 64 | 22,989 | gnu17 (C_STANDARD 17) | `-DNOMEMOPT` `-DGS_LIB_DEFAULT=".:./fonts"` `-DNOPRIVATE` | `-Wno-implicit-function-declaration` `-Wno-implicit-int` | -lm | yes; exact |
+| 32 | qbsort | `MS/McCat/01-qbsort` | 3 | 374 | — | — | — | -lm | yes; hash |
+| 33 | testtrie | `MS/McCat/03-testtrie` | 3 | 339 | — | — | — | -lm | yes; exact |
+| 34 | bisect | `MS/McCat/04-bisect` | 3 | 463 | — | — | — | -lm | yes; r 0.001 |
+| 35 | eks | `MS/McCat/05-eks` | 7 | 1,178 | — | — | — | -lm | yes; exact |
+| 36 | main | `MS/McCat/08-main` | 4 | 1,210 | — | — | — | -lm | yes; hash |
+| 37 | vor | `MS/McCat/09-vor` | 6 | 1,401 | — | — | — | -lm | yes; exact |
+| 38 | iotest | `MS/McCat/12-IOtest` | 4 | 418 | — | — | — | — | yes; exact |
+| 39 | trie | `MS/McCat/15-trie` | 1 | 356 | gnu17 (C_STANDARD 17) | — | — | -lm | yes; exact |
+| 40 | bintr | `MS/McCat/17-bintr` | 2 | 456 | — | — | — | -lm | yes; exact |
+| 41 | imp | `MS/McCat/18-imp` | 4 | 2,658 | gnu17 (C_STANDARD 17) | — | `-Wno-implicit-int` | -lm | yes; exact |
+| 42 | automotive-basicmath | `MS/MiBench/automotive-basicmath` | 4 | 496 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash |
+| 43 | automotive-bitcount | `MS/MiBench/automotive-bitcount` | 9 | 944 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 44 | automotive-susan | `MS/MiBench/automotive-susan` | 1 | 2,125 | — | — | `-Wno-implicit-int` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash |
+| 45 | consumer-jpeg | `MS/MiBench/consumer-jpeg` | 54 | 26,098 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 46 | consumer-lame | `MS/MiBench/consumer-lame` | 33 | 21,752 | — | `-DHAVEMPGLIB` `-DLAMEPARSE` `-D__NO_MATH_INLINES` `-DLAMESNDFILE` | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 47 | **consumer-typeset** (CTMark consumer-typeset) | `MS/MiBench/consumer-typeset` | 51 | 42,454 | c99 (CFLAGS) | `-DOS_UNIX=1` `-DOS_DOS=0` `-DOS_MAC=0` `-DDB_FIX=0` `-DUSE_STAT=1` `-DSAFE_DFT=0` `-DCOLLATE=1` `-DLIB_DIR="lout.lib"` `-DFONT_DIR="font"` `-DMAPS_DIR="maps"` `-DINCL_DIR="include"` `-DDATA_DIR="data"` `-DHYPH_DIR="hyph"` `-DLOCALE_DIR="locale"` `-DCHAR_IN=1` `-DCHAR_OUT=0` `-DLOCALE_ON=1` `-DASSERT_ON=1` `-DDEBUG_ON=0` `-DPDF_COMPRESSION=0` `-D_FORTIFY_SOURCE=0` | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 48 | network-dijkstra | `MS/MiBench/network-dijkstra` | 1 | 175 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 49 | network-patricia | `MS/MiBench/network-patricia` | 2 | 600 | — | — | `-Wno-implicit-function-declaration` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash |
+| 50 | office-ispell | `MS/MiBench/office-ispell` | 12 | 10,532 | gnu17 (C_STANDARD 17) | `-Dconst=` | `-Wno-implicit-function-declaration` `-Wno-implicit-int` `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 51 | office-stringsearch | `MS/MiBench/office-stringsearch` | 4 | 3,037 | — | — | `-Wno-implicit-int` `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 52 | security-blowfish | `MS/MiBench/security-blowfish` | 7 | 1,915 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 53 | security-rijndael | `MS/MiBench/security-rijndael` | 2 | 1,779 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash |
+| 54 | security-sha | `MS/MiBench/security-sha` | 2 | 276 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 55 | telecomm-CRC32 | `MS/MiBench/telecomm-CRC32` | 1 | 286 | — | — | `-Wno-implicit-int` `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 56 | telecomm-fft | `MS/MiBench/telecomm-FFT` | 3 | 623 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; a 0.00001, hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 57 | telecomm-adpcm | `MS/MiBench/telecomm-adpcm` | 2 | 302 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash |
+| 58 | telecomm-gsm | `MS/MiBench/telecomm-gsm` | 23 | 6,040 | — | `-DSTUPID_COMPILER` `-DNeedFunctionPrototypes=1` `-DSASR` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash |
+| 59 | is | `MS/NPB-serial/is` | 1 | 779 | — | — | — | — | yes; exact |
+| 60 | bh | `MS/Olden/bh` | 4 | 2,077 | gnu17 (C_STANDARD 17) | `-DTORONTO` | `-Wno-implicit-int` `-fcommon` | -lm | yes; exact |
+| 61 | bisort | `MS/Olden/bisort` | 2 | 350 | gnu17 (C_STANDARD 17) | `-DTORONTO` | — | -lm | yes; exact |
+| 62 | em3d | `MS/Olden/em3d` | 5 | 688 | — | `-DTORONTO` | — | — | yes; exact |
+| 63 | health | `MS/Olden/health` | 4 | 504 | — | `-DTORONTO` | — | -lm | yes; r 0.001 |
+| 64 | mst | `MS/Olden/mst` | 4 | 428 | — | `-DTORONTO` | — | — | yes; exact |
+| 65 | perimeter | `MS/Olden/perimeter` | 3 | 484 | — | `-DTORONTO` | — | — | yes; exact |
+| 66 | power | `MS/Olden/power` | 3 | 622 | — | `-DTORONTO` | — | -lm | yes; r 0.00001 |
+| 67 | treeadd | `MS/Olden/treeadd` | 3 | 245 | — | `-DTORONTO` | — | — | yes; exact |
+| 68 | tsp | `MS/Olden/tsp` | 4 | 582 | — | `-DTORONTO` | — | -lm | yes; exact |
+| 69 | voronoi | `MS/Olden/voronoi` | 4 | 1,151 | gnu17 (C_STANDARD 17) | `-DTORONTO` | — | -lm | yes; hash |
+| 70 | timberwolfmc | `MS/Prolangs-C/TimberWolfMC` | 109 | 24,958 | gnu17 (C_STANDARD 17) | — | `-fcommon` `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 71 | agrep | `MS/Prolangs-C/agrep` | 13 | 3,977 | — | — | `-Wno-implicit-int` | — | yes; hash |
+| 72 | allroots | `MS/Prolangs-C/allroots` | 3 | 205 | — | — | — | -lm | yes; exact |
+| 73 | archie | `MS/Prolangs-C/archie-client` | 14 | 5,500 | — | — | `-Wno-implicit-function-declaration` | — | yes; exact |
+| 74 | assembler | `MS/Prolangs-C/assembler` | 12 | 3,171 | gnu17 (C_STANDARD 17) | — | `-Wno-int-conversion` | -lm | yes; exact |
+| 75 | mybison | `MS/Prolangs-C/bison` | 18 | 8,339 | gnu17 (C_STANDARD 17) | — | `-Wno-implicit-function-declaration` `-Wno-implicit-int` `-Wno-int-conversion` | — | yes; exact |
+| 76 | cdecl | `MS/Prolangs-C/cdecl` | 1 | 3,826 | gnu89 (C_STANDARD 90) | — | — | — | yes; exact |
+| 77 | compiler | `MS/Prolangs-C/compiler` | 7 | 2,369 | — | — | `-fcommon` | — | yes; exact |
+| 78 | fixoutput | `MS/Prolangs-C/fixoutput` | 2 | 460 | — | — | `-Wno-implicit-int` | — | yes; exact |
+| 79 | football | `MS/Prolangs-C/football` | 4 | 2,257 | — | — | `-Wno-int-conversion` | — | yes; exact |
+| 80 | gnugo | `MS/Prolangs-C/gnugo` | 26 | 2,941 | — | — | — | — | yes; hash |
+| 81 | loader | `MS/Prolangs-C/loader` | 8 | 1,452 | gnu17 (C_STANDARD 17) | — | `-fcommon` | -lm | yes; exact |
+| 82 | plot2fig | `MS/Prolangs-C/plot2fig` | 21 | 1,538 | — | — | `-Wno-implicit-function-declaration` | -lm | yes; exact |
+| 83 | simulator | `MS/Prolangs-C/simulator` | 13 | 4,477 | gnu17 (C_STANDARD 17) | — | `-fcommon` | -lm | yes; exact |
+| 84 | unix-smail | `MS/Prolangs-C/unix-smail` | 11 | 3,527 | gnu17 (C_STANDARD 17) | — | `-Wno-int-conversion` | — | yes; exact |
+| 85 | unix-tbl | `MS/Prolangs-C/unix-tbl` | 22 | 2,829 | — | — | `-Wno-implicit-int` `-Wno-incompatible-function-pointer-types` | — | yes; exact |
+| 86 | anagram | `MS/Ptrdist/anagram` | 1 | 657 | — | — | `-Wno-implicit-function-declaration` | — | yes; exact |
+| 87 | bc | `MS/Ptrdist/bc` | 9 | 7,289 | — | — | `-Wno-implicit-int` | — | yes; hash |
+| 88 | ft | `MS/Ptrdist/ft` | 5 | 1,666 | — | — | `-Wno-implicit-int` | — | yes; hash |
+| 89 | ks | `MS/Ptrdist/ks` | 2 | 783 | — | — | — | — | yes; exact |
+| 90 | yacr2 | `MS/Ptrdist/yacr2` | 7 | 3,987 | — | `-DTODD` | `-Wno-implicit-function-declaration` | — | yes; hash |
+| 91 | backprop | `MS/Rodinia/backprop` | 3 | 300 | — | — + 1 `-I` | — | -lm | yes; a 0.00001 |
+| 92 | hotspot | `MS/Rodinia/hotspot` | 3 | 280 | — | — + 1 `-I` | — | — | yes; a 0.00001 |
+| 93 | pathfinder | `MS/Rodinia/pathfinder` | 3 | 142 | — | — + 1 `-I` | — | — | yes; hash |
+| 94 | srad | `MS/Rodinia/srad` | 3 | 425 | — | `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` | -lm | yes; a 0.00001 |
+| 95 | scimark2 | `MS/SciMark2-C` | 10 | 1,220 | — | — | — | -lm | yes; exact |
+| 96 | ControlFlow-dbl | `MS/TSVC/ControlFlow-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 97 | ControlFlow-flt | `MS/TSVC/ControlFlow-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 98 | ControlLoops-dbl | `MS/TSVC/ControlLoops-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 99 | ControlLoops-flt | `MS/TSVC/ControlLoops-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 100 | CrossingThresholds-dbl | `MS/TSVC/CrossingThresholds-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 101 | CrossingThresholds-flt | `MS/TSVC/CrossingThresholds-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 102 | Equivalencing-dbl | `MS/TSVC/Equivalencing-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 103 | Equivalencing-flt | `MS/TSVC/Equivalencing-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 104 | Expansion-dbl | `MS/TSVC/Expansion-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 105 | Expansion-flt | `MS/TSVC/Expansion-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 106 | GlobalDataFlow-dbl | `MS/TSVC/GlobalDataFlow-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 107 | GlobalDataFlow-flt | `MS/TSVC/GlobalDataFlow-flt` | 2 | 5,861 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 108 | IndirectAddressing-dbl | `MS/TSVC/IndirectAddressing-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 109 | IndirectAddressing-flt | `MS/TSVC/IndirectAddressing-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 110 | InductionVariable-dbl | `MS/TSVC/InductionVariable-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 111 | InductionVariable-flt | `MS/TSVC/InductionVariable-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 112 | LinearDependence-dbl | `MS/TSVC/LinearDependence-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 113 | LinearDependence-flt | `MS/TSVC/LinearDependence-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 114 | LoopRerolling-dbl | `MS/TSVC/LoopRerolling-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 115 | LoopRerolling-flt | `MS/TSVC/LoopRerolling-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 116 | LoopRestructuring-dbl | `MS/TSVC/LoopRestructuring-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 117 | LoopRestructuring-flt | `MS/TSVC/LoopRestructuring-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 118 | NodeSplitting-dbl | `MS/TSVC/NodeSplitting-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 119 | NodeSplitting-flt | `MS/TSVC/NodeSplitting-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 120 | Packing-dbl | `MS/TSVC/Packing-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 121 | Packing-flt | `MS/TSVC/Packing-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 122 | Recurrences-dbl | `MS/TSVC/Recurrences-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 123 | Recurrences-flt | `MS/TSVC/Recurrences-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | `-Wno-int-conversion` | -lm | yes; a 0.0 |
+| 124 | Reductions-dbl | `MS/TSVC/Reductions-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 125 | Reductions-flt | `MS/TSVC/Reductions-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 126 | Searching-dbl | `MS/TSVC/Searching-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 127 | Searching-flt | `MS/TSVC/Searching-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 128 | StatementReordering-dbl | `MS/TSVC/StatementReordering-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 129 | StatementReordering-flt | `MS/TSVC/StatementReordering-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 130 | Symbolics-dbl | `MS/TSVC/Symbolics-dbl` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 131 | Symbolics-flt | `MS/TSVC/Symbolics-flt` | 2 | 5,860 | gnu99 (C_STANDARD 99) | — | — | -lm | yes; a 0.0 |
+| 132 | enc-3des | `MS/Trimaran/enc-3des` | 1 | 644 | — | — | — | — | yes; exact |
+| 133 | enc-md5 | `MS/Trimaran/enc-md5` | 1 | 317 | — | — | — | — | yes; exact |
+| 134 | enc-pc1 | `MS/Trimaran/enc-pc1` | 1 | 335 | — | — | `-Wno-implicit-int` | — | yes; exact |
+| 135 | enc-rc4 | `MS/Trimaran/enc-rc4` | 1 | 166 | — | — | — | — | yes; exact |
+| 136 | netbench-crc | `MS/Trimaran/netbench-crc` | 2 | 10,347 | gnu17 (C_STANDARD 17) | — | — | — | yes; exact |
+| 137 | netbench-url | `MS/Trimaran/netbench-url` | 4 | 10,950 | — | — | — | — | yes; exact |
+| 138 | 8b10b | `MS/VersaBench/8b10b` | 3 | 480 | — | — | — | — | yes; exact |
+| 139 | beamformer | `MS/VersaBench/beamformer` | 1 | 691 | — | — | `-Wno-int-conversion` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 140 | bmm | `MS/VersaBench/bmm` | 1 | 246 | — | — | — | — | yes; exact |
+| 141 | dbms | `MS/VersaBench/dbms` | 41 | 6,925 | — | — | — | -lm | yes; exact |
+| 142 | ecbdes | `MS/VersaBench/ecbdes` | 4 | 2,126 | gnu17 (C_STANDARD 17) | — | `-Wno-implicit-int` | — | yes; exact |
+| 143 | llu | `MS/llubenchmark` | 1 | 191 | — | — | — | — | yes; exact |
+| 144 | **pairlocalalign** (CTMark mafft) | `MS/mafft` | 29 | 38,498 | gnu17 (C_STANDARD 17) | `-DLLVM` | — | -lm | yes; hash |
+| 145 | rawcaudio | `MS/mediabench/adpcm/rawcaudio` | 2 | 302 | — | — | `-Wno-implicit-int` `-Wno-error=incompatible-pointer-types` | — | yes; exact |
+| 146 | rawdaudio | `MS/mediabench/adpcm/rawdaudio` | 2 | 302 | — | — | `-Wno-implicit-int` `-Wno-error=incompatible-pointer-types` | — | yes; hash |
+| 147 | encode | `MS/mediabench/g721/g721encode` | 6 | 1,595 | gnu17 (C_STANDARD 17) | — | `-Wno-implicit-int` `-Wno-error=incompatible-pointer-types` | — | yes; exact |
+| 148 | toast | `MS/mediabench/gsm/toast` | 23 | 6,039 | — | `-DNeedFunctionPrototypes=1` `-DSASR` | `-Wno-error=incompatible-pointer-types` | — | yes; exact |
+| 149 | cjpeg | `MS/mediabench/jpeg/jpeg-6a` | 54 | 26,865 | — | — | `-Wno-error=incompatible-pointer-types` | — | yes; exact |
+| 150 | mpeg2decode | `MS/mediabench/mpeg2/mpeg2dec` | 16 | 9,844 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 151 | nbench | `MS/nbench` | 5 | 9,645 | gnu17 (C_STANDARD 17) | `-DBASE_ITERATIONS=25` | `-Wno-implicit-function-declaration` | -lm | yes; exact |
+| 152 | sim | `MS/sim` | 1 | 1,592 | gnu17 (C_STANDARD 17) | `-DUNIX` | `-Wno-implicit-int` | — | yes; exact |
+| 153 | fannkuch | `SS/BenchmarkGame` | 1 | 104 | — | — | — | -lm | yes; exact |
+| 154 | n-body | `SS/BenchmarkGame` | 1 | 141 | — | — | — | -lm | yes; exact |
+| 155 | nsieve-bits | `SS/BenchmarkGame` | 1 | 35 | — | — | — | -lm | yes; exact |
+| 156 | partialsums | `SS/BenchmarkGame` | 1 | 67 | — | — | — | -lm | yes; exact |
+| 157 | puzzle | `SS/BenchmarkGame` | 1 | 84 | — | — | — | -lm | yes; exact |
+| 158 | recursive | `SS/BenchmarkGame` | 1 | 54 | — | — | — | -lm | yes; exact |
+| 159 | spectral-norm | `SS/BenchmarkGame` | 1 | 52 | — | — | — | -lm | yes; exact |
+| 160 | fasta | `SS/BenchmarkGame/Large` | 1 | 136 | — | — | — | -lm | yes; hash |
+| 161 | almabench | `SS/CoyoteBench` | 1 | 390 | — | — | — | -lm | yes; exact |
+| 162 | huffbench | `SS/CoyoteBench` | 1 | 491 | — | — | — | -lm | yes; exact |
+| 163 | lpbench | `SS/CoyoteBench` | 1 | 414 | — | — | — | -lm | yes; exact |
+| 164 | dry | `SS/Dhrystone` | 1 | 550 | gnu17 (C_STANDARD 17) | — | `-Wno-implicit-int` | -lm | yes; exact |
+| 165 | fldry | `SS/Dhrystone` | 1 | 560 | gnu17 (C_STANDARD 17) | — | `-Wno-implicit-int` | -lm | yes; exact |
+| 166 | linpack-pc | `SS/Linpack` | 1 | 1,226 | — | `-DFMA_DISABLED=1` | `-ffp-contract=off` | -lm | yes; r 0.0001 |
+| 167 | chomp | `SS/McGill` | 1 | 429 | — | — | — | -lm | yes; r 0.001 |
+| 168 | exptree | `SS/McGill` | 1 | 389 | — | — | — | -lm | yes; r 0.001 |
+| 169 | misr | `SS/McGill` | 1 | 291 | — | — | — | -lm | yes; r 0.001 |
+| 170 | queens | `SS/McGill` | 1 | 370 | — | — | — | -lm | yes; r 0.001 |
+| 171 | ReedSolomon | `SS/Misc` | 1 | 447 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 172 | dt | `SS/Misc` | 1 | 51 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 173 | evalloop | `SS/Misc` | 1 | 121 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 174 | fbench | `SS/Misc` | 1 | 829 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 175 | ffbench | `SS/Misc` | 1 | 361 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 176 | flops | `SS/Misc` | 1 | 1,180 | gnu17 (C_STANDARD 17) | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 177 | flops-1 | `SS/Misc` | 1 | 269 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 178 | flops-2 | `SS/Misc` | 1 | 275 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 179 | flops-3 | `SS/Misc` | 1 | 269 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 180 | flops-4 | `SS/Misc` | 1 | 271 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 181 | flops-5 | `SS/Misc` | 1 | 268 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 182 | flops-6 | `SS/Misc` | 1 | 271 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 183 | flops-7 | `SS/Misc` | 1 | 277 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 184 | flops-8 | `SS/Misc` | 1 | 273 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 185 | fp-convert | `SS/Misc` | 1 | 45 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 186 | himenobmtxpa | `SS/Misc` | 1 | 317 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 187 | lowercase | `SS/Misc` | 1 | 58 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 188 | mandel | `SS/Misc` | 1 | 48 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 189 | mandel-2 | `SS/Misc` | 1 | 28 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 190 | matmul_f64_4x4 | `SS/Misc` | 1 | 72 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 191 | oourafft | `SS/Misc` | 1 | 763 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 192 | perlin | `SS/Misc` | 1 | 80 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 193 | pi | `SS/Misc` | 1 | 64 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 194 | revertBits | `SS/Misc` | 1 | 67 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 195 | richards_benchmark | `SS/Misc` | 1 | 408 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 196 | salsa20 | `SS/Misc` | 1 | 75 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 197 | whetstone | `SS/Misc` | 1 | 439 | — | — | `-Wno-implicit-int` | -lm | yes; r 0.001 |
+| 198 | correlation | `SS/Polybench/datamining/correlation` | 1 | 1,244 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 199 | covariance | `SS/Polybench/datamining/covariance` | 1 | 1,188 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 200 | gemm | `SS/Polybench/linear-algebra/blas/gemm` | 1 | 1,204 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 201 | gemver | `SS/Polybench/linear-algebra/blas/gemver` | 1 | 1,242 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 202 | gesummv | `SS/Polybench/linear-algebra/blas/gesummv` | 1 | 1,176 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 203 | symm | `SS/Polybench/linear-algebra/blas/symm` | 1 | 1,206 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 204 | syr2k | `SS/Polybench/linear-algebra/blas/syr2k` | 1 | 1,198 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 205 | syrk | `SS/Polybench/linear-algebra/blas/syrk` | 1 | 1,179 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 206 | trmm | `SS/Polybench/linear-algebra/blas/trmm` | 1 | 1,179 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 207 | 2mm | `SS/Polybench/linear-algebra/kernels/2mm` | 1 | 1,230 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 208 | 3mm | `SS/Polybench/linear-algebra/kernels/3mm` | 1 | 1,243 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 209 | atax | `SS/Polybench/linear-algebra/kernels/atax` | 1 | 1,162 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 210 | bicg | `SS/Polybench/linear-algebra/kernels/bicg` | 1 | 1,190 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 211 | doitgen | `SS/Polybench/linear-algebra/kernels/doitgen` | 1 | 1,178 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 212 | mvt | `SS/Polybench/linear-algebra/kernels/mvt` | 1 | 1,189 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 213 | cholesky | `SS/Polybench/linear-algebra/solvers/cholesky` | 1 | 1,186 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 214 | durbin | `SS/Polybench/linear-algebra/solvers/durbin` | 1 | 1,175 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 215 | gramschmidt | `SS/Polybench/linear-algebra/solvers/gramschmidt` | 1 | 1,219 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 216 | lu | `SS/Polybench/linear-algebra/solvers/lu` | 1 | 1,162 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 217 | ludcmp | `SS/Polybench/linear-algebra/solvers/ludcmp` | 1 | 1,242 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 218 | trisolv | `SS/Polybench/linear-algebra/solvers/trisolv` | 1 | 1,148 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 219 | deriche | `SS/Polybench/medley/deriche` | 1 | 1,306 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 220 | floyd-warshall | `SS/Polybench/medley/floyd-warshall` | 1 | 1,132 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 221 | nussinov | `SS/Polybench/medley/nussinov` | 1 | 1,176 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 222 | adi | `SS/Polybench/stencils/adi` | 1 | 1,241 | — | `-DPOLYBENCH_DUMP_ARRAYS` `-DFMA_DISABLED=1` + 1 `-I` | `-ffp-contract=off` `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 223 | fdtd-2d | `SS/Polybench/stencils/fdtd-2d` | 1 | 1,219 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 224 | heat-3d | `SS/Polybench/stencils/heat-3d` | 1 | 1,182 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 225 | jacobi-1d | `SS/Polybench/stencils/jacobi-1d` | 1 | 1,144 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 226 | jacobi-2d | `SS/Polybench/stencils/jacobi-2d` | 1 | 1,153 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 227 | seidel-2d | `SS/Polybench/stencils/seidel-2d` | 1 | 1,139 | — | `-DPOLYBENCH_DUMP_ARRAYS` + 1 `-I` | `-Wno-error=incompatible-pointer-types` | -lm | yes; hash, in-program FP_ABSTOLERANCE=1e-5 |
+| 228 | Shootout-ackermann | `SS/Shootout` | 1 | 23 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 229 | Shootout-ary3 | `SS/Shootout` | 1 | 45 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 230 | Shootout-fib2 | `SS/Shootout` | 1 | 27 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 231 | Shootout-hash | `SS/Shootout` | 1 | 219 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 232 | Shootout-heapsort | `SS/Shootout` | 1 | 81 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 233 | Shootout-hello | `SS/Shootout` | 1 | 12 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 234 | Shootout-lists | `SS/Shootout` | 1 | 231 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 235 | Shootout-matrix | `SS/Shootout` | 1 | 71 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 236 | Shootout-methcall | `SS/Shootout` | 1 | 94 | gnu17 (C_STANDARD 17) | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 237 | Shootout-nestedloop | `SS/Shootout` | 1 | 31 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 238 | Shootout-objinst | `SS/Shootout` | 1 | 105 | gnu17 (C_STANDARD 17) | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 239 | Shootout-random | `SS/Shootout` | 1 | 36 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 240 | Shootout-sieve | `SS/Shootout` | 1 | 39 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 241 | Shootout-strcat | `SS/Shootout` | 1 | 36 | — | — | `-Wno-error=incompatible-pointer-types` | -lm | yes; exact |
+| 242 | Bubblesort | `SS/Stanford` | 1 | 171 | — | — | — | -lm | yes; r 0.001 |
+| 243 | FloatMM | `SS/Stanford` | 1 | 160 | — | — | — | -lm | yes; r 0.001 |
+| 244 | IntMM | `SS/Stanford` | 1 | 159 | — | — | — | -lm | yes; r 0.001 |
+| 245 | Oscar | `SS/Stanford` | 1 | 323 | — | — | — | -lm | yes; r 0.001 |
+| 246 | Perm | `SS/Stanford` | 1 | 169 | — | — | — | -lm | yes; r 0.001 |
+| 247 | Puzzle | `SS/Stanford` | 1 | 225 | — | — | — | -lm | yes; r 0.001 |
+| 248 | Queens | `SS/Stanford` | 1 | 188 | — | — | — | -lm | yes; r 0.001 |
+| 249 | Quicksort | `SS/Stanford` | 1 | 174 | — | — | — | -lm | yes; r 0.001 |
+| 250 | RealMM | `SS/Stanford` | 1 | 161 | — | — | — | -lm | yes; r 0.001 |
+| 251 | Towers | `SS/Stanford` | 1 | 218 | — | — | — | -lm | yes; r 0.001 |
+| 252 | Treesort | `SS/Stanford` | 1 | 187 | — | — | — | -lm | yes; r 0.001 |
+
+*(table PARTA_FEATURES not generated yet)*
