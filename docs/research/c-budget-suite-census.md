@@ -865,5 +865,124 @@ Programs that would fall out if milestone 1 dropped each item. "Falls out" means
 - **C99 rows.** All 46 programs that fail at `-std=gnu89` contain `for (int i = …)` declarations ("'for' loop initial declarations are only allowed in C99 or C11 mode", 1,718 errors), and two of them also use `restrict` as a keyword. GCC accepts the rest of the C99 list in 4.2 in `gnu89` as extensions: `//`, `long long`, mixed declarations, `inline`, VLAs, flexible arrays and `_Bool`.
 - **Inactive branches.** `long double` and pthreads appear only in inactive branches in four programs (4.1). sqlite3 is built with `-DSQLITE_THREADSAFE=0`. smg2000 uses `-DHYPRE_SEQUENTIAL`. ClamAV's and AMGmk's pthread code is not reached on this configuration. No C program's flags include `-pthread`.
 
-*(table PARTB not generated yet)*
+## 7. Part B: GCC C torture tests (grep-level)
+
+**Source.** `gcc/testsuite/gcc.c-torture/execute/` from GCC's `releases/gcc-15` branch, via the GitHub mirror `https://github.com/gcc-mirror/gcc`. The tip was **`7b7cd17e123e311a083df49f79822ffabee7205f`** (2026-11-10, "Daily bump."), fetched with `git clone --depth 1 --filter=blob:none --sparse`. The branch tip is later than the 15.2.0 release; the directory was not compared with the `releases/gcc-15.2.0` tag.
+
+**What a test is.** A `.c` file in `execute/` (1,682), a `builtins/*.c` file other than a `*-lib.c` helper (58), or an `ieee/*.c` file (69): **1,809 tests**. `torture.py` counts regex hits on comment-stripped text. Nested functions, VLAs and labels-as-values come from clang (`-std=gnu17`, aarch64-unknown-linux-gnu, glibc 2.43 headers), which reports them per file. **Everything here is grep-level**:
+- `#if`-guarded uses count. For example, most `__int128` tests test `__SIZEOF_INT128__` first.
+- The inline-asm count includes `asm("")` barriers and target-guarded blocks.
+- The grep computed-goto count includes `&&` false positives.
+
+| Tests using | Tests | Share |
+|---|---|---|
+| nested functions (clang: "function definition is not allowed here") | 30 | 1.7% |
+| `long double` | 56 | 3.1% |
+| `__int128`, `__int128_t`, `__uint128_t`, `mode(TI)` | 15 | 0.8% |
+| `_Complex`, `__complex__`, `__real__`/`__imag__`, `<complex.h>` | 24 | 1.3% |
+| of which complex integer types (`_Complex int`, `__complex__ char`, …) | 7 | 0.4% |
+| `vector_size` | 24 | 1.3% |
+| VLAs (clang `-Wvla`) | 23 | 1.3% |
+| computed goto / labels as values (clang `-Wgnu-label-as-value`) | 17 | 0.9% |
+| computed goto / labels as values (grep `goto *`, `&&label`; includes false positives) | 44 | 2.4% |
+| any `__builtin_*` | 573 | 31.7% |
+| inline asm (`asm`/`__asm__` followed by `(`) | 96 | 5.3% |
+| `_Atomic`, `<stdatomic.h>` | 0 | 0.0% |
+| `__atomic_*`/`__sync_*` calls | 1 | 0.1% |
+| `_BitInt` | 0 | 0.0% |
+| `_FloatN` | 0 | 0.0% |
+| setjmp/longjmp, including `__builtin_setjmp` | 21 | 1.2% |
+| statement expressions (grep `({`) | 10 | 0.6% |
+| `__attribute__` | 554 | 30.6% |
+| an options or target `dg-` directive (list below) | 322 | 17.8% |
+| a `.x` Tcl control file beside it | 52 | 2.9% |
+
+**Top 30 `__builtin_*` by number of tests:** `__builtin_abort` 409, `__builtin_memset` 39, `__builtin_memcpy` 33, `__builtin_alloca` 23, `__builtin_memcmp` 21, `__builtin_setjmp` 19, `__builtin_strcmp` 18, `__builtin_printf` 16, `__builtin_strlen` 16, `__builtin_strcpy` 10, `__builtin_mul_overflow` 9, `__builtin_malloc` 8, `__builtin_inf` 8, `__builtin_nan` 7, `__builtin_isunordered` 7, `__builtin_expect` 6, `__builtin_prefetch` 6, `__builtin_constant_p` 5, `__builtin_ffs` 5, `__builtin_offsetof` 5, `__builtin_add_overflow` 5, `__builtin_islessgreater` 5, `__builtin_return_address` 4, `__builtin_unreachable` 4, `__builtin_longjmp` 4, `__builtin_copysign` 4, `__builtin_isless` 4, `__builtin_islessequal` 4, `__builtin_isgreaterequal` 4, `__builtin_isgreater` 4.
+
+**`dg-` directive kinds (tests):** `dg-additional-options` 139, `dg-require-effective-target` 129, `dg-options` 43, `dg-skip-if` 37, `dg-add-options` 15, `dg-require-stack-size` 8, `dg-xfail-if` 6, `dg-xfail-run-if` 6, `dg-timeout-factor` 5, `dg-do` 5, `dg-require-alias` 3, `dg-prune-output` 3, `dg-require-weak` 1.
+
+**Options in `dg-options`/`dg-additional-options` (tests, top 20):** `-std=gnu89` 75, `-fpermissive` 32, `-std=gnu17` 13, `-fgnu89-inline` 12, `-fwrapv` 12, `-Wno-psabi` 5, `-fno-inline` 3, `-fmodulo-sched` 3, `-fno-common` 2, `-mno-mmx` 2, `-Wl,-u,_printf_float` 2, `-fno-vect-cost-model` 2, `-O2` 2, `-mtune=i686` 1, `-std=c99` 1, `-fno-trapping-math` 1, `-fnon-call-exceptions` 1, `-DSIGNAL_SUPPRESS` 1, `-mcheck-zero-division` 1, `-Wno-old-style-definition` 1.
+
+**Target and skip directives (tests, top 20):** `dg-require-effective-target int32plus` 56; `dg-require-effective-target label_values` 19; `dg-require-effective-target trampolines` 14; `dg-skip-if "requires io" { freestanding }` 13; `dg-require-effective-target indirect_jumps` 11; `dg-require-effective-target untyped_assembly` 7; `dg-require-effective-target return_address` 6; `dg-require-effective-target run_expensive_tests` 5; `dg-skip-if "memory full + time hog" { "avr-*-*" }` 5; `dg-xfail-run-if {unexpected PTX 'vprintf' return value} { nvptx-*-* }` 4; `dg-require-effective-target c99_runtime` 3; `dg-require-alias ""` 3; `dg-require-effective-target fileio` 3; `dg-skip-if "requires io" { avr-*-* }` 3; `dg-require-effective-target double64plus` 2; `dg-xfail-if "Can not call system libm.a with -msoft-float" { powerpc-*-aix* rs6000-*-aix* ` 2; `dg-skip-if "small alignment" { pdp11-*-* }` 2; `dg-require-effective-target mmap` 2; `dg-skip-if "the executable is at the same position the test tries to remap" { m68k-*-linux` 2; `dg-require-effective-target stdint_types` 2.
+
+**C23 adaptations visible in the directives.** GCC 15 made `gnu23` the default. Tests now carry `-std=gnu89` (75 tests), `-std=gnu17` (13) and `-fpermissive` (32), the GCC 14 permerror downgrade. `-fgnu89-inline` appears in 12. These are counts of directive occurrences in test files; the 52 `.x` files can add options too and were not read.
+
+## 8. Part C: glibc 2.43's C-mode steering (time-boxed)
+
+**Source.** libc6-dev 2.43-2ubuntu2.4 (arm64) and linux-libc-dev 7.0.0-43.43, from Ubuntu 26.04's archive (section 0). This is the 26.04 package, so no sourceware fallback was needed.
+
+**Method.** `glibc_c.py` preprocesses 47 root headers with `-E -dD`, using gcc-16 with the aarch64-linux-gnu identity. The roots are the ISO C headers glibc ships plus the POSIX headers the suite uses. It keeps the lines that come from glibc and kernel headers, and diffs configurations. One correction was needed. gcc-16's Darwin build installs its own `tgmath.h`, which shadows glibc's, while Ubuntu's GCC uses glibc's. So `tgmath.h` was included by path. The earlier note's method was followed (`host-header-extensions.md` sections 0 and 2): glibc read from the archive, GCC identity imposed, macros steered with `-std`/`-O`/`-D`. Its C++-mode results were not redone.
+
+**Steering sites** in `/usr/include` (grep, lines that test the macro):
+- `__STDC_VERSION__`: 25 lines, 5 files: `features.h`, `sys/cdefs.h`, `assert.h`, `threads.h`, `regex.h`.
+- `__GLIBC_USE (ISOC23)`/`ISOC2X`: 59 lines, 19 files.
+- `__USE_ISOC11`: 13 lines, 5 files. `__USE_ISOC99`: 59 lines, 16 files.
+- `__OPTIMIZE__`: 15 lines, 8 files. `__USE_EXTERN_INLINES`: 17 lines, 14 files.
+- `_FORTIFY_SOURCE`/`__USE_FORTIFY_LEVEL`: 103 lines, 26 files.
+- **`__glibc_has_c_attribute`: 0.** glibc 2.43 has no such macro, and no header line contains `[[`.
+- **`features.h:268-272` selects ISO C23 content in two ways.** `__GLIBC_USE_ISOC23` is 1 when `__STDC_VERSION__ > 201710L`, *or* when `_ISOC23_SOURCE` is defined. `_GNU_SOURCE` defines `_ISOC23_SOURCE` (`features.h:217-226`). So a program that defines `_GNU_SOURCE` gets the C23 header content in every dialect. ClamAV's gnu99 `_Generic` diagnostic in section 4 is this case (`libclamav_mbox.c:1397`, `strchr`).
+
+| Configuration pair (gcc-16, aarch64-linux-gnu identity, 47 root headers) | Header lines present only in the first | Constructs in those lines (lines) |
+|---|---|---|
+| `c23 minus c17` | 393 | (no listed construct) 208, __attribute__ 154, restrict 30, asm label (__REDIRECT) 24, __glibc_const_generic (qualifier-preserving _Generic) 11, bool / true / false 6, char8_t / char16_t / char32_t 3, _Bool 1, __inline 1 |
+| `gnu23 minus gnu17` | 382 | (no listed construct) 203, __attribute__ 150, restrict 28, asm label (__REDIRECT) 26, __glibc_const_generic (qualifier-preserving _Generic) 11, bool / true / false 6, char8_t / char16_t / char32_t 3, _Bool 1, __extension__ statement expression 1, __inline 1 |
+| `c17 minus c11` | 0 | — |
+| `c11 minus c99` | 15 | (no listed construct) 5, __attribute__ 5, __builtin_* 3, static_assert / _Static_assert 2 |
+| `gnu17-O2 minus gnu17` | 127 | (no listed construct) 90, __attribute__ 26, __extern_always_inline / extern inline function body 15, __inline 13, __builtin_* 8, restrict 2, __extension__ statement expression 2 |
+| `gnu23-O2 minus gnu23` | 127 | (no listed construct) 90, __attribute__ 26, __extern_always_inline / extern inline function body 15, __inline 13, __builtin_* 8, restrict 2, __extension__ statement expression 2 |
+| `gnu17-O2-fortify3 minus gnu17-O2` | 734 | __attribute__ 337, (no listed construct) 194, restrict 168, __builtin_* 101, asm label (__REDIRECT) 85, __extern_always_inline / extern inline function body 29, __inline 29, __extension__ statement expression 1 |
+| `gnu17-O0-fortify3 minus gnu17` | 0 | — |
+
+"Lines" counts distinct (header, text) pairs, including `#define` lines from `-dD`; "(no listed construct)" lines are ordinary declarations and macros.
+
+**Constructs emitted under `__STDC_VERSION__ == 202311L` and not under `201710L`** (`c23 minus c17`; `gnu23 minus gnu17` differs only in GNU-dialect lines):
+- **Qualifier-preserving `_Generic` macros.** 11 function-like macros wrap `__glibc_const_generic`: `memchr`, `strchr`, `strrchr`, `strpbrk`, `strstr` (`string.h:121-380`), `bsearch` (`stdlib.h:991`), and `wcschr`, `wcsrchr`, `wcspbrk`, `wcsstr`, `wmemchr` (`wchar.h:196-302`). The macro itself is a `_Generic`: `_Generic (0 ? (PTR) : (void *) 1, const void *: (CTYPE) (CALL), default: CALL)` (`sys/cdefs.h:837-840`). It is *defined* in every C dialect under GCC ≥ 4.9 (`__HAVE_GENERIC_SELECTION`, `sys/cdefs.h:821-829`) but only *used* under `__GLIBC_USE (ISOC23)`.
+- **`bool` in declarations.** `<stdbit.h>` declares `stdc_has_single_bit_*` returning `bool` (`stdbit.h:622-631`) and defines a `static __inline … bool` body (`stdbit.h:660`). Under `201710L` the same declarations use `_Bool`. The other `<stdbit.h>` type-generic macros expand to `__builtin_stdc_*` in both dialects (`stdbit.h:124…`, 14 macros).
+- **Variadic `assert(...)`** (`assert.h:144`) with `extern _Bool __assert_single_arg (_Bool);` (`assert.h:117`).
+- **`char8_t`, `mbrtoc8` and `c8rtomb`** (`uchar.h:47-72`).
+- **`__isoc23_` symbol redirections** for the `strto*`, `wcsto*` and `scanf` families (`stdlib.h:219…`, `inttypes.h:389-399`, `stdio.h:449-526`). These are `__asm__` labels, so the source construct is the same as in C17, but the linked symbol differs.
+- **C23 library surface.** This includes `fadd`/`fdiv`/`ffma`/`fmul` and the other narrowing functions (`bits/mathcalls-narrow.h`), `femode_t`, the `__STDC_VERSION_*_H__` macros, and the `iszero`, `issignaling`, `iscanonical` and `iseqsig` macros. `iszero` and `iscanonical` use GNU `__typeof`, not C23 `typeof`.
+- **Not emitted in either dialect:** `[[…]]` attributes, C23 `typeof`/`typeof_unqual`, `constexpr`, `nullptr`, `_BitInt`, `#embed`. `<stdckdint.h>` is not part of glibc 2.43; GCC supplies it.
+
+**Constructs that need C11 under `201710L`:**
+- **Emitted declarations.** None of the C11 keywords appears in emitted code (`present` in `glibc.json`). `c11 minus c99` adds only declarations: `aligned_alloc`, `at_quick_exit`, `quick_exit`, `timespec_get`, `TIME_UTC`, `CMPLX*` as `__builtin_complex` (`complex.h:62-64`), and `static_assert` defined as `_Static_assert` (`assert.h:210`). `c17 minus c11` is empty.
+- **Macro bodies.** These become live only when a program expands them:
+  - `static_assert` expands to `_Static_assert` (`assert.h:210`).
+  - `thread_local` expands to `_Thread_local` (`threads.h:34`, under `__STDC_VERSION__ <= 201710L`).
+  - `__glibc_const_generic` is a `_Generic` (unused unless `_GNU_SOURCE`/`_ISOC23_SOURCE`, see above).
+  - glibc's `<tgmath.h>` macros use `__builtin_tgmath` (21 macros, `tgmath.h:131…`; `__HAVE_BUILTIN_TGMATH` is `__GNUC_PREREQ (8, 0)`, `tgmath.h:53`).
+  - `<math.h>`'s classification macros expand to builtins: `fpclassify`, `signbit`, `isfinite`, `isnormal`, `isnan`, `isinf` become `__builtin_fpclassify`, `__builtin_signbit`, `__builtin_isfinite`, `__builtin_isnormal`, `__builtin_isnan` and `__builtin_isinf_sign`; `HUGE_VAL`, `INFINITY` and `NAN` become `__builtin_huge_val`, `__builtin_inff` and `__builtin_nanf`.
+  - `__MATH_TG` is the `sizeof` chain (`math.h:1058-1064`), because long double is not distinct from `_Float128` on aarch64.
+- **GNU constructs in both dialects:** `__extension__ ({ … })` statement expressions in `__CPU_SET_S` and friends (`bits/cpu-set.h:58-99`), `__tobody` (`ctype.h:155`) and `IN6_IS_ADDR_*` (`netinet/in.h:437…`). `_FloatN` typedef names and `_Complex _FloatN` appear in `bits/floatn-common.h` and `math.h` macro bodies.
+
+**Header code reached only when `__OPTIMIZE__` is defined** (`gnu17-O2 minus gnu17`, 127 lines; milestone 1 compiles at `-O0`, so none of it is seen):
+- **`__USE_EXTERN_INLINES` bodies.** `features.h:552-556` sets `__USE_EXTERN_INLINES` only under `__OPTIMIZE__`. It brings `extern __inline __attribute__ ((__gnu_inline__))` bodies for:
+  - `getc_unlocked`, `getchar`, `putchar`, `feof_unlocked`, `ferror_unlocked` and friends (`bits/stdio.h:29-135`), plus the `fread_unlocked`/`fwrite_unlocked` statement-expression macros (`bits/stdio.h:147-171`);
+  - `atoi`, `atol`, `atoll` (`stdlib.h:484-496`) and `atof` (`bits/stdlib-float.h:24`);
+  - `bsearch` (`bits/stdlib-bsearch.h:19`), `tolower`/`toupper` (`ctype.h:207-212`), `__cmsg_nxthdr` (`bits/socket.h:323-351`);
+  - `pthread_equal` (`pthread.h:1344`), `thrd_equal` (`threads.h:123`), `btowc`/`wctob` (`wchar.h:369-379`).
+- **Macros.** `libintl.h:96` defines `gettext`/`dgettext` as macros, and `dirent.h:228` defines `dirfd`. `netinet/in.h:415` maps `ntohs`/`htons` to `__bswap_*`, and `bits/stdio.h:144` adds the `fread_unlocked` family. These all use `__builtin_expect` and `__builtin_constant_p`.
+- **`string.h`.** Its `__OPTIMIZE__` blocks (`string.h:103-362`) are C++-only (`__cplusplus` const overloads), so nothing changes in C.
+- **Fortify.** `_FORTIFY_SOURCE` needs `__OPTIMIZE__ > 0` (`features.h:449-450`). With `-D_FORTIFY_SOURCE=3` at `-O0` the preprocessed output is identical to plain `-O0` (`gnu17-O0-fortify3 minus gnu17`: 0 lines), and gcc-16 prints no warning for `<stdio.h>`. At `-O2` it adds 734 lines: `__fortify_function` bodies with `__builtin___*_chk`, `__builtin_object_size`/`__builtin_dynamic_object_size` and `__REDIRECT` labels. Ubuntu's driver turns fortify on only at `-O2` and above (earlier note, section 0).
+
+## 9. Known unknowns
+
+- **Not GCC 15.2 on glibc.** Every "compiles under gnu23/gnu17" result is GCC 16.1 targeting Darwin, given the Linux identity with `-U`/`-D` and pointed at Ubuntu's glibc 2.43 headers.
+  - GCC 15.2's diagnostics for these programs were not observed. The permerror set and C23 rules match the GCC 15 release (both default to `gnu23`), but GCC 16 may diagnose some constructs differently.
+  - `long double` is 64-bit on this GCC. Only syntax was checked, but a `sizeof (long double)` test in a program would take Darwin's answer.
+  - gcc-16's own `stdint.h`, `limits.h` and `tgmath.h` sit ahead of glibc's. On Ubuntu, GCC 15's `stdint.h` and `limits.h` wrap glibc's the same way and there is no GCC `tgmath.h`. No benchmark includes `<tgmath.h>`.
+- **Clang identity for features.** VLA, K&R, `()`, implicit-int, implicit-declaration and extension counts are Apple clang 17's diagnostics, with `__clang__` and `__GNUC__` 4. Where a program branches on `__clang__`, those counts follow clang's branch. The reach counts (`gcc -E`) follow GCC's.
+- **CMake read as text.** `enumerate.py` evaluates a fixed configuration and five assumed `check_*` results (1.1). `HAVE_RE_COMP` was assumed true without checking a libc6 binary. If it is false, plot2fig and archie drop out of the C count, which would be 250.
+- **Assumed CMake defaults.**
+  - `C_STANDARD N` was taken to mean `-std=gnuN`, which is CMake's default `C_EXTENSIONS ON`. CMake may omit the flag when the compiler's default already satisfies it (policy CMP0128 and the minimum version 3.20), which is irrelevant for GCC 15 because its default is newer than every pin.
+  - CMake's include path for `-I.` (the build directory) was approximated by the source directory.
+- **Grep-level items.**
+  - Bitfields (a line regex on `gcc -E` output), `inline`/`restrict` keyword counts, include lists (all branches), `#pragma`/attribute/builtin lists and all of Part B are grep-level.
+  - The zero-length-array regex had false positives (`x = a[0];`), so 4.1 uses clang's `-Wzero-length-array`, which found none.
+  - The per-program "lines" double-counts headers shared between programs; the 1.1 totals do not.
+- **Library-level C99/C11 not classified.** "Needs" counts language constructs and C99/C11 headers only. It does not count C99 library functions (`snprintf`, `strtoll`, `isnan` as a function, …), which a slice that links glibc gets anyway.
+- **Unknown outcomes.** Whether sqlite3's and basicmath's reference outputs match within their tolerances when `long double` is binary128, or when it is double, was not checked; nothing was run. Whether the 46 gnu89 failures or the 37 gnu23 failures hide further errors behind the first ones is unknown. Errors were counted with `-fmax-errors=0`, but a parse error can mask later code.
+- **Part B scope.** Branch tip, not the 15.2.0 tag. The `.x` files were not read. Nested functions and labels-as-values rely on clang parsing the file, so a test that clang rejects earlier may be missed.
+- **Part C scope.** 47 roots, not glibc's whole closure. The analysis covers the dialect and optimisation axes only, not `_POSIX_C_SOURCE`/`_XOPEN_SOURCE` combinations.
+
 

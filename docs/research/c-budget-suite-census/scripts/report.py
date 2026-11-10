@@ -566,6 +566,48 @@ def table_LONGDOUBLE():
         lines.append(f"| {n} | {nodes} | {v['sites']} |")
     return "\n".join(lines)
 
+
+TORT = load("torture.json")
+GLIBC = load("glibc.json")
+
+
+def table_TORTURE():
+    d = TORT
+    f = d["features"]
+    order = [("nested function (clang)", "nested functions (clang: \"function definition is not allowed here\")"),
+             ("long double", "`long double`"), ("__int128", "`__int128`, `__int128_t`, `__uint128_t`, `mode(TI)`"),
+             ("_Complex (any)", "`_Complex`, `__complex__`, `__real__`/`__imag__`, `<complex.h>`"),
+             ("complex integer", "of which complex integer types (`_Complex int`, `__complex__ char`, …)"),
+             ("vector_size", "`vector_size`"), ("VLA (clang -Wvla)", "VLAs (clang `-Wvla`)"),
+             ("labels as values (clang)", "computed goto / labels as values (clang `-Wgnu-label-as-value`)"),
+             ("computed goto (grep)", "computed goto / labels as values (grep `goto *`, `&&label`; includes false positives)"),
+             ("any __builtin_*", "any `__builtin_*`"), ("inline asm", "inline asm (`asm`/`__asm__` followed by `(`)"),
+             ("_Atomic", "`_Atomic`, `<stdatomic.h>`"), ("__atomic_/__sync_ builtins", "`__atomic_*`/`__sync_*` calls"),
+             ("_BitInt", "`_BitInt`"), ("_Float16/32/64/128", "`_FloatN`"), ("setjmp/longjmp", "setjmp/longjmp, including `__builtin_setjmp`"),
+             ("statement expression", "statement expressions (grep `({`)"), ("__attribute__", "`__attribute__`"),
+             ("has an options/target dg- directive", "an options or target `dg-` directive (list below)"),
+             ("has a .x control file", "a `.x` Tcl control file beside it")]
+    lines = ["| Tests using | Tests | Share |", "|---|---|---|"]
+    for k, lab in order:
+        n = f.get(k, 0)
+        lines.append(f"| {lab} | {n} | {100.0 * n / d['tests']:.1f}% |")
+    lines += ["", "**Top 30 `__builtin_*` by number of tests:** " +
+              ", ".join(f"`{b}` {n}" for b, n in d["builtins_by_tests"][:30]) + "."]
+    lines += ["", "**`dg-` directive kinds (tests):** " + ", ".join(f"`{k}` {n}" for k, n in d["dg_kinds"]) + "."]
+    lines += ["", "**Options in `dg-options`/`dg-additional-options` (tests, top 20):** " +
+              ", ".join(f"`{k}` {n}" for k, n in d["dg_options"][:20]) + "."]
+    lines += ["", "**Target and skip directives (tests, top 20):** " +
+              "; ".join(f"`{k}` {n}" for k, n in d["dg_targets"][:20]) + "."]
+    return "\n".join(lines)
+
+
+def table_GLIBC_PAIRS():
+    lines = ["| Configuration pair (gcc-16, aarch64-linux-gnu identity, 47 root headers) | Header lines present only in the first | Constructs in those lines (lines) |", "|---|---|---|"]
+    for k, v in GLIBC["pairs"].items():
+        cs = ", ".join(f"{c} {x['n']}" for c, x in sorted(v["constructs"].items(), key=lambda y: -y[1]["n"]))
+        lines.append(f"| `{k}` | {v['lines']} | {cs or '—'} |")
+    return "\n".join(lines)
+
 UNIQ_LINES = {}
 
 
