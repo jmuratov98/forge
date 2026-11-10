@@ -152,12 +152,15 @@ _Pragma (text from a macro argument)	pragma	A	A	glibc	macro:209	macro:209	macro:
 anonymous struct or union member	syntax	M		glibc+kernel	code:10	code:12	code:10	code:12	code:10	code:12	code:10	code:12	aarch64/bits/termios-struct.h:36	C11 feature (an extension under gnu89/gnu99): layout and member lookup.
 empty struct or union	syntax	M		kernel	macro:41	macro:52	macro:41	macro:52	macro:41	macro:52	macro:41	macro:52	linux/stddef.h:53 in `#define __DECLARE_FLEX_ARRAY`	GNU extension with size 0 (kernel `__DECLARE_FLEX_ARRAY`).
 enum trailing comma	syntax	A		glibc+kernel	code:12	code:14	code:12	code:14	code:12	code:14	code:14	code:14	aarch64/bits/types/idtype_t.h:10	C99 syntax; accepting the comma is the whole implementation.
+enumerator value outside int	syntax	M		glibc	code:2	code:2	code:2	code:2	code:2	code:2	code:2	code:2	aarch64/sys/epoll.h:66	sys/epoll.h:66 (`EPOLLET = 1u << 31`) and sys/mount.h:124: pre-C23 GCC extension (C23 standard) that gives the enumerator and the enum a wider or unsigned type; values must be right.
 flexible array member	syntax	M	M	glibc+kernel	code:28	code:28	code:28	code:28	code:28	code:28	code:28	code:28	linux/fanotify.h:183	#9's class
 imaginary constant suffix	syntax	M	M	glibc	macro:2	macro:2	macro:2	macro:2	macro:2	macro:2	macro:2	macro:2	complex.h:52 in `#define _Complex_I`	#9's class
 long double	syntax	M	M	gcc+glibc	code:7	code:7	code:7	code:7	code:12	code:12	code:12	code:12	gcc/stddef.h:442	#9's class
 long long	syntax	M		gcc+glibc+kernel	code:96	code:103	code:96	code:103	code:97	code:104	code:97	code:104	aarch64/bits/atomic_wide_counter.h:27	C99 type used in every dialect; under gnu89 an extension (`-Wlong-long`).
 long long constant	syntax	M		glibc+kernel	via:3	via:3	via:3	via:3	via:3	via:3	via:3	via:3	linux/swab.h:75 via `___constant_swab64` (linux/swab.h:24)	`LL`/`ULL` suffixes (sys/ifunc.h:86, linux/swab.h); C99, an extension under gnu89.
 named variadic macro parameter	syntax	M	M	kernel	code:41	code:52	code:41	code:52	code:41	code:52	code:41	code:52	linux/stddef.h:32	#9's class
+qualifier in parameter array declarator ([__restrict])	syntax	A		glibc	code:4	code:5	code:4	code:5	code:4	code:5	code:4	code:5	regex.h:685	C99 syntax (glibc's `__restrict_arr`, e.g. spawn.h:79); the qualifier applies to the adjusted pointer and `__restrict` may be ignored, but the declarator must parse.
 statement expression ({ ... })	syntax	M	M	glibc	macro:18	macro:31	macro:18	macro:31	macro:18	macro:31	macro:18	macro:31	netinet/in.h:437 in `#define IN6_IS_ADDR_UNSPECIFIED`	#9's class
+variable-length array parameter	syntax	A		glibc	-	-	code:2	code:2	code:2	code:2	code:2	code:2	regex.h:686	regex.h:686 `regexec`'s `__pmatch[__restrict_arr __nmatch]` (C99 and later); in a prototype the parameter is a pointer, so the bound may be ignored once parsed.
 variadic macro (__VA_ARGS__)	syntax	M		gcc+glibc	-	code:1	-	code:1	-	code:1	code:2	code:2	assert.h:156	C99 variadic macros (assert.h:156, GCC's stdarg.h:48).
 zero-length array member	syntax	M	M	glibc	code:3	code:11	code:3	code:11	code:3	code:11	code:3	code:11	aarch64/bits/fcntl-linux.h:369	#9's class

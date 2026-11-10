@@ -226,6 +226,7 @@ def main():
             "class": cls, "why": why,
             "hx9_class": h["class"] if h else "", "hx9_reached": h["reached"] if h else "",
         })
+    rows.extend(pedantic_rows(W, owner))
     missing = [r["display"] for r in rows if r["class"] is None]
     if missing:
         print("UNCLASSIFIED:", missing, file=sys.stderr)
@@ -246,6 +247,41 @@ def main():
         if left:
             print("unfilled in", src, left, file=sys.stderr)
         open(dst, "w").write(text)
+
+
+# constructs the token scanner does not see, taken from GCC's own pedantic
+# diagnostics (the -D__extension__= run): message regex -> inventory name
+PEDANTIC_ONLY = [
+    (r"does not support .static. or type qualifiers in parameter array declarators",
+     "qualifier in parameter array declarator ([__restrict])"),
+    (r"forbids variable length array", "variable-length array parameter"),
+    (r"restricts enumerator values to range of .int.", "enumerator value outside int"),
+]
+
+
+def pedantic_rows(W, owner):
+    ped = json.load(open(os.path.join(W, "pedantic-noext.json")))
+    out = []
+    for rx, name in PEDANTIC_ONLY:
+        code = {c: set() for c in C}
+        sites = collections.defaultdict(set)
+        for c in C:
+            for root, v in ped[c].items():
+                for f, line, kind, msg, opt in v["diags"]:
+                    if kind != "note" and re.search(rx, msg):
+                        code[c].add(root)
+                        sites[(f, line)].add(root)
+        if not sites:
+            continue
+        site = max(sites.items(), key=lambda kv: len(kv[1]))[0]
+        cls, why, _ = classes.classify("syntax:" + name, name, None)
+        empty = {c: set() for c in C}
+        out.append({"name": "syntax:" + name, "display": name, "group": "syntax", "gkind": "(GCC pedantic diagnostic)",
+                    "status": {c: "code" for c in C if code[c]}, "code": code, "via": empty, "macro": empty,
+                    "reached": code, "orig_reached": sorted({owner(f) for f, _l in sites}), "orig_macro": [],
+                    "rep": "%s:%d" % (short(site[0]), site[1]), "forms": [], "class": cls, "why": why,
+                    "hx9_class": "", "hx9_reached": ""})
+    return out
 
 
 # ------------------------------------------------------------------ output
@@ -397,7 +433,10 @@ def tables(W, rows, hx9, ex, gn, vs):
     by = collections.defaultdict(list)
     for sec, nm, cl in dropped:
         by[sec].append("`%s` (%s)" % (nm, cl))
-    T["delta_dropped_list"] = "\n".join("- **%s** (%d): %s" % (sec, len(v), ", ".join(v)) for sec, v in sorted(by.items()))
+    T["delta_dropped_full"] = "\n".join("- **%s** (%d): %s" % (sec, len(v), ", ".join(v)) for sec, v in sorted(by.items()))
+    T["delta_dropped_list"] = "\n".join("- **%s** (%d): %s%s" % (sec, len(v), ", ".join(v[:8]),
+                                                                 ", ... (appendix C)" if len(v) > 8 else "")
+                                        for sec, v in sorted(by.items()))
     T["n_dropped"] = str(len(dropped))
 
     # asm labels

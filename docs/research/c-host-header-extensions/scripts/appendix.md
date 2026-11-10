@@ -19,3 +19,9 @@ Columns:
 ## B. Compiler-predefined macros that header code expands ({{n_predef}})
 
 {{predef_list}}
+
+## C. #9 names not reached in C mode ({{n_dropped}})
+
+Names #9's appendix marks as reached in its M1 configuration (code, via macro or macro only) that occur nowhere in C mode, grouped by #9's section, with #9's class.
+
+{{delta_dropped_full}}

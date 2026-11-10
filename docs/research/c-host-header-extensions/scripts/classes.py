@@ -71,6 +71,15 @@ NEW = {
     "empty struct or union": ("M", "GNU extension with size 0 (kernel `__DECLARE_FLEX_ARRAY`)."),
     "variadic macro (__VA_ARGS__)": ("M", "C99 variadic macros (assert.h:156, GCC's stdarg.h:48)."),
     "#warning": ("A", "Diagnostic only (sys/elf.h:22); standard only from C23."),
+    "qualifier in parameter array declarator ([__restrict])": (
+        "A", "C99 syntax (glibc's `__restrict_arr`, e.g. spawn.h:79); the qualifier applies to the adjusted "
+             "pointer and `__restrict` may be ignored, but the declarator must parse."),
+    "variable-length array parameter": (
+        "A", "regex.h:686 `regexec`'s `__pmatch[__restrict_arr __nmatch]` (C99 and later); in a prototype the "
+             "parameter is a pointer, so the bound may be ignored once parsed."),
+    "enumerator value outside int": (
+        "M", "sys/epoll.h:66 (`EPOLLET = 1u << 31`) and sys/mount.h:124: pre-C23 GCC extension (C23 "
+             "standard) that gives the enumerator and the enum a wider or unsigned type; values must be right."),
     "#pragma GCC diagnostic": ("A", "Diagnostic state only."),
 }
 
