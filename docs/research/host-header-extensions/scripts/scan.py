@@ -442,7 +442,9 @@ def main():
                     continue
                 if val.startswith("__builtin_"):
                     emit(val, "builtin", val, ctx)
-                elif val in traits and (nxt in ("(", "<")):
+                elif val in traits and (nxt == "(" or (nxt == "<" and val == "__type_pack_element")):
+                    # only __type_pack_element is used as a template; libstdc++'s own
+                    # std::__is_invocable<...> / std::__is_nothrow_invocable<...> are not traits
                     emit(val, "trait", val, ctx)
                 elif val in atomic_names and nxt == "(":
                     emit(val, "atomic", val, ctx)

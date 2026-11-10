@@ -91,21 +91,23 @@ NOTE_OVERRIDE = {
 # (diagnostic or optimisation hint only); L = may be lowered to a call to the
 # named libc/libm function or to the identity.  Unlisted builtins default to L
 # if they are library builtins, else M.  Attributes default to A.
-CLASS_M_ATTR = {"aligned", "packed", "mode", "vector_size", "may_alias", "abi_tag", "visibility",
-                "weak", "weakref", "alias", "gnu_inline", "always_inline", "transparent_union",
+CLASS_M_ATTR = {"aligned", "packed", "mode", "vector_size", "may_alias", "abi_tag",
+                "weak", "weakref", "alias", "gnu_inline", "transparent_union",
                 "cleanup", "aarch64_vector_pcs", "section", "tls_model", "init_priority",
-                "returns_twice", "noreturn", "assume", "neon_vector_type", "common", "nocommon",
+                "returns_twice", "neon_vector_type", "common", "nocommon",
                 "ifunc", "symver", "copy"}
 CLASS_NOTE_ATTR = {
-    "always_inline": "M only in the sense that GCC errors when inlining fails; ignoring it is behaviour-preserving",
-    "gnu_inline": "extern inline + gnu_inline must never emit an out-of-line body (fortify wrappers reuse the libc name)",
-    "abi_tag": "changes mangled names (B5cxx11) of symbols exported by libstdc++.so",
-    "visibility": "linkage only; matters little for a PIE with no shared objects",
-    "may_alias": "only matters to an optimiser that does type-based alias analysis",
-    "noreturn": "ignoring is safe for correct code; affects only codegen/warnings",
-    "returns_twice": "needed for setjmp-like calls if the optimiser keeps values in registers across calls",
-    "assume": "ignoring is safe; implementing it as an optimisation fact makes violations UB",
-    "copy": "copies other attributes; class follows the copied set",
+    "always_inline": "Forge: GCC errors when it cannot inline; ignoring the attribute preserves behaviour.",
+    "gnu_inline": "Forge: extern inline + gnu_inline must never emit an out-of-line body (the symbol is libc's).",
+    "abi_tag": "Forge: changes mangled names (B5cxx11) of symbols exported by libstdc++.so.",
+    "visibility": "Forge: linkage only; no effect on a PIE that exports nothing.",
+    "may_alias": "Forge: matters only to an optimiser that does type-based alias analysis.",
+    "noreturn": "Forge: ignoring is safe for correct code; affects code generation and warnings only.",
+    "returns_twice": "Forge: setjmp-like calls; an optimiser must not keep values in registers across them.",
+    "assume": "Forge: ignoring is safe; acting on it is an optimisation.",
+    "copy": "Forge: copies another declaration's attributes; its class is that of the copied set.",
+    "weak": "Forge: weak undefined reference to __pthread_unwind_next (pthread.h:753) if referenced.",
+    "mode": "Forge: cxxabi_tweaks.h:46 `__guard` is `int __attribute__((mode (__DI__)))`, a 64-bit guard type.",
 }
 CLASS_A_BUILTIN = {"__builtin_expect", "__builtin_expect_with_probability", "__builtin_prefetch",
                    "__builtin_assume_aligned", "__builtin_object_size",
@@ -815,7 +817,15 @@ GCC_VALUES = {
     "__USER_LABEL_PREFIX__": ("(empty)", "cpp manual"),
     "__ELF__": ("1", "System-specific"), "__linux__": ("1", "System-specific"),
     "__INT_MAX__": ("0x7fffffff", "cpp manual"), "__CHAR_BIT__": ("8", "cpp manual"),
+    "__GNUC_GNU_INLINE__": ("1 if flag_gnu89_inline, else undefined", "c-cppbuiltin.cc"),
 }
+GCC_VALUES["__GNUC_STDC_INLINE__"] = ("1 unless flag_gnu89_inline", "c-cppbuiltin.cc")
+for _n in ("__clang_literal_encoding__", "__clang_wide_literal_encoding__", "__INTEL_COMPILER", "__EDG__",
+           "_MSC_VER", "__CUDACC__", "__TINYC__", "__HP_cc", "__ICC", "__ECC", "__BIONIC__"):
+    GCC_VALUES[_n] = ("undefined", "")
+GCC_VALUES["_GLIBCXX_CLANG"] = ("undefined (c++config.h:515 defines it from __clang__)", "")
+# Example site to show for a steering macro when the first evaluated one is unrepresentative
+PREFERRED_SITE = {"__GNUC__": ("/usr/include/aarch64-linux-gnu/sys/cdefs.h", 408)}
 
 IDENTITY = ["__GNUC__", "__GNUC_MINOR__", "__GNUC_PATCHLEVEL__", "__GNUG__", "__clang__", "__clang_major__",
             "__clang_minor__", "__clang_literal_encoding__", "__clang_wide_literal_encoding__", "_GLIBCXX_CLANG",
@@ -871,7 +881,8 @@ def gen_steer_table(c, names, with_values=True):
         if not r:
             continue
         sites = [s for s in r["sites"] if s["live"]] or r["sites"]
-        s = sites[0]
+        pref = [x for x in r["sites"] if (x["file"], x["line"]) == PREFERRED_SITE.get(n)]
+        s = (pref or sites)[0]
         sel = first_body_line(c, s["file"], s["line"])
         gv = GCC_VALUES.get(n, ("", ""))
         cv = clang.get(n, "undefined")
@@ -997,7 +1008,7 @@ def gen_identity_diff(c):
         fa = {c.marks[k][0] for k in A if k.endswith(".0")}
         fb = {c.marks[k][0] for k in B if k.endswith(".0")}
         rows.append([code(a) + " vs " + code(b), str(len(A - B)), str(len(B - A)), str(len(fa - fb)), str(len(fb - fa)),
-                     md(", ".join(sorted(short(x) for x in (fb - fa)))[:200])])
+                     md(", ".join(sorted(short(x) for x in (fb - fa))))])
     return table(rows, ["Configurations", "Blocks only in first", "Blocks only in second", "Headers only in first", "Headers only in second", "Headers entered only in second"])
 
 
@@ -1032,12 +1043,12 @@ def gen_closure(c):
 
 def gen_counts(counts, classes):
     rows = []
-    labels = [("trait-keyword", "Type-trait keywords (cp-trait.def)"), ("trait", "Type-trait `__builtin_*` (C++ front end)"),
+    labels = [("trait-keyword", "Type-trait keywords (cp-trait.def, `__integer_pack`)"), ("trait", "Type-trait `__builtin_*` (C++ front end)"),
               ("constexpr", "Constexpr / language-support builtins"), ("control", "Control-flow and hint builtins"),
               ("bit", "Bit, byte-swap and overflow builtins"), ("memory", "Memory/string library builtins"),
               ("fpclass", "Floating-point classification/constant builtins"), ("math", "Math library builtins"),
               ("varargs", "Varargs builtins"), ("fortify", "Object-size / fortify builtins"),
-              ("atomic", "`__atomic_*` / `__sync_*` builtins"), ("attribute", "GNU attributes"),
+              ("atomic", "`__atomic_*` builtins (no `__sync_*` is used)"), ("attribute", "GNU attributes"),
               ("attribute-std", "Standard attributes (incl. reserved spellings)"), ("pragma", "Pragmas"),
               ("keyword", "Keyword and type extensions"), ("asm", "asm usage (kinds)"),
               ("syntax", "Syntax and directive extensions"), ("preprocessor", "Preprocessor operators (in code)"), ("aarch64", "aarch64-specific types")]
@@ -1120,7 +1131,8 @@ def main():
     gen["counts"] = gen_counts(counts, classes)
     m, a, l, o, ns = gen_class_lists(classes)
     gen["class_must"], gen["class_accept"], gen["class_lower"], gen["class_outside"] = m, a, l, o
-    gen["class_counts"] = "%d must-implement, %d accept-and-ignore, %d lowerable, %d only outside M1 or not reached" % ns
+    gen["class_counts"] = ("%d distinct names: of those reachable in M1, %d are class M, %d class L and %d class A; "
+                           "%d are reachable only outside M1 or not at all" % ((sum(ns),) + (ns[0], ns[2], ns[1], ns[3])))
     gen["roots"] = ", ".join(code("<%s>" % r) for r in hx.root_names())
     gen["cfg_flags"] = "\n".join("- `%s`: `%s`" % (k, " ".join(c.act[k]["flags"])) for k in CFG_ORDER)
     text = open(tmpl).read()
