@@ -108,18 +108,57 @@ CLASS_NOTE_ATTR = {
     "copy": "copies other attributes; class follows the copied set",
 }
 CLASS_A_BUILTIN = {"__builtin_expect", "__builtin_expect_with_probability", "__builtin_prefetch",
-                   "__builtin_assume_aligned", "__builtin_constant_p", "__builtin_object_size",
+                   "__builtin_assume_aligned", "__builtin_object_size",
                    "__builtin_dynamic_object_size", "__builtin_ia32_pause"}
 CLASS_NOTE_BUILTIN = {
-    "__builtin_expect": "identity on the value is a correct implementation",
-    "__builtin_constant_p": "returning 0 is always a correct answer (GCC manual)",
-    "__builtin_object_size": "returning the 'unknown' value ((size_t)-1 or 0) is correct",
-    "__builtin_dynamic_object_size": "returning the 'unknown' value is correct",
-    "__builtin_assume_aligned": "identity on the pointer is correct",
-    "__builtin_unreachable": "any lowering (trap, nothing) is correct for programs that never reach it",
-    "__builtin_is_constant_evaluated": "must be exact: libstdc++ selects constexpr-only code paths with it",
-    "__builtin_launder": "identity is correct unless the optimiser assumes object identity",
+    "__builtin_expect": "Forge: identity on the value is a correct implementation.",
+    "__builtin_constant_p": "Forge: 0 is correct at run time (manual), but char_traits::move (bits/char_traits.h:233) "
+                            "calls it during constant evaluation and needs 1 for a foldable pointer comparison.",
+    "__builtin_object_size": "Forge: the 'unknown' answer ((size_t)-1 for types 0/1) is correct (manual).",
+    "__builtin_dynamic_object_size": "Forge: the 'unknown' answer is correct (manual).",
+    "__builtin_assume_aligned": "Forge: identity on the pointer is correct.",
+    "__builtin_unreachable": "Forge: any lowering (trap or nothing) is correct for programs that never reach it.",
+    "__builtin_is_constant_evaluated": "Forge: must be exact; libstdc++ picks constexpr-only code with it.",
+    "__builtin_launder": "Forge: identity is correct unless the optimiser assumes object identity.",
+    "__builtin_clear_padding": "Forge: a no-op for types without padding; atomic<T> compare-exchange depends on it otherwise.",
+    "__builtin_operator_new": "Reached only if __has_builtin(__builtin_operator_new) >= 201802L; the manual does not "
+                              "give GCC's value (section 5).",
+    "__builtin_operator_delete": "As __builtin_operator_new.",
+    "__builtin_FILE": "Forge: its string is embedded at every assert() call site, so it is part of the output bytes.",
+    "__builtin_alloca": "Forge: real stack allocation; used for buffers in <fstream> and <locale> code.",
 }
+FLOATN_NOTE = ("Forge: if __GNUC__ >= 13 is reported, glibc treats it as a distinct built-in type in C++ "
+               "(math.h __iseqsig_type specializations, bits/floatn.h).")
+KW_NOTE = {
+    "__int128": "Forge: every M1 use is gated on __SIZEOF_INT128__ (23 tests).",
+    "__uint128_t": "Forge: unconditional; struct layout in asm/sigcontext.h and sys/user.h.",
+    "_Float32": FLOATN_NOTE, "_Float64": FLOATN_NOTE, "_Float128": FLOATN_NOTE,
+    "_Float32x": FLOATN_NOTE, "_Float64x": FLOATN_NOTE,
+    "_Float16": "Forge: reached only through <format> under __FLT16_DIG__.",
+    "long double": "Forge's own code avoids it, but the headers declare it 661 times (layout, mangling).",
+    "__thread": "Forge: TLS variable in <mutex> under _GLIBCXX_HAVE_TLS.",
+    "__null": "Forge: GCC's stddef.h defines NULL as __null when __GNUG__ is defined.",
+    "pp-number suffix bf16": "Forge: c++config.h:889 `__decltype(0.0bf16)` whenever __BFLT16_DIG__ is predefined.",
+    "#include_next": "Forge: needed by libstdc++'s <stdlib.h>/<math.h> wrappers and GCC's <limits.h>.",
+    "__Float32x4_t": "Arm ACLE AdvSIMD type (not in the GCC manual); glibc vector-math declarations only.",
+    "__Float64x2_t": "Arm ACLE AdvSIMD type (not in the GCC manual); glibc vector-math declarations only.",
+    "__SVFloat32_t": "Arm ACLE sizeless SVE type (not in the GCC manual); glibc vector-math declarations only.",
+    "__SVFloat64_t": "Arm ACLE sizeless SVE type (not in the GCC manual); glibc vector-math declarations only.",
+    "__SVBool_t": "Arm ACLE sizeless SVE predicate type (not in the GCC manual); glibc vector-math declarations only.",
+    "__is_identifier": "Clang-only operator; GCC 15.2 has none (c++config.h tests #ifdef __is_identifier).",
+}
+CLASS_NOTE_ATTR["aarch64_vector_pcs"] = ("Arm vector PCS (not in the GCC manual): changes callee-saved registers "
+                                         "of glibc's _ZGVnN* vector-math declarations")
+PAGES.update({"__has_attribute": ("cpp", "_005f_005fhas_005fattribute.html"),
+              "__has_builtin": ("cpp", "_005f_005fhas_005fbuiltin.html"),
+              "__has_extension": ("cpp", "_005f_005fhas_005fextension.html"),
+              "__has_include": ("cpp", "_005f_005fhas_005finclude.html")})
+
+# Preferred manual entry kind per attribute, where the first index entry is the
+# wrong one for how the headers use the attribute.
+ATTR_KIND_PREF = {"aligned": "type", "unused": "variable", "cold": "function", "deprecated": "function",
+                  "may_alias": "type", "mode": "type", "packed": "type", "vector_size": "type",
+                  "visibility": "function", "noreturn": "function", "const": "function"}
 
 
 def first_sentence(t, limit=150):
@@ -317,7 +356,8 @@ def manual_note(c, name, group):
     if group == "attribute":
         es = c.man["attribute"].get(name)
         if es:
-            e = es[0]
+            pref = [x for x in es if x["kind"] == ATTR_KIND_PREF.get(name)]
+            e = (pref or es)[0]
             page = e["page"].split("/")[-1]
             return "[%s](%s%s#%s)" % (prettify(page), GCC, page, e["anchor"]), e["desc"]
         return "not in manual", ""
@@ -401,7 +441,25 @@ def table(rows, header):
     return "\n".join(out)
 
 
-def ext_row(c, name, hs, kind, extra_note="", show_name=None):
+def put(gen, key, rows, header):
+    """Store the full table under KEY and an M1-only table under KEY_m1; the
+    latter lists the names of the other rows after the table."""
+    gen[key] = table(rows, header)
+    si = header.index("Reached")
+    m1 = [r for r in rows if r[si].startswith("M1")]
+    rest = [r for r in rows if not r[si].startswith("M1")]
+    t = table(m1, header) if m1 else "(no entry is reached in M1)"
+    if rest:
+        t += ("\n\nNot reached in M1 (rows in the appendix): "
+              + ", ".join("%s (%s)" % (r[0], r[si]) for r in rest) + ".")
+    gen[key + "_m1"] = t
+
+
+def hdr(extra=()):
+    return HEAD[:2] + list(extra) + HEAD[2:]
+
+
+def ext_row(c, name, hs, kind, extra_note="", show_name=None, label="", extra=()):
     h = rep_hit(c, hs)
     st = status_of(c, hs)
     files = len({x["file"] for x in hs})
@@ -419,21 +477,35 @@ def ext_row(c, name, hs, kind, extra_note="", show_name=None):
     loc = "%s:%d" % (short(h["file"]), h["line"])
     if h["ctx"].startswith("define:"):
         loc += " (in `#define %s`)" % h["ctx"][7:]
-    return [code(show_name or name), str(len(hs)) + "/" + str(files), loc, code(guard_text(h["guards"][-1] if h["guards"] else None)),
-            st + (" (" + rtxt + ")" if rtxt else ""), md(link + (": " if link and note else "") + note)]
+    return ([code(show_name or name), label] + list(extra)
+            + [str(len(hs)) + "/" + str(files), loc, code(guard_text(h["guards"][-1] if h["guards"] else None)),
+               st + (" (" + rtxt + ")" if rtxt else ""), md(link + (": " if link and note else "") + note)])
 
 
-HEAD = ["Name", "Uses/files", "Representative site", "Innermost guard (verbatim)", "Reached", "GCC 15.2 manual"]
+HEAD = ["Name", "Kind", "Uses/files", "Representative site", "Innermost guard (verbatim)", "Reached",
+        "Semantics (GCC 15.2 manual)"]
+KIND_LABEL = {"keyword": "keyword", "c-keyword": "C keyword", "type": "type", "type-std": "ISO type",
+              "fallback-define": "fallback macro", "syntax": "syntax", "directive": "directive",
+              "aarch64-type": "aarch64 type", "preprocessor": "pp operator"}
 
 
-def gen_builtin_tables(c, counts, classes):
+def label_of(hs):
+    g = collections.Counter(h["group"] for h in hs).most_common(1)[0][0]
+    return KIND_LABEL.get(g, g)
+
+
+BUILTIN_KIND = {"trait": "builtin (trait)", "constexpr": "builtin (language)", "control": "builtin (control/hint)",
+                "bit": "builtin (bit/overflow)", "memory": "builtin (library)", "varargs": "builtin (varargs)",
+                "fortify": "builtin (object size)", "math": "builtin (library, math)", "fpclass": "builtin (FP class/constant)"}
+
+
+def gen_builtin_tables(c, counts, classes, gen):
     hits = by_name(c, lambda h: h["group"] == "builtin")
     groups = collections.defaultdict(dict)
     for n, hs in hits.items():
         if n == "__builtin_ret_type":
             continue  # libstdc++ alias in <source_location>, not a builtin
         groups[builtin_group(n)][n] = hs
-    out = {}
     # math compression
     for g in ("math", "fpclass"):
         names = set(groups[g])
@@ -455,9 +527,10 @@ def gen_builtin_tables(c, counts, classes):
             hs = groups[g][n]
             cls = "A" if n in CLASS_A_BUILTIN else ("L" if g == "memory" else "M")
             classes[(g, n)] = (cls, status_of(c, hs))
-            rows.append(ext_row(c, n, hs, "builtin", CLASS_NOTE_BUILTIN.get(n, "")))
+            rows.append(ext_row(c, n, hs, "builtin", CLASS_NOTE_BUILTIN.get(n, ""), label=BUILTIN_KIND[g],
+                                extra=(cls,)))
         counts[g] = (len(groups[g]), sum(len(v) for v in groups[g].values()))
-        out["builtins_" + g] = table(rows, HEAD)
+        put(gen, "builtins_" + g, rows, hdr(("Class",)))
     for g in ("math", "fpclass"):
         rows = []
         comp = groups[g + "_comp"]
@@ -465,35 +538,36 @@ def gen_builtin_tables(c, counts, classes):
             hs = [h for v in variants for h in groups[g][v]]
             suf = sorted({v[len(b):] or "-" for v in variants}, key=lambda s: (len(s), s))
             disp = b + ("{" + ",".join("" if s == "-" else s for s in suf) + "}" if len(variants) > 1 else "")
+            cls = "L" if g == "math" else "M"
             for v in variants:
-                classes[(g, v)] = ("L" if g == "math" else "M", status_of(c, groups[g][v]))
-            rows.append(ext_row(c, b if b in groups[g] else variants[0], hs, "builtin", show_name=disp))
+                classes[(g, v)] = (cls, status_of(c, groups[g][v]))
+            rows.append(ext_row(c, b if b in groups[g] else variants[0], hs, "builtin", show_name=disp,
+                                label=BUILTIN_KIND[g], extra=(cls,)))
         counts[g] = (len(groups[g]), sum(len(v) for v in groups[g].values()))
-        out["builtins_" + g] = table(rows, HEAD)
-    return out
+        put(gen, "builtins_" + g, rows, hdr(("Class",)))
 
 
-def gen_traits(c, counts, classes):
+def gen_traits(c, counts, classes, gen):
     hits = by_name(c, lambda h: h["group"] == "trait")
     rows = []
     for n in sorted(hits):
         classes[("trait-keyword", n)] = ("M", status_of(c, hits[n]))
-        rows.append(ext_row(c, n, hits[n], "trait"))
+        rows.append(ext_row(c, n, hits[n], "trait", label="trait keyword", extra=("M",)))
     counts["trait-keyword"] = (len(hits), sum(len(v) for v in hits.values()))
-    return table(rows, HEAD)
+    put(gen, "traits", rows, hdr(("Class",)))
 
 
-def gen_atomics(c, counts, classes):
+def gen_atomics(c, counts, classes, gen):
     hits = by_name(c, lambda h: h["group"] in ("atomic", "sync"))
     rows = []
     for n in sorted(hits):
         classes[("atomic", n)] = ("M", status_of(c, hits[n]))
-        rows.append(ext_row(c, n, hits[n], "atomic"))
+        rows.append(ext_row(c, n, hits[n], "atomic", label="builtin (atomic)", extra=("M",)))
     counts["atomic"] = (len(hits), sum(len(v) for v in hits.values()))
-    return table(rows, HEAD)
+    put(gen, "atomics", rows, hdr(("Class",)))
 
 
-def gen_attributes(c, counts, classes):
+def gen_attributes(c, counts, classes, gen):
     hits = by_name(c, lambda h: h["group"] == "attribute")
     rows = []
     for n in sorted(hits):
@@ -501,40 +575,35 @@ def gen_attributes(c, counts, classes):
         sp = sorted({h.get("syntax", "") for h in hs} - {""})
         cls = "M" if n in CLASS_M_ATTR else "A"
         classes[("attribute", n)] = (cls, status_of(c, hs))
-        r = ext_row(c, n, hs, "attribute", CLASS_NOTE_ATTR.get(n, ""))
-        r.insert(1, md(", ".join(sp)))
-        r.insert(2, cls)
-        rows.append(r)
+        rows.append(ext_row(c, n, hs, "attribute", CLASS_NOTE_ATTR.get(n, ""), label="GNU attribute",
+                            extra=(md(", ".join(sp)), cls)))
     counts["attribute"] = (len(hits), sum(len(v) for v in hits.values()))
-    hd = HEAD[:1] + ["Spellings", "Class"] + HEAD[1:]
+    put(gen, "attributes", rows, hdr(("Spellings", "Class")))
     std = by_name(c, lambda h: h["group"] in ("attribute-std", "attribute-cxx11-other"))
     srows = []
     for n in sorted(std):
         hs = std[n]
         sp = sorted({h["spelling"] for h in hs})
-        classes[("attribute-std", n)] = ("A" if n not in ("[[no_unique_address]]",) else "M", status_of(c, hs))
-        r = ext_row(c, n, hs, "attribute-std")
-        r[-1] = "ISO C++ attribute; GCC accepts the reserved `__name__` spelling ([Attribute-Syntax](%sAttribute-Syntax.html))" % GCC
-        r.insert(1, md(", ".join(sp)))
+        cls = "A" if n not in ("[[no_unique_address]]",) else "M"
+        classes[("attribute-std", n)] = (cls, status_of(c, hs))
+        r = ext_row(c, n, hs, "attribute-std", label="ISO attribute", extra=(md(", ".join(sp)), cls))
+        r[-1] = ("ISO C++ attribute; GCC accepts the reserved `__name__` spelling "
+                 "([Attribute-Syntax](%sAttribute-Syntax.html))" % GCC)
         srows.append(r)
     counts["attribute-std"] = (len(std), sum(len(v) for v in std.values()))
-    hd2 = HEAD[:1] + ["Spellings"] + HEAD[1:]
-    return table(rows, hd), table(srows, hd2)
+    put(gen, "std_attributes", srows, hdr(("Spellings", "Class")))
 
 
-def gen_simple(c, groups, counts, key, classes, cls_fn=lambda n: "M"):
+def gen_simple(c, groups, counts, key, classes, gen, out_key, cls_fn=lambda n: "M"):
     hits = by_name(c, lambda h: h["group"] in groups)
     rows = []
     for n in sorted(hits, key=lambda s: s.lower()):
         hs = hits[n]
         cl = cls_fn(n)
         classes[(key, n)] = (cl, status_of(c, hs))
-        r = ext_row(c, n, hs, "x")
-        r.insert(1, cl)
-        rows.append(r)
+        rows.append(ext_row(c, n, hs, "x", KW_NOTE.get(n, ""), label=label_of(hs), extra=(cl,)))
     counts[key] = (len(hits), sum(len(v) for v in hits.values()))
-    hd = HEAD[:1] + ["Class"] + HEAD[1:]
-    return table(rows, hd)
+    put(gen, out_key, rows, hdr(("Class",)))
 
 
 def kw_class(n):
@@ -553,7 +622,7 @@ def syn_class(n):
     return "M"
 
 
-def gen_pragmas(c, counts, classes):
+def gen_pragmas(c, counts, classes, gen):
     hits = by_name(c, lambda h: h["group"] == "pragma")
     rows = []
     for n in sorted(hits):
@@ -562,26 +631,90 @@ def gen_pragmas(c, counts, classes):
         top = "; ".join("%s (%d)" % (t[:60], k) for t, k in texts.most_common(4))
         cl = syn_class(n)
         classes[("pragma", n)] = (cl, status_of(c, hs))
-        r = ext_row(c, n, hs, "x")
-        r.insert(1, cl)
-        r.insert(2, md(top))
-        rows.append(r)
+        via = "_Pragma" if all(h.get("via") == "_Pragma" for h in hs) else "#pragma"
+        rows.append(ext_row(c, n, hs, "x", label="pragma (%s)" % via, extra=(cl, md(top))))
     counts["pragma"] = (len(hits), sum(len(v) for v in hits.values()))
-    hd = HEAD[:1] + ["Class", "Forms seen (count)"] + HEAD[1:]
-    return table(rows, hd)
+    put(gen, "pragmas", rows, hdr(("Class", "Forms seen (count)")))
 
 
-def gen_asm(c, counts, classes):
+def asm_family(h):
+    """Coarse family of an asm hit, for the summary table."""
+    if h["ctx"].startswith("define:"):
+        return "macro " + h["ctx"][7:]
+    if h["name"].startswith("inline asm"):
+        return "top-level asm statement"
+    if h["file"].startswith("/usr/include/c++/"):
+        return "long double / _Float128 ABI aliases"
+    return "C++ overload or POSIX alias"
+
+
+def gen_asm(c, counts, classes, gen):
     hits = [h for h in c.scan["hits"] if h["group"] == "asm"]
     rows = []
     for h in sorted(hits, key=lambda h: (h["file"], h["line"])):
         st = status_of(c, [h])
         rows.append([code(h["name"]), "%s:%d" % (short(h["file"]), h["line"]) + (" (`#define %s`)" % h["ctx"][7:] if h["ctx"].startswith("define:") else ""),
-                     code(h.get("asm", "")[:70]), code(guard_text(h["guards"][-1] if h["guards"] else None)), st])
+                     code(h.get("asm", "").strip()[:70]), code(guard_text(h["guards"][-1] if h["guards"] else None)), st])
     counts["asm"] = (len({h["name"] for h in hits}), len(hits))
     for n in {h["name"] for h in hits}:
         classes[("asm", n)] = ("M", status_of(c, [h for h in hits if h["name"] == n]))
-    return table(rows, ["Kind", "Site", "Operand text", "Innermost guard (verbatim)", "Reached"])
+    gen["asm"] = table(rows, ["Kind", "Site", "Operand text", "Innermost guard (verbatim)", "Reached"])
+    # summary: one row per (kind, family, file, guard, status)
+    grp = collections.OrderedDict()
+    for h in sorted(hits, key=lambda h: (h["file"], h["line"])):
+        g = h["guards"][-1] if h["guards"] else None
+        k = (h["name"], asm_family(h), h["file"], guard_text(g), status_of(c, [h]))
+        grp.setdefault(k, []).append(h)
+    srows = []
+    for (name, fam, f, gt, st), hs in grp.items():
+        lines = ", ".join(str(h["line"]) for h in hs[:6]) + (", ..." if len(hs) > 6 else "")
+        srows.append([code(name), md(fam), "%s:%s" % (short(f), lines), str(len(hs)),
+                      code(hs[0].get("asm", "").strip()[:60]), code(gt), st])
+    gen["asm_summary"] = table(srows, ["Kind", "Family", "Sites", "Count", "First operand", "Innermost guard (verbatim)", "Reached"])
+
+
+REDIRECT_RE = re.compile(r"\b(__REDIRECT(?:_NTH|_NTHNL|_FORTIFY|_FORTIFY_NTH|_LDBL)?)\s*\(")
+
+
+def gen_redirects(c, gen):
+    """Invocations of glibc's __REDIRECT* macros in code lines of entered blocks."""
+    fid_of = {p: i for i, p in enumerate(sorted(c.manifest))}
+    res = {}
+    for cfg in ("m1", "m1-fortify", "neither"):
+        act = c.sets[cfg]
+        per_file = collections.Counter()
+        per_macro = collections.Counter()
+        for f in sorted(c.closure["files"]):
+            fid = fid_of[f]
+            stack, counter = [], 0
+            for ll in hx.logical_lines(hx.read_text(c.manifest, f)):
+                d, _ = hx.directive(ll)
+                if d in hx.COND_OPEN:
+                    counter += 1
+                    stack.append("%d.%d" % (fid, counter))
+                    continue
+                if d in hx.COND_MID:
+                    counter += 1
+                    if stack:
+                        stack[-1] = "%d.%d" % (fid, counter)
+                    continue
+                if d == "endif":
+                    if stack:
+                        stack.pop()
+                    continue
+                if d is not None:
+                    continue
+                if (stack[-1] if stack else "%d.0" % fid) not in act:
+                    continue
+                for m in REDIRECT_RE.finditer(ll.code):
+                    per_file[f] += 1
+                    per_macro[m.group(1)] += 1
+        res[cfg] = (per_file, per_macro)
+    rows = []
+    for cfg, (pf, pm) in res.items():
+        rows.append([code(cfg), str(sum(pm.values())), md(", ".join("%s %d" % (k, v) for k, v in sorted(pm.items()))),
+                     md(", ".join("%s %d" % (short(k), v) for k, v in pf.most_common()))])
+    gen["redirects"] = table(rows, ["Configuration", "`__REDIRECT*` invocations in entered code", "By macro", "By header"])
 
 
 def gen_wrappers(c, files):
@@ -813,6 +946,49 @@ def gen_other_ext_macros(c):
     return "\n".join(out)
 
 
+def gen_predef_values(c):
+    """Compiler-predefined macros that M1-live header code (or a macro body
+    reachable from it) uses as a value rather than in #if."""
+    cand = set()
+    for line in open(os.path.join(c.out, "pp/clang-predef.txt")):
+        m = re.match(r"#define (\w+)", line)
+        if m:
+            cand.add(m.group(1))
+    delta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gcc15-delta.h")
+    for line in open(delta):
+        m = re.match(r"#define (\w+)", line)
+        if m:
+            cand.add(m.group(1))
+    cand |= set(GCC_VALUES)
+    cand -= {d["name"] for d in c.scan["defines"]}
+    cand = {n for n in cand if n.startswith("__") and not n.startswith("__clang") and n != "__llvm__"}
+    act = c.sets["m1"]
+    used = collections.Counter()
+    for b, ids in c.scan["uses"].items():
+        if b in act:
+            for x in ids:
+                if x in cand:
+                    used[x] += 1
+    for d in c.scan["defines"]:
+        if d["block"] in act and d["name"] in c.expanded["m1"]:
+            for x in set(re.findall(r"[A-Za-z_]\w*", d["body"])):
+                if x in cand:
+                    used[x] += 1
+    tested = {r["name"] for r in c.steer["ids"]}
+    fams = collections.OrderedDict([
+        ("type names", r"_TYPE__$"), ("floating-point characteristics", r"^__(B?FLT|DBL|LDBL|DEC)\d*X?_"),
+        ("integer limits and widths", r"_(MAX|MIN|WIDTH)__$"), ("sizes", r"^__SIZEOF_"),
+        ("atomics", r"^__(GCC_)?ATOMIC_"), ("byte order", r"ORDER|BYTE_ORDER"), ("other", r"")])
+    out = collections.defaultdict(list)
+    for n in sorted(used):
+        for k, p in fams.items():
+            if re.search(p, n):
+                out[k].append(code(n) + ("\\*" if n in tested else ""))
+                break
+    lines = ["- **%s** (%d): %s" % (k, len(v), ", ".join(v)) for k, v in out.items() if v]
+    return "\n".join(lines)
+
+
 def gen_identity_diff(c):
     rows = []
     pairs = [("m1", "clang"), ("m1", "neither"), ("m1", "m1-O0"), ("m1", "gcc-eh"), ("m1", "m1-fortify"), ("m1", "m1-gnu")]
@@ -863,22 +1039,25 @@ def gen_counts(counts, classes):
               ("varargs", "Varargs builtins"), ("fortify", "Object-size / fortify builtins"),
               ("atomic", "`__atomic_*` / `__sync_*` builtins"), ("attribute", "GNU attributes"),
               ("attribute-std", "Standard attributes (incl. reserved spellings)"), ("pragma", "Pragmas"),
-              ("keyword", "Keyword / type / syntax extensions"), ("asm", "asm usage (kinds)"),
+              ("keyword", "Keyword and type extensions"), ("asm", "asm usage (kinds)"),
               ("syntax", "Syntax and directive extensions"), ("preprocessor", "Preprocessor operators (in code)"), ("aarch64", "aarch64-specific types")]
     for k, lab in labels:
         if k not in counts:
             continue
         n, u = counts[k]
         cl = collections.Counter()
+        bucket = collections.Counter()
         for (g, nm), (cls, st) in classes.items():
-            gk = g
-            if gk in ("keyword-table",):
-                gk = "keyword"
-            if gk == k:
+            if g == k:
                 cl[st.split(" (")[0]] += 1
+                if st.startswith("M1"):
+                    bucket[cls] += 1
         m1 = cl.get("M1", 0)
-        rows.append([lab, str(n), str(u), str(m1), str(cl.get("M1 macro only", 0)), str(n - m1 - cl.get("M1 macro only", 0))])
-    return table(rows, ["Group", "Distinct names", "Occurrences", "Reached in M1", "M1, macro defined but not expanded by headers", "Only outside M1 / not reached"])
+        mo = cl.get("M1 macro only", 0)
+        rows.append([lab, str(n), str(u), str(m1), str(mo), str(n - m1 - mo),
+                     "%d / %d / %d" % (bucket.get("M", 0), bucket.get("L", 0), bucket.get("A", 0))])
+    return table(rows, ["Group", "Distinct names", "Occurrences", "Reached in M1", "M1 macro only",
+                        "Only outside M1", "M1-reachable by class M / L / A"])
 
 
 def gen_class_lists(classes):
@@ -907,16 +1086,19 @@ def main():
     counts = {}
     classes = {}
     gen = {}
-    gen.update(gen_builtin_tables(c, counts, classes))
-    gen["traits"] = gen_traits(c, counts, classes)
-    gen["atomics"] = gen_atomics(c, counts, classes)
-    gen["attributes"], gen["std_attributes"] = gen_attributes(c, counts, classes)
-    gen["keywords"] = gen_simple(c, ("keyword", "c-keyword", "type", "type-std", "fallback-define"), counts, "keyword", classes, kw_class)
-    gen["syntax"] = gen_simple(c, ("syntax", "directive"), counts, "syntax", classes, syn_class)
-    gen["aarch64"] = gen_simple(c, ("aarch64-type",), counts, "aarch64", classes)
-    gen["pragmas"] = gen_pragmas(c, counts, classes)
-    gen["asm"] = gen_asm(c, counts, classes)
-    gen["preproc"] = gen_simple(c, ("preprocessor",), counts, "preprocessor", classes, lambda n: "M")
+    gen_builtin_tables(c, counts, classes, gen)
+    gen_traits(c, counts, classes, gen)
+    gen_atomics(c, counts, classes, gen)
+    gen_attributes(c, counts, classes, gen)
+    gen_simple(c, ("keyword", "c-keyword", "type", "type-std", "fallback-define"), counts, "keyword", classes, gen,
+               "keywords", kw_class)
+    gen_simple(c, ("syntax", "directive"), counts, "syntax", classes, gen, "syntax", syn_class)
+    gen_simple(c, ("aarch64-type",), counts, "aarch64", classes, gen, "aarch64")
+    gen_pragmas(c, counts, classes, gen)
+    gen_asm(c, counts, classes, gen)
+    gen_redirects(c, gen)
+    gen_simple(c, ("preprocessor",), counts, "preprocessor", classes, gen, "preproc")
+    gen["predef_values"] = gen_predef_values(c)
     gen["wrappers_glibc"] = gen_wrappers(c, {"/usr/include/aarch64-linux-gnu/sys/cdefs.h", "/usr/include/features.h"})
     gen["wrappers_libstdcxx"] = gen_wrappers(c, {"/usr/include/aarch64-linux-gnu/c++/15/bits/c++config.h"})
     gen["steer_identity"] = gen_steer_table(c, IDENTITY)

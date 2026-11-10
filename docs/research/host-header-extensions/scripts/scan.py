@@ -154,6 +154,9 @@ def main():
     closure = json.load(open(closure_p))
     traits = load_traits(trait_p)
     manidx = json.load(open(manidx_p))
+    # Type-Traits entries of the manual that are not in cp-trait.def (__integer_pack)
+    traits |= {n for n, es in manidx["builtin"].items()
+               if not n.startswith("__builtin_") and any("Type-Traits" in e["page"] for e in es)}
     atomic_names = {n for n, es in manidx["builtin"].items()
                     if any("atomic-Builtins" in e["page"] for e in es)}
     sync_names = {n for n, es in manidx["builtin"].items()
