@@ -70,6 +70,11 @@ FEATURES = {
     "bitfield": r"^[ \t]*(?:(?:unsigned|signed|const|volatile)\s+)*(?:int|unsigned|signed|char|short|long|_Bool|bool|u?int(?:8|16|32|64)_t|[A-Za-z_]\w*_t|[A-Z][A-Za-z0-9_]*)\s+(?:[A-Za-z_]\w*\s*)?:\s*[0-9]+\s*[;,]",
     "fenv_calls": r"\bfe(?:getround|setround|clearexcept|raiseexcept|testexcept|getenv|setenv|holdexcept|updateenv|getexceptflag|setexceptflag|enableexcept|disableexcept)\s*\(",
     "Pragma_op": r"\b_Pragma\s*\(",
+    "line_comment": r"__LINE_COMMENT__",
+    "c11_keyword": r"\b(?:_Static_assert|_Alignas|_Alignof|_Noreturn|_Generic|_Atomic|_Thread_local)\b",
+    "restrict_kw": r"\brestrict\b",
+    "inline_kw": r"\binline\b",
+    "Bool_kw": r"\b_Bool\b",
 }
 FEATURES = {k: re.compile(v, re.M) for k, v in FEATURES.items()}
 FMT_L = re.compile(r"%[-+ #0'0-9.*$]*L[fFeEgGaA]")
@@ -90,6 +95,7 @@ def strip(text):
         if c == "/" and i + 1 < n and text[i + 1] == "/":
             j = text.find("\n", i)
             j = n if j < 0 else j
+            out.append(" __LINE_COMMENT__ ")  # counted as feature line_comment
             i = j; continue
         if c in "\"'":
             j = i + 1

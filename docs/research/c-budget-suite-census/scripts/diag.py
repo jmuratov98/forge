@@ -38,6 +38,9 @@ CONFIGS = {
     # gcc-16 (Darwin-hosted), glibc headers, GCC's own default diagnostics only
     "gcc-default": ("gcc", []),
     "gcc-gnu17": ("gcc", ["-std=gnu17"]),
+    "gcc-gnu11": ("gcc", ["-std=gnu11"]),
+    "gcc-gnu99": ("gcc", ["-std=gnu99"]),
+    "gcc-gnu89": ("gcc", ["-std=gnu89"]),
     # what the suite itself asks for: C_STANDARD N -> -std=gnuN (CMake's
     # C_EXTENSIONS defaults to ON); a -std= in the program's CFLAGS wins
     "gcc-pinned": ("gcc", []),

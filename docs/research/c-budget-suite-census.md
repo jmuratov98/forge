@@ -400,4 +400,470 @@ Directories are abbreviated: `SS` = `SingleSource/Benchmarks`, `MS` = `MultiSour
 | 251 | Towers | `SS/Stanford` | 1 | 218 | — | — | — | -lm | yes; r 0.001 |
 | 252 | Treesort | `SS/Stanford` | 1 | 187 | — | — | — | -lm | yes; r 0.001 |
 
-*(table PARTA_FEATURES not generated yet)*
+## 4. Language features
+
+### 4.1 How features were detected
+
+- **Reached (`gcc -E`).** Most counts come from `pp.py`, which preprocesses each program with gcc-16 in the dialect the suite passes, with glibc 2.43 headers and the program's flags, and keeps only lines from the program's own files. Code in inactive `#if` branches is not counted; for example ClamAV's and consumer-lame's `long double` appear only in such branches. The identity is GCC's (`__GNUC__` 16, no `__clang__`), so where a program tests `__GNUC__` the GCC path is the one counted.
+- **Diagnostics (clang).** VLAs, K&R definitions, `()` declarations, implicit int, implicit declarations, computed goto and the C99/C11/C23 extension warnings come from clang's diagnostics in program files. Clang ran with `--target=aarch64-unknown-linux-gnu` against the same glibc headers. The flags were `-std=gnu17 -pedantic -Wvla -Wgnu -Wc23-extensions -Wimplicit-int -Wimplicit-function-declaration -Wdeprecated-non-prototype -Wstrict-prototypes`, plus `-std=gnu99 -pedantic -Wc11-extensions` and `-std=gnu89 -pedantic`. The default-error diagnostics were downgraded with `-Wno-error=…`, so a file keeps going after the first one. The program's own `-W` flags were dropped for these runs so the warnings fire.
+- **Grep (`scan.py`).** Grep, which also sees inactive branches, supplies `//` comments, `#define f(...)` variadic macros, the include lists and the "inactive" rows.
+- **Apple SDK.** No Apple SDK header was used, so nothing broke for SDK reasons. The section-0 fallback was not needed.
+- **No C++-only constructs.** No program hit a clang error for a construct GCC accepts (nested functions, for example). The only clang errors in program files under `-std=gnu17` are `restrict` used as an identifier, in espresso and cdecl, which the suite pins to C90.
+
+| Feature | Programs | of CTMark 6 | Which | Detected by |
+|---|---|---|---|---|
+| `long double` arithmetic | 2 | 1 | automotive-basicmath, **sqlite3** (CTMark sqlite3) | gcc -E reached + clang AST |
+| `long double` only in inactive `#if` branches | 2 | 1 | consumer-lame, **clamscan** (CTMark ClamAV) | grep hit, absent after gcc -E |
+| `%Lf`/`%Le`/`%Lg`/`%La` formats | 0 | 0 | — | string literals after gcc -E |
+| `<math.h>` `*l` functions, `strtold` | 0 | 0 | — | gcc -E |
+| `__int128`, `__uint128_t`, `mode(TI)` | 0 | 0 | — | grep and gcc -E |
+| `_BitInt` | 0 | 0 | — | gcc -E |
+| `_Complex`/`__complex__`/`complex` | 3 | 0 | mandel-2, mandel, rsbench | gcc -E |
+| `<tgmath.h>` | 0 | 0 | — | includes (grep) |
+| `<fenv.h>` | 0 | 0 | — | includes (grep) |
+| VLA | 9 | 1 | spectral-norm, evalloop, CrystalMk, backprop, pathfinder, miniAMR, SimpleMOC, CoMD, **clamscan** (CTMark ClamAV) | clang -Wvla |
+| `_Atomic`, `<stdatomic.h>`, `__atomic_*`/`__sync_*` | 0 | 0 | — | gcc -E |
+| `_Thread_local`/`__thread` | 0 | 0 | — | gcc -E |
+| pthread calls reached | 0 | 0 | — | gcc -E |
+| pthread/TLS/atomics only in inactive branches | 4 | 2 | smg2000, AMGmk, **clamscan** (CTMark ClamAV), **sqlite3** (CTMark sqlite3) | grep hit, absent after gcc -E |
+| any C11 construct or C11 header spelled by the program | 0 | 0 | — | gcc -E keywords, includes, clang -std=gnu99 -Wc11-extensions |
+| any C99 construct (see 4.2) | 140 | 5 | fasta, partialsums, puzzle, spectral-norm, almabench, huffbench, lpbench, fldry, misr, evalloop, himenobmtxpa, lowercase, mandel-2, mandel, oourafft, perlin, revertBits, salsa20, dt, correlation … (120 more) | clang -std=gnu89 -pedantic, grep |
+| C23 construct or extension (`{}` initializer, `#warning`, …) | 3 | 0 | gs, netbench-url, miniGMG | clang -Wc23-extensions, grep |
+| K&R function definitions | 31 | 3 | dry, fldry, chomp, fbench, ffbench, flops, smg2000, espresso, cfrac, imp, bisort, em3d, voronoi, assembler, cdecl, simulator, netbench-url, ecbdes, rawcaudio, rawdaudio, toast, mpeg2decode, sim, automotive-susan, **consumer-typeset** (CTMark consumer-typeset), telecomm-gsm, security-blowfish, telecomm-adpcm, office-ispell, **pairlocalalign** (CTMark mafft), **clamscan** (CTMark ClamAV) | clang -Wdeprecated-non-prototype |
+| calls with arguments to a `()` declaration | 25 | 2 | dry, fldry, flops, smg2000, five11, fhourstones, espresso, cfrac, imp, bh, voronoi, mybison, timberwolfmc, assembler, loader, plot2fig, simulator, archie, unix-smail, netbench-crc, encode, sim, PathFinder, **pairlocalalign** (CTMark mafft), **lencod** (CTMark lencod) | clang -Wdeprecated-non-prototype |
+| `()` declaration that conflicts once `()` means `(void)` | 29 | 3 | dry, fldry, flops, five11, espresso, gs, cfrac, imp, bh, bisort, voronoi, mybison, timberwolfmc, assembler, loader, plot2fig, simulator, archie, unix-smail, netbench-crc, ecbdes, encode, nbench, sim, PathFinder, office-ispell, **pairlocalalign** (CTMark mafft), **sqlite3** (CTMark sqlite3), **lencod** (CTMark lencod) | clang -Wdeprecated-non-prototype |
+| implicit int | 29 | 0 | dry, fldry, ReedSolomon, fbench, flops, perlin, uudecode, uuencode, espresso, gs, imp, bh, agrep, mybison, cdecl, fixoutput, unix-tbl, bc, ft, enc-pc1, ecbdes, rawcaudio, rawdaudio, encode, sim, automotive-susan, telecomm-CRC32, office-stringsearch, office-ispell | clang -Wimplicit-int |
+| implicit function declarations | 5 | 0 | gs, mybison, plot2fig, archie, office-ispell | clang -Wimplicit-function-declaration |
+| hex float literals | 1 | 0 | telecomm-fft | gcc -E + clang gnu89 |
+| `restrict` keyword | 3 | 0 | backprop, XSBench, SimpleMOC | gcc -E |
+| `inline` keyword | 77 | 2 | fasta, lowercase, oourafft, dt, correlation, covariance, gemm, gemver, gesummv, symm, syr2k, syrk … (65 more) | gcc -E |
+| flexible array members | 1 | 1 | **consumer-typeset** (CTMark consumer-typeset) | clang -std=gnu89 -pedantic |
+| compound literals | 1 | 0 | fhourstones3.1 | clang -std=gnu89 -pedantic |
+| variadic macros (`__VA_ARGS__` or named) | 1 | 0 | netbench-url | grep `#define f(...)`, clang |
+| setjmp/longjmp | 2 | 0 | gs, anagram | gcc -E |
+| `signal`/`sigaction` calls | 7 | 1 | unix-tbl, unix-smail, bc, toast, telecomm-gsm, office-ispell, **sqlite3** (CTMark sqlite3) | gcc -E |
+| variadic function definitions (`va_start`) | 5 | 4 | cdecl, **consumer-typeset** (CTMark consumer-typeset), **clamscan** (CTMark ClamAV), **SPASS** (CTMark SPASS), **sqlite3** (CTMark sqlite3) | grep `va_start`, reached `__builtin_va_start` |
+| bitfields | 5 | 3 | fhourstones3.1, **consumer-typeset** (CTMark consumer-typeset), consumer-lame, **clamscan** (CTMark ClamAV), **sqlite3** (CTMark sqlite3) | regex on gcc -E (approximate) |
+| computed goto / labels as values | 1 | 0 | evalloop | clang -Wgnu-label-as-value |
+| `vector_size` | 1 | 0 | partialsums | gcc -E |
+| `alloca`/`__builtin_alloca` | 2 | 1 | consumer-lame, **SPASS** (CTMark SPASS) | gcc -E |
+| inline asm reached | 0 | 0 | — | gcc -E |
+| statement expressions | 0 | 0 | — | clang -Wgnu-statement-expression |
+| nested functions | 0 | 0 | — | clang error |
+| zero-length arrays | 0 | 0 | — | clang -Wzero-length-array |
+| case ranges | 0 | 0 | — | clang -Wgnu-case-range |
+| `__typeof__`/`typeof` | 0 | 0 | — | gcc -E |
+
+### 4.2 Revisions
+
+"Needs" is the newest ISO revision with a construct the program spells and reaches:
+- **C99** means any of: `//` comments, `long long`, mixed declarations and code, a declaration in a `for` initializer, `_Bool`, `inline`, `restrict`, a VLA, a flexible array member, a compound literal, a hex float, a variadic macro, a non-constant aggregate initializer, or a C99 header (`<stdint.h>`, `<stdbool.h>`, `<inttypes.h>`, `<complex.h>`, `<fenv.h>`, `<tgmath.h>`).
+- **C11** means a C11 keyword or one of `<stdalign.h>`, `<stdatomic.h>`, `<stdnoreturn.h>`, `<threads.h>`, `<uchar.h>`. No program spells any of them, so no program reaches C11.
+- **C17 is not a column.** C17 added no language features over C11 (it is a defect-correction revision), so it would always equal the C11 row.
+- **"C23/GNU"** marks a C23 construct that GCC has long accepted as a GNU extension in older dialects: an empty initializer `{}` (gs) or `#warning` (miniGMG).
+
+Library functions (`snprintf`, `strtoll`, …) are not counted; section 9 says why.
+
+"GCC 16 accepts" is the range of `-std=gnuNN` that GCC 16 compiles without errors, with the program's own flags. It is the measured counterpart: the oldest dialect shows what the program needs, the newest shows what C23 removed.
+
+| Newest revision whose features the program spells | Programs | CTMark |
+|---|---|---|
+| C89 | 112 | SPASS |
+| C99 | 137 | consumer-typeset, mafft, ClamAV, sqlite3, lencod |
+| C11 | 0 | — |
+| C23/GNU | 3 | — |
+
+| C99 construct (clang `-std=gnu89 -pedantic` unless noted) | Programs |
+|---|---|
+| // comments | 121 |
+| mixed decls | 88 |
+| inline | 77 |
+| long long | 47 |
+| for-init decl | 47 |
+| <stdint.h> | 11 |
+| VLA | 9 |
+| _Bool | 6 |
+| <stdbool.h> | 6 |
+| <inttypes.h> | 4 |
+| _Complex | 3 |
+| <complex.h> | 3 |
+| restrict | 3 |
+| non-constant aggregate init | 2 |
+| compound literal | 1 |
+| variadic macro | 1 |
+| flexible array | 1 |
+| hex float | 1 |
+
+| GNU dialects GCC 16 accepts (program's own flags) | Programs | CTMark |
+|---|---|---|
+| gnu89–gnu23 | 169 | consumer-typeset, ClamAV |
+| gnu99–gnu23 | 46 | — |
+| gnu89–gnu17 | 34 | mafft, SPASS, sqlite3, lencod |
+| gnu89 | 3 | — |
+
+Programs reaching at least one GNU language extension (excluding `__attribute__` and `__builtin_*`, counted separately in 4.4): **7**: partialsums, evalloop, mandel, netbench-url, network-patricia, consumer-lame, **SPASS** (CTMark SPASS).
+
+### 4.3 `long double`
+
+AArch64 Linux makes `long double` IEEE binary128 (`__LDBL_MANT_DIG__` 113 for this target). Two programs reach it:
+
+| Program | `long double` expression nodes in program files (clang AST, gnu17, aarch64-linux-gnu) | Distinct source lines |
+|---|---|---|
+| automotive-basicmath | ImplicitCastExpr <LValueToRValue> 28, DeclRefExpr 28, ImplicitCastExpr <FloatingCast> 19, BinaryOperator * 13, BinaryOperator / 8, BinaryOperator - 6, VarDecl 5, ParmVarDecl 4, ParenExpr 2, BinaryOperator + 1, CompoundAssignOperator += 1, CompoundAssignOperator -= 1 | 13 |
+| consumer-lame | none (all hits are in inactive branches) | 0 |
+| clamscan | none (all hits are in inactive branches) | 0 |
+| sqlite3 | DeclRefExpr 42, ImplicitCastExpr <FloatingCast> 27, ImplicitCastExpr <LValueToRValue> 21, CompoundAssignOperator *= 12, BinaryOperator = 6, VarDecl 5, UnaryOperator * 3, ImplicitCastExpr <IntegralToFloating> 3, BinaryOperator * 3, ParenExpr 3, UnaryOperator - 2, CompoundAssignOperator += 2, BinaryOperator + 2, CompoundAssignOperator /= 2, BinaryOperator - 1, ConditionalOperator 1 | 31 |
+
+- **automotive-basicmath** (`MS/MiBench/automotive-basicmath/cubic.c:19-21`) declares `long double a1 = b/a, a2 = c/a, a3 = d/a;` and computes `Q` and `R` in `long double`. The `FloatingCast` nodes are the conversions to and from `double` around calls to `sqrt`, `cos`, `acos` and `pow`. It calls no `*l` function and uses no `%L` format. `snipmath.h:45` also declares `long double ldfloor(long double)`.
+- **sqlite3** (version 3.5.7, amalgamation generated 2008-03-17; `sqlite3.c:553`). `sqlite3.c:6276-6277`: `#ifndef LONGDOUBLE_TYPE` / `# define LONGDOUBLE_TYPE long double`. The only other definition, `sqlite_int64` at `:6160`, applies under `SQLITE_OMIT_FLOATING_POINT`, which the suite does not set. Three places use it:
+  - **Float printing.** `vxprintf` holds the value in `LONGDOUBLE_TYPE realvalue` (`:13881`), loaded with `va_arg(ap,double)` (`:14091`). It normalises by repeated `*= 1e-32`, `*= 1e-8`, `*= 0.1`, `*= 1e8`, `*= 10.0` (`:14120-14124`) and adds a rounder (`:14111`, `:14144`). It then extracts digits with `et_getdigit(LONGDOUBLE_TYPE *val, int *cnt)` (`:13796`): `digit = (int)*val; … *val = (*val - d)*10.0;`. That stops after 16 digits.
+  - **`sqlite3AtoF`** (`:15853`) accumulates `LONGDOUBLE_TYPE v1` with `v1 = v1*10.0 + (*z - '0')`. It keeps a `long double` `divisor` and `scale` (`scale *= 1.0e+64` etc.) and finally stores into a `double *pResult`.
+  - **No library use.** Neither place uses `%Lf` or any `*l` function. All `long double` work is the four arithmetic operators, comparisons and conversions to and from `double` and `int`.
+  - **Tolerance.** The suite compares sqlite3's output with `FP_TOLERANCE 1.0e-9`. `MultiSource/Applications/CMakeLists.txt` excludes sqlite3 only on PowerPC and XCore, so it is also configured on AArch64 Darwin, where `long double` is IEEE double (`gcc-16 -dM -E` there: `__SIZEOF_LONG_DOUBLE__ 8`, `__LDBL_MANT_DIG__ 53`). Whether the reference output still matches there was not checked (section 9).
+- **Inactive only.** consumer-lame and clamscan mention `long double` only inside inactive branches: the AST of the active code has no `long double` node.
+- **Nothing else.** No program has `%Lf`/`%Le`/`%Lg` formats or calls a `<math.h>` `*l` function.
+
+### 4.4 Attributes, builtins and pragmas
+
+The "reached" lists include expansions of glibc macros in program code. For example `__builtin_va_*` comes from `<stdarg.h>`, so it is left out of the builtin list. The "spelled" lists are grep over the program's own files across every branch.
+
+- **`__attribute__` names reached after `gcc -E`** (programs): `aligned` 36, `optimize` 32, `noinline` 4, `const` 1, `format` 1, `noreturn` 1, `packed` 1, `vector_size` 1.
+- **`__attribute__` names spelled anywhere in program files, any branch** (programs): `aligned` 36, `optimize` 32, `noinline` 4, `const` 1, `format` 1, `noreturn` 1, `packed` 1, `unused` 1, `vector_size` 1, `visibility` 1.
+- **`__builtin_*` reached after `gcc -E`**, without `__builtin_va_*` from `<stdarg.h>` (programs): `__builtin_alloca` 2, `__builtin_isnan` 2, `__builtin_huge_val` 1, `__builtin_isinf_sign` 1, `__builtin_memcpy` 1, `__builtin_offsetof` 1.
+- **`__builtin_*` spelled anywhere in program files, any branch** (programs): `__builtin_alloca` 1, `__builtin_bitreverse32` 1, `__builtin_bitreverse64` 1, `__builtin_expect` 1, `__builtin_memcpy` 1, `__builtin_readcyclecounter` 1.
+- **`#pragma`s reached after `gcc -E`** (programs): `STDC FP_CONTRACT` 32, `endscop` 30, `scop` 30, `omp parallel` 4, `omp for` 3, `ident` 1, `omp atomic` 1.
+
+### 4.5 System headers
+
+`#include <…>` targets in the program's files, plus quoted includes that name a standard header and do not resolve locally. Grep-level, so includes in inactive branches count too.
+
+**ISO C headers** (19 of the 31 in C23), with the number of programs: `<assert.h>` 84, `<complex.h>` 3, `<ctype.h>` 34, `<errno.h>` 15, `<float.h>` 6, `<inttypes.h>` 4, `<limits.h>` 20, `<locale.h>` 2, `<math.h>` 140, `<setjmp.h>` 2, `<signal.h>` 14, `<stdarg.h>` 8, `<stdbool.h>` 6, `<stddef.h>` 12, `<stdint.h>` 11, `<stdio.h>` 248, `<stdlib.h>` 230, `<string.h>` 159, `<time.h>` 102.
+
+**Other headers** (110: POSIX, Linux, BSD and non-portable): `<unistd.h>` 67, `<sys/types.h>` 66, `<sys/time.h>` 60, `<sys/param.h>` 43, `<sys/times.h>` 42, `<omp.h>` 36, `<sys/resource.h>` 35, `<papi.h>` 31, `<sched.h>` 30, `<strings.h>` 19, `<fcntl.h>` 18, `<sys/stat.h>` 16, `<io.h>` 10, `<windows.h>` 10, `<memory.h>` 8, `<malloc.h>` 7, `<netinet/in.h>` 5, `<pthread.h>` 5, `<sys/socket.h>` 5, `<arpa/inet.h>` 4, `<mpi.h>` 4, `<pwd.h>` 4, `<cm/cmmd.h>` 3, `<dos.h>` 3, `<sys/timeb.h>` 3, `<utime.h>` 3, `<SIOUX.h>` 2, `<Timer.h>` 2, `<alloc.h>` 2, `<alloca.h>` 2, `<console.h>` 2, `<dirent.h>` 2, `<err.h>` 2, `<netdb.h>` 2, `<rle.h>` 2, `<ssdef.h>` 2, `<sys/file.h>` 2, `<sys/ioctl.h>` 2, `<sys/ipc.h>` 2, `<sys/rusage.h>` 2, `<sys/shm.h>` 2, `<sys/syscall.h>` 2, `<sys/timesu.h>` 2, `<sys/wait.h>` 2, `<unix.h>` 2, `<CursorCtl.h>` 1, `<Time.h>` 1, `<Types.h>` 1, `<Winsock2.h>` 1, `<X11/Xlib.h>` 1, `<X11/Xutil.h>` 1, `<X11/extensions/XShm.h>` 1, `<bzlib.h>` 1, `<conio.h>` 1, `<crtdbg.h>` 1, `<dlfcn.h>` 1, `<execinfo.h>` 1, `<features.h>` 1, `<floatingpoint.h>` 1, `<fpu_control.h>` 1, `<getopt.h>` 1, `<gmp.h>` 1, `<gnu-versions.h>` 1, `<grp.h>` 1, `<gtk/gtk.h>` 1, `<iconv.h>` 1, `<in.h>` 1, `<jpidef.h>` 1, `<libintl.h>` 1, `<lowmem.h>` 1, `<mem.h>` 1, `<msdos/cutcp.h>` 1, `<msdos/hostform.h>` 1, `<msdos/netevent.h>` 1, `<net/errno.h>` 1, `<net/if.h>` 1, `<nl_types.h>` 1, `<os2.h>` 1, `<os2def.h>` 1, `<os2safe.h>` 1, `<osfcn.h>` 1, `<pctcp.h>` 1, `<readline/history.h>` 1, `<readline/readline.h>` 1, `<regex.h>` 1, `<rwconf.h>` 1, `<sgtty.h>` 1, `<socket.h>` 1, `<sys/cygwin.h>` 1, `<sys/inet.h>` 1, `<sys/int_types.h>` 1, `<sys/mman.h>` 1, `<sys/mount.h>` 1, `<sys/select.h>` 1, `<sys/utime.h>` 1, `<sys/utsname.h>` 1, `<sys\stat.h>` 1, `<sysexits.h>` 1, `<syslog.h>` 1, `<tcl.h>` 1, `<termcap.h>` 1, `<termio.h>` 1, `<termios.h>` 1, `<toolhelp.h>` 1, `<types.h>` 1, `<unixio.h>` 1, `<unixlib.h>` 1, `<varargs.h>` 1, `<winbase.h>` 1, `<winsock.h>` 1.
+
+### 4.6 Per-program table
+
+Columns:
+- **"Needs"** and **"GCC 16 accepts"**: see 4.2.
+- **`long double`**: "arith" means arithmetic is reached; "inactive" means grep-only.
+- **K&R defs**: K&R function definitions.
+- **`f()` called with args**: calls that pass arguments to a function declared `()`.
+- **`f()` decl conflicts**: `()` declarations that conflict with a definition or another declaration once `()` means `(void)`.
+- **implicit int**, **implicit decl**: clang diagnostic counts in program files.
+- **gnu23 errors**: GCC 16's errors at its default dialect, grouped by message.
+
+| # | Program | Needs | GCC 16 accepts | `long double` | `_Complex` | VLA | K&R defs | `f()` called with args | `f()` decl conflicts | implicit int | implicit decl | gnu23 errors (class) | GNU extensions reached |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | **clamscan** (CTMark ClamAV) | C99 | gnu89–gnu23 | inactive | — | 1 | 142 | — | — | — | — | 0 | — |
+| 2 | **lencod** (CTMark lencod) | C99 | gnu89–gnu17 | — | — | — | — | 2 | 1 | — | — | 3: () now means (void) 3 | — |
+| 3 | **SPASS** (CTMark SPASS) | C89 | gnu89–gnu17 | — | — | — | — | — | — | — | — | 14: bool/true/false keywords 13; () now means (void) 1 | alloca |
+| 4 | **sqlite3** (CTMark sqlite3) | C99 | gnu89–gnu17 | arith | — | — | — | — | 1 | — | — | 2: () now means (void) 2 | — |
+| 5 | smg2000 | C89 | gnu89–gnu17 | — | — | — | 1 | 4 | — | — | — | 8: () now means (void) 8 | — |
+| 6 | AMGmk | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 7 | CrystalMk | C99 | gnu89–gnu23 | — | — | 94 | — | — | — | — | — | 0 | — |
+| 8 | IRSmk | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 9 | drop3 | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 10 | five11 | C99 | gnu89–gnu17 | — | — | — | — | 2 | 2 | — | — | 4: () now means (void) 4 | — |
+| 11 | uudecode | C99 | gnu89–gnu23 | — | — | — | — | — | — | 1 | — | 0 | — |
+| 12 | uuencode | C99 | gnu89–gnu23 | — | — | — | — | — | — | 1 | — | 0 | — |
+| 13 | CoMD | C99 | gnu99–gnu23 | — | — | 1 | — | — | — | — | — | 0 | — |
+| 14 | PathFinder | C99 | gnu89–gnu17 | — | — | — | — | 1 | 1 | — | — | 2: () now means (void) 2 | — |
+| 15 | rsbench | C99 | gnu99–gnu23 | — | yes (complex.h) | — | — | — | — | — | — | 0 | — |
+| 16 | SimpleMOC | C99 | gnu99–gnu23 | — | — | 5 | — | — | — | — | — | 0 | — |
+| 17 | XSBench | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 18 | miniAMR | C99 | gnu99–gnu23 | — | — | 9 | — | — | — | — | — | 0 | — |
+| 19 | miniGMG | C23/GNU | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 20 | fhourstones | C99 | gnu89–gnu17 | — | — | — | — | 12 | — | — | — | 12: () now means (void) 12 | — |
+| 21 | fhourstones3.1 | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 22 | analyzer | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 23 | distray | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 24 | fourinarow | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 25 | mason | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 26 | neural | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 27 | pcompress2 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 28 | pifft | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 29 | cfrac | C99 | gnu89–gnu17 | — | — | — | 60 | 102 | 3 | — | — | 113: () now means (void) 113 | — |
+| 30 | espresso | C89 | gnu89 | — | — | — | 341 | 1391 | 370 | 597 | — | 2827: () now means (void) 2205; implicit int 600; restrict is a keyword 14; bool/true/false keywords 6; other 2 | — |
+| 31 | gs | C23/GNU | gnu89–gnu17 | — | — | — | — | — | 1 | 2 | 198 | 8: () now means (void) 2; bool/true/false keywords 2; other 2; restrict is a keyword 2 | — |
+| 32 | qbsort | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 33 | testtrie | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 34 | bisect | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 35 | eks | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 36 | main | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 37 | vor | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 38 | iotest | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 39 | trie | C89 | gnu89–gnu17 | — | — | — | — | — | — | — | — | 1: bool/true/false keywords 1 | — |
+| 40 | bintr | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 41 | imp | C89 | gnu89–gnu17 | — | — | — | 5 | 5 | 4 | 1 | — | 13: () now means (void) 13 | — |
+| 42 | automotive-basicmath | C99 | gnu89–gnu23 | arith | — | — | — | — | — | — | — | 0 | — |
+| 43 | automotive-bitcount | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 44 | automotive-susan | C89 | gnu89–gnu23 | — | — | — | 18 | — | — | 14 | — | 0 | — |
+| 45 | consumer-jpeg | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 46 | consumer-lame | C99 | gnu89–gnu23 | inactive | — | — | — | — | — | — | — | 0 | alloca |
+| 47 | **consumer-typeset** (CTMark consumer-typeset) | C99 | gnu89–gnu23 | — | — | — | 2 | — | — | — | — | 0 | — |
+| 48 | network-dijkstra | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 49 | network-patricia | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | void* arithmetic |
+| 50 | office-ispell | C89 | gnu89–gnu17 | — | — | — | 99 | — | 24 | 3 | 1 | 36: () now means (void) 36 | — |
+| 51 | office-stringsearch | C89 | gnu89–gnu23 | — | — | — | — | — | — | 1 | — | 0 | — |
+| 52 | security-blowfish | C89 | gnu89–gnu23 | — | — | — | 7 | — | — | — | — | 0 | — |
+| 53 | security-rijndael | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 54 | security-sha | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 55 | telecomm-CRC32 | C89 | gnu89–gnu23 | — | — | — | — | — | — | 1 | — | 0 | — |
+| 56 | telecomm-fft | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 57 | telecomm-adpcm | C89 | gnu89–gnu23 | — | — | — | 2 | — | — | — | — | 0 | — |
+| 58 | telecomm-gsm | C89 | gnu89–gnu23 | — | — | — | 1 | — | — | — | — | 0 | — |
+| 59 | is | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 60 | bh | C89 | gnu89–gnu17 | — | — | — | — | 23 | 10 | 1 | — | 72: () now means (void) 69; bool/true/false keywords 3 | — |
+| 61 | bisort | C99 | gnu89–gnu17 | — | — | — | 4 | — | 6 | — | — | 19: () now means (void) 19 | — |
+| 62 | em3d | C89 | gnu89–gnu23 | — | — | — | 1 | — | — | — | — | 0 | — |
+| 63 | health | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 64 | mst | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 65 | perimeter | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 66 | power | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 67 | treeadd | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 68 | tsp | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 69 | voronoi | C99 | gnu89–gnu17 | — | — | — | 17 | 15 | 16 | — | — | 72: () now means (void) 72 | — |
+| 70 | timberwolfmc | C99 | gnu89–gnu17 | — | — | — | — | 35 | 123 | — | — | 167: () now means (void) 166; bool/true/false keywords 1 | — |
+| 71 | agrep | C89 | gnu89–gnu23 | — | — | — | — | — | — | 33 | — | 0 | — |
+| 72 | allroots | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 73 | archie | C99 | gnu89–gnu17 | — | — | — | — | 83 | 21 | — | 26 | 104: () now means (void) 104 | — |
+| 74 | assembler | C89 | gnu89–gnu17 | — | — | — | 7 | 160 | 13 | — | — | 173: () now means (void) 173 | — |
+| 75 | mybison | C99 | gnu89–gnu17 | — | — | — | — | 119 | 6 | 1 | 2 | 128: () now means (void) 128 | — |
+| 76 | cdecl | C99 | gnu89 | — | — | — | 14 | — | — | 2 | — | 15: restrict is a keyword 13; implicit int 2 | — |
+| 77 | compiler | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 78 | fixoutput | C89 | gnu89–gnu23 | — | — | — | — | — | — | 2 | — | 0 | — |
+| 79 | football | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 80 | gnugo | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 81 | loader | C89 | gnu89–gnu17 | — | — | — | — | 45 | 2 | — | — | 47: () now means (void) 47 | — |
+| 82 | plot2fig | C89 | gnu89–gnu17 | — | — | — | — | 1 | 2 | — | 2 | 3: () now means (void) 3 | — |
+| 83 | simulator | C89 | gnu89–gnu17 | — | — | — | 16 | 335 | 4 | — | — | 343: () now means (void) 343 | — |
+| 84 | unix-smail | C89 | gnu89–gnu17 | — | — | — | — | 86 | 37 | — | — | 142: () now means (void) 142 | — |
+| 85 | unix-tbl | C89 | gnu89 | — | — | — | — | — | — | 2 | — | 2: () now means (void) 1; glibc C23 _Generic macro 1 | — |
+| 86 | anagram | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 87 | bc | C89 | gnu89–gnu23 | — | — | — | — | — | — | 1 | — | 0 | — |
+| 88 | ft | C99 | gnu89–gnu23 | — | — | — | — | — | — | 1 | — | 0 | — |
+| 89 | ks | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 90 | yacr2 | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 91 | backprop | C99 | gnu99–gnu23 | — | — | 14 | — | — | — | — | — | 0 | — |
+| 92 | hotspot | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 93 | pathfinder | C99 | gnu99–gnu23 | — | — | 4 | — | — | — | — | — | 0 | — |
+| 94 | srad | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 95 | scimark2 | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 96 | ControlFlow-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 97 | ControlFlow-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 98 | ControlLoops-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 99 | ControlLoops-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 100 | CrossingThresholds-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 101 | CrossingThresholds-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 102 | Equivalencing-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 103 | Equivalencing-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 104 | Expansion-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 105 | Expansion-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 106 | GlobalDataFlow-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 107 | GlobalDataFlow-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 108 | IndirectAddressing-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 109 | IndirectAddressing-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 110 | InductionVariable-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 111 | InductionVariable-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 112 | LinearDependence-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 113 | LinearDependence-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 114 | LoopRerolling-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 115 | LoopRerolling-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 116 | LoopRestructuring-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 117 | LoopRestructuring-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 118 | NodeSplitting-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 119 | NodeSplitting-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 120 | Packing-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 121 | Packing-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 122 | Recurrences-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 123 | Recurrences-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 124 | Reductions-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 125 | Reductions-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 126 | Searching-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 127 | Searching-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 128 | StatementReordering-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 129 | StatementReordering-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 130 | Symbolics-dbl | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 131 | Symbolics-flt | C99 | gnu99–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 132 | enc-3des | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 133 | enc-md5 | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 134 | enc-pc1 | C89 | gnu89–gnu23 | — | — | — | — | — | — | 3 | — | 0 | — |
+| 135 | enc-rc4 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 136 | netbench-crc | C89 | gnu89–gnu17 | — | — | — | — | 1 | 1 | — | — | 2: () now means (void) 2 | — |
+| 137 | netbench-url | C23/GNU | gnu89–gnu23 | — | — | — | 1 | — | — | — | — | 0 | , ##__VA_ARGS__, named variadic macro |
+| 138 | 8b10b | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 139 | beamformer | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 140 | bmm | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 141 | dbms | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 142 | ecbdes | C99 | gnu89–gnu17 | — | — | — | 10 | — | 1 | 1 | — | 1: () now means (void) 1 | — |
+| 143 | llu | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 144 | **pairlocalalign** (CTMark mafft) | C99 | gnu89–gnu17 | — | — | — | 2 | 4 | 340 | — | — | 357: () now means (void) 357 | — |
+| 145 | rawcaudio | C89 | gnu89–gnu23 | — | — | — | 2 | — | — | 1 | — | 0 | — |
+| 146 | rawdaudio | C89 | gnu89–gnu23 | — | — | — | 2 | — | — | 1 | — | 0 | — |
+| 147 | encode | C89 | gnu89–gnu17 | — | — | — | — | 50 | 8 | 1 | — | 60: () now means (void) 60 | — |
+| 148 | toast | C89 | gnu89–gnu23 | — | — | — | 1 | — | — | — | — | 0 | — |
+| 149 | cjpeg | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 150 | mpeg2decode | C89 | gnu89–gnu23 | — | — | — | 61 | — | — | — | — | 0 | — |
+| 151 | nbench | C89 | gnu89–gnu17 | — | — | — | — | — | 1 | — | — | 1: () now means (void) 1 | — |
+| 152 | sim | C89 | gnu89–gnu17 | — | — | — | 11 | 17 | 10 | 8 | — | 46: () now means (void) 46 | — |
+| 153 | fannkuch | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 154 | n-body | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 155 | nsieve-bits | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 156 | partialsums | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | vector_size |
+| 157 | puzzle | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 158 | recursive | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 159 | spectral-norm | C99 | gnu89–gnu23 | — | — | 3 | — | — | — | — | — | 0 | — |
+| 160 | fasta | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 161 | almabench | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 162 | huffbench | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 163 | lpbench | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 164 | dry | C89 | gnu89–gnu17 | — | — | — | 9 | 9 | 9 | 10 | — | 28: () now means (void) 28 | — |
+| 165 | fldry | C99 | gnu89–gnu17 | — | — | — | 10 | 9 | 9 | 9 | — | 28: () now means (void) 28 | — |
+| 166 | linpack-pc | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 167 | chomp | C89 | gnu89–gnu23 | — | — | — | 2 | — | — | — | — | 0 | — |
+| 168 | exptree | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 169 | misr | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 170 | queens | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 171 | ReedSolomon | C89 | gnu89–gnu23 | — | — | — | — | — | — | 1 | — | 0 | — |
+| 172 | dt | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 173 | evalloop | C99 | gnu99–gnu23 | — | — | 1 | — | — | — | — | — | 0 | computed goto |
+| 174 | fbench | C89 | gnu89–gnu23 | — | — | — | 2 | — | — | 1 | — | 0 | — |
+| 175 | ffbench | C89 | gnu89–gnu23 | — | — | — | 1 | — | — | — | — | 0 | — |
+| 176 | flops | C89 | gnu89–gnu17 | — | — | — | 1 | 22 | 1 | 1 | — | 24: () now means (void) 24 | — |
+| 177 | flops-1 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 178 | flops-2 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 179 | flops-3 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 180 | flops-4 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 181 | flops-5 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 182 | flops-6 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 183 | flops-7 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 184 | flops-8 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 185 | fp-convert | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 186 | himenobmtxpa | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 187 | lowercase | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 188 | mandel | C99 | gnu89–gnu23 | — | yes (complex.h) | — | — | — | — | — | — | 0 | __complex__, imaginary constant |
+| 189 | mandel-2 | C99 | gnu89–gnu23 | — | yes (complex.h) | — | — | — | — | — | — | 0 | — |
+| 190 | matmul_f64_4x4 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 191 | oourafft | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 192 | perlin | C99 | gnu89–gnu23 | — | — | — | — | — | — | 1 | — | 0 | — |
+| 193 | pi | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 194 | revertBits | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 195 | richards_benchmark | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 196 | salsa20 | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 197 | whetstone | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 198 | correlation | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 199 | covariance | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 200 | gemm | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 201 | gemver | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 202 | gesummv | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 203 | symm | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 204 | syr2k | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 205 | syrk | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 206 | trmm | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 207 | 2mm | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 208 | 3mm | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 209 | atax | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 210 | bicg | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 211 | doitgen | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 212 | mvt | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 213 | cholesky | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 214 | durbin | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 215 | gramschmidt | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 216 | lu | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 217 | ludcmp | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 218 | trisolv | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 219 | deriche | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 220 | floyd-warshall | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 221 | nussinov | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 222 | adi | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 223 | fdtd-2d | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 224 | heat-3d | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 225 | jacobi-1d | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 226 | jacobi-2d | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 227 | seidel-2d | C99 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 228 | Shootout-ackermann | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 229 | Shootout-ary3 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 230 | Shootout-fib2 | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 231 | Shootout-hash | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 232 | Shootout-heapsort | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 233 | Shootout-hello | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 234 | Shootout-lists | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 235 | Shootout-matrix | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 236 | Shootout-methcall | C89 | gnu89–gnu17 | — | — | — | — | — | — | — | — | 1: bool/true/false keywords 1 | — |
+| 237 | Shootout-nestedloop | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 238 | Shootout-objinst | C89 | gnu89–gnu17 | — | — | — | — | — | — | — | — | 1: bool/true/false keywords 1 | — |
+| 239 | Shootout-random | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 240 | Shootout-sieve | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 241 | Shootout-strcat | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 242 | Bubblesort | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 243 | FloatMM | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 244 | IntMM | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 245 | Oscar | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 246 | Perm | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 247 | Puzzle | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 248 | Queens | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 249 | Quicksort | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 250 | RealMM | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 251 | Towers | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+| 252 | Treesort | C89 | gnu89–gnu23 | — | — | — | — | — | — | — | — | 0 | — |
+
+## 5. GCC's default `gnu23` versus `gnu17`
+
+This was measured with GCC 16.1 (Homebrew, `aarch64-apple-darwin24`) given the Linux identity (section 0), not GCC 15.2 on Ubuntu. GCC 16's default is `gnu23`, as GCC 15's is. Each configuration passes the program's own `-D`, `-I`, `-f` and `-W` flags; the `-W` flags are how the suite keeps GCC 14+ permerrors off. Only errors located in program files are counted.
+
+| Configuration (GCC 16.1 on Darwin, glibc 2.43 headers, program's own `-D`/`-I`/`-W`/`-f` flags) | Programs with errors | of CTMark 6 | Which |
+|---|---|---|---|
+| default dialect (`gnu23`), every program | 37 | 4: mafft, SPASS, sqlite3, lencod | dry, fldry, flops, Shootout-methcall, Shootout-objinst, smg2000, five11, fhourstones, espresso, gs, cfrac, imp, trie, bh, bisort, voronoi, mybison, timberwolfmc, assembler, cdecl, loader, plot2fig, simulator, unix-tbl, archie, unix-smail, netbench-crc, ecbdes, encode, nbench, sim, PathFinder, office-ispell, **pairlocalalign** (CTMark mafft), **SPASS** (CTMark SPASS), **sqlite3** (CTMark sqlite3), **lencod** (CTMark lencod) |
+| `-std=gnu17`, every program | 3 | 0 | espresso, cdecl, unix-tbl |
+| `-std=gnu11`, every program | 3 | 0 | espresso, cdecl, unix-tbl |
+| `-std=gnu99`, every program | 3 | 0 | espresso, cdecl, unix-tbl |
+| `-std=gnu89`, every program | 46 | 0 | evalloop, hotspot, srad, backprop, pathfinder, ControlFlow-dbl, ControlFlow-flt, ControlLoops-dbl, ControlLoops-flt, CrossingThresholds-dbl, CrossingThresholds-flt, Equivalencing-dbl, Equivalencing-flt, Expansion-dbl, Expansion-flt, GlobalDataFlow-dbl, GlobalDataFlow-flt, IndirectAddressing-dbl, IndirectAddressing-flt, InductionVariable-dbl, InductionVariable-flt, LinearDependence-dbl, LinearDependence-flt, LoopRerolling-dbl, LoopRerolling-flt, LoopRestructuring-dbl, LoopRestructuring-flt, NodeSplitting-dbl, NodeSplitting-flt, Packing-dbl, Packing-flt, Recurrences-dbl, Recurrences-flt, Reductions-dbl, Reductions-flt, Searching-dbl, Searching-flt, StatementReordering-dbl, StatementReordering-flt, Symbolics-dbl, Symbolics-flt, XSBench, rsbench, miniAMR, SimpleMOC, CoMD |
+| the dialect the suite passes (C_STANDARD pin or own `-std=`, else default `gnu23`) | 3 | 0 | plot2fig, unix-tbl, archie |
+
+| gnu23 error class (message-based) | Errors | Programs |
+|---|---|---|
+| () now means (void) | 4215 | 33 |
+| implicit int | 602 | 2 |
+| restrict is a keyword | 29 | 3 |
+| bool/true/false keywords | 28 | 8 |
+| other | 4 | 2 |
+| glibc C23 _Generic macro | 1 | 1 |
+
+Of the 37 programs that fail at `gnu23`, 34 carry a pin that keeps the suite from compiling them at `gnu23`, and 3 do not: plot2fig, unix-tbl, archie.
+Of the 35 programs pinned to `C_STANDARD 17` or `90`, 1 compile at `gnu23` anyway: **clamscan** (CTMark ClamAV).
+
+Observations from the error text (`diag-gcc-*.json`):
+- **What C23 changes.**
+  - **`()` now means `(void)`.** Almost all gnu23 errors come from this. Old-style declarations such as `extern int fputs(), fputc();` (plot2fig `closepl.c:29`) now conflict with glibc's prototypes, and calls that pass arguments to `()`-declared functions are now "too many arguments".
+  - **Keywords.** The second cause is `bool`, `true` and `false` becoming keywords: `typedef … bool` in trie and bh, `enum { false, true }` in the Shootout programs and timberwolfmc, and a `bool` parameter name in SPASS's `dfgparser.y`.
+- **K&R definitions still compile in GCC 16 at `gnu23`.** A probe gave `int bar(x) int x; { return x; }` only `warning: old-style function definition [-Wold-style-definition]`, under both `-std=c23` and the default. Clang 17 at `-std=gnu23` rejects the same line with "unknown type name 'x'". So the K&R column in 4.6 does not by itself predict a GCC gnu23 failure; the `()`-call and conflict columns do.
+- **unix-tbl: glibc's C23 `strchr` macro.** `t3.c:6` has `#define index strchr` before `#include <string.h>`. At `gnu23`, glibc 2.43 defines `strchr(S, C)` as `__glibc_const_generic (S, const char *, strchr (S, C))`, a `_Generic` (`string.h:263-265`, `sys/cdefs.h:837-840`). `<strings.h>`'s declaration of `index` then expands into that macro, giving "expected identifier or '(' before '_Generic'". This is the only gnu23 error caused by header text rather than program text.
+- **unix-tbl also fails at gnu17** with "passing argument 2 of 'signal' from incompatible pointer type" (`t1.c:41`). Its `CMakeLists.txt` adds `-Wno-incompatible-function-pointer-types`, a clang-only spelling. GCC's flag is `-Wno-incompatible-pointer-types`.
+- **espresso and cdecl fail at gnu17, gnu11 and gnu99** because of implicit int and `restrict` used as an identifier. The suite pins both to `C_STANDARD 90` (`-std=gnu89`), where they compile.
+- **What GCC 15 sees as the suite configures it.** Without a pin the suite compiles at the compiler's default (section 2), so with GCC 15 or 16 three programs fail as configured:
+  - plot2fig and archie fail at `gnu23` only;
+  - unix-tbl fails at `gnu23`, and at `gnu17` because of its clang-only flag.
+
+## 6. Fallout if the slice dropped a feature
+
+Programs that would fall out if milestone 1 dropped each item. "Falls out" means the program reaches the construct after `gcc -E` (or clang reports it in program code); a construct only in inactive branches does not count. CTMark's six are listed individually.
+
+| If the slice dropped | Programs that fall out | CTMark six | Which | Basis |
+|---|---|---|---|---|
+| `long double` (binary128) | **2** | sqlite3 out; ClamAV in; consumer-typeset in; lencod in; mafft in; SPASS in | automotive-basicmath, **sqlite3** (CTMark sqlite3) | reached after `gcc -E`; AST confirms arithmetic |
+| `__int128` | **0** | sqlite3 in; ClamAV in; consumer-typeset in; lencod in; mafft in; SPASS in | — | no occurrence, even in inactive branches |
+| `_Complex` | **3** | sqlite3 in; ClamAV in; consumer-typeset in; lencod in; mafft in; SPASS in | mandel-2, mandel, rsbench | reached after `gcc -E` |
+| VLAs | **9** | sqlite3 in; ClamAV out; consumer-typeset in; lencod in; mafft in; SPASS in | spectral-norm, evalloop, CrystalMk, backprop, pathfinder, miniAMR, SimpleMOC, CoMD, **clamscan** (CTMark ClamAV) | clang `-Wvla` in program source |
+| `_Atomic` and threads (`<threads.h>`, pthreads, TLS) | **0** | sqlite3 in; ClamAV in; consumer-typeset in; lencod in; mafft in; SPASS in | — | reached after `gcc -E` |
+| C11 as a whole (language features and C11 headers spelled by the program) | **0** | sqlite3 in; ClamAV in; consumer-typeset in; lencod in; mafft in; SPASS in | — | see 4.2; glibc's own `_Generic` macros are section C |
+| C11 as a whole, counted by GCC 16 failing at `-std=gnu99` | **0** | sqlite3 in; ClamAV in; consumer-typeset in; lencod in; mafft in; SPASS in | — | compiles at gnu17 but not gnu99 |
+| pre-C23 rules: slice compiles only with C23 rules (GCC 15's default `gnu23`) | **37** | sqlite3 out; ClamAV in; consumer-typeset in; lencod out; mafft out; SPASS out | dry, fldry, flops, Shootout-methcall, Shootout-objinst, smg2000, five11, fhourstones, espresso, gs, cfrac, imp, trie, bh, bisort, voronoi, mybison, timberwolfmc, assembler, cdecl, loader, plot2fig, simulator, unix-tbl, archie, unix-smail, netbench-crc, ecbdes, encode, nbench, sim, PathFinder, office-ispell, **pairlocalalign** (CTMark mafft), **SPASS** (CTMark SPASS), **sqlite3** (CTMark sqlite3), **lencod** (CTMark lencod) | GCC 16 errors at `gnu23` |
+| C99 as a whole, ISO reading: slice is strict C89 | **140** | sqlite3 out; ClamAV out; consumer-typeset out; lencod out; mafft out; SPASS in | fasta, partialsums, puzzle, spectral-norm, almabench, huffbench, lpbench, fldry, misr, evalloop, himenobmtxpa, lowercase, mandel-2, mandel, oourafft, perlin, revertBits, salsa20, dt, correlation, covariance, gemm, gemver, gesummv, symm, syr2k, syrk, trmm, 2mm, 3mm, atax, bicg, doitgen, mvt, cholesky, durbin, gramschmidt, lu, ludcmp, trisolv, deriche, floyd-warshall, nussinov, adi, fdtd-2d, heat-3d, jacobi-1d, jacobi-2d, seidel-2d, AMGmk, CrystalMk, IRSmk, drop3, five11, uudecode, uuencode, fhourstones, fhourstones3.1, fourinarow, gs, cfrac, bintr, bisort, health, voronoi, mybison, timberwolfmc, cdecl, archie, ft, yacr2, scimark2, enc-md5, netbench-url, beamformer, bmm, ecbdes, 8b10b, cjpeg, hotspot, srad, backprop, pathfinder, ControlFlow-dbl, ControlFlow-flt, ControlLoops-dbl, ControlLoops-flt, CrossingThresholds-dbl, CrossingThresholds-flt, Equivalencing-dbl, Equivalencing-flt, Expansion-dbl, Expansion-flt, GlobalDataFlow-dbl, GlobalDataFlow-flt, IndirectAddressing-dbl, IndirectAddressing-flt, InductionVariable-dbl, InductionVariable-flt, LinearDependence-dbl, LinearDependence-flt, LoopRerolling-dbl, LoopRerolling-flt, LoopRestructuring-dbl, LoopRestructuring-flt, NodeSplitting-dbl, NodeSplitting-flt, Packing-dbl, Packing-flt, Recurrences-dbl, Recurrences-flt, Reductions-dbl, Reductions-flt, Searching-dbl, Searching-flt, StatementReordering-dbl, StatementReordering-flt, Symbolics-dbl, Symbolics-flt, XSBench, rsbench, PathFinder, miniAMR, miniGMG, SimpleMOC, CoMD, automotive-basicmath, automotive-bitcount, consumer-jpeg, **consumer-typeset** (CTMark consumer-typeset), network-dijkstra, network-patricia, security-rijndael, security-sha, telecomm-fft, consumer-lame, **pairlocalalign** (CTMark mafft), **clamscan** (CTMark ClamAV), **sqlite3** (CTMark sqlite3), **lencod** (CTMark lencod) | program spells any C99 construct (4.2) |
+| C99 as a whole, GCC reading: slice is `gnu89` (GCC accepts many C99 features there as extensions) | **46** | sqlite3 in; ClamAV in; consumer-typeset in; lencod in; mafft in; SPASS in | evalloop, hotspot, srad, backprop, pathfinder, ControlFlow-dbl, ControlFlow-flt, ControlLoops-dbl, ControlLoops-flt, CrossingThresholds-dbl, CrossingThresholds-flt, Equivalencing-dbl, Equivalencing-flt, Expansion-dbl, Expansion-flt, GlobalDataFlow-dbl, GlobalDataFlow-flt, IndirectAddressing-dbl, IndirectAddressing-flt, InductionVariable-dbl, InductionVariable-flt, LinearDependence-dbl, LinearDependence-flt, LoopRerolling-dbl, LoopRerolling-flt, LoopRestructuring-dbl, LoopRestructuring-flt, NodeSplitting-dbl, NodeSplitting-flt, Packing-dbl, Packing-flt, Recurrences-dbl, Recurrences-flt, Reductions-dbl, Reductions-flt, Searching-dbl, Searching-flt, StatementReordering-dbl, StatementReordering-flt, Symbolics-dbl, Symbolics-flt, XSBench, rsbench, miniAMR, SimpleMOC, CoMD | GCC 16 errors at `-std=gnu89` |
+
+- **C11 row.** Every program that compiles at `gnu17` also compiles at `gnu99` and `gnu11` under GCC 16 (4.2), and none spells a C11 construct. The 33 programs pinned to `C_STANDARD 17` are pinned to stay below C23, not because they need C11. A slice limited to C99 would still meet C11 constructs in glibc's headers (Part C).
+- **C99 rows.** All 46 programs that fail at `-std=gnu89` contain `for (int i = …)` declarations ("'for' loop initial declarations are only allowed in C99 or C11 mode", 1,718 errors), and two of them also use `restrict` as a keyword. GCC accepts the rest of the C99 list in 4.2 in `gnu89` as extensions: `//`, `long long`, mixed declarations, `inline`, VLAs, flexible arrays and `_Bool`.
+- **Inactive branches.** `long double` and pthreads appear only in inactive branches in four programs (4.1). sqlite3 is built with `-DSQLITE_THREADSAFE=0`. smg2000 uses `-DHYPRE_SEQUENTIAL`. ClamAV's and AMGmk's pthread code is not reached on this configuration. No C program's flags include `-pthread`.
+
+*(table PARTB not generated yet)*
+

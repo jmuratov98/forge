@@ -76,4 +76,99 @@ Directories are abbreviated: `SS` = `SingleSource/Benchmarks`, `MS` = `MultiSour
 
 {{FLAGS}}
 
-{{PARTA_FEATURES}}
+## 4. Language features
+
+### 4.1 How features were detected
+
+- **Reached (`gcc -E`).** Most counts come from `pp.py`, which preprocesses each program with gcc-16 in the dialect the suite passes, with glibc 2.43 headers and the program's flags, and keeps only lines from the program's own files. Code in inactive `#if` branches is not counted; for example ClamAV's and consumer-lame's `long double` appear only in such branches. The identity is GCC's (`__GNUC__` 16, no `__clang__`), so where a program tests `__GNUC__` the GCC path is the one counted.
+- **Diagnostics (clang).** VLAs, K&R definitions, `()` declarations, implicit int, implicit declarations, computed goto and the C99/C11/C23 extension warnings come from clang's diagnostics in program files. Clang ran with `--target=aarch64-unknown-linux-gnu` against the same glibc headers. The flags were `-std=gnu17 -pedantic -Wvla -Wgnu -Wc23-extensions -Wimplicit-int -Wimplicit-function-declaration -Wdeprecated-non-prototype -Wstrict-prototypes`, plus `-std=gnu99 -pedantic -Wc11-extensions` and `-std=gnu89 -pedantic`. The default-error diagnostics were downgraded with `-Wno-error=…`, so a file keeps going after the first one. The program's own `-W` flags were dropped for these runs so the warnings fire.
+- **Grep (`scan.py`).** Grep, which also sees inactive branches, supplies `//` comments, `#define f(...)` variadic macros, the include lists and the "inactive" rows.
+- **Apple SDK.** No Apple SDK header was used, so nothing broke for SDK reasons. The section-0 fallback was not needed.
+- **No C++-only constructs.** No program hit a clang error for a construct GCC accepts (nested functions, for example). The only clang errors in program files under `-std=gnu17` are `restrict` used as an identifier, in espresso and cdecl, which the suite pins to C90.
+
+{{FEATURE_COUNTS}}
+
+### 4.2 Revisions
+
+"Needs" is the newest ISO revision with a construct the program spells and reaches:
+- **C99** means any of: `//` comments, `long long`, mixed declarations and code, a declaration in a `for` initializer, `_Bool`, `inline`, `restrict`, a VLA, a flexible array member, a compound literal, a hex float, a variadic macro, a non-constant aggregate initializer, or a C99 header (`<stdint.h>`, `<stdbool.h>`, `<inttypes.h>`, `<complex.h>`, `<fenv.h>`, `<tgmath.h>`).
+- **C11** means a C11 keyword or one of `<stdalign.h>`, `<stdatomic.h>`, `<stdnoreturn.h>`, `<threads.h>`, `<uchar.h>`. No program spells any of them, so no program reaches C11.
+- **C17 is not a column.** C17 added no language features over C11 (it is a defect-correction revision), so it would always equal the C11 row.
+- **"C23/GNU"** marks a C23 construct that GCC has long accepted as a GNU extension in older dialects: an empty initializer `{}` (gs) or `#warning` (miniGMG).
+
+Library functions (`snprintf`, `strtoll`, …) are not counted; section 9 says why.
+
+"GCC 16 accepts" is the range of `-std=gnuNN` that GCC 16 compiles without errors, with the program's own flags. It is the measured counterpart: the oldest dialect shows what the program needs, the newest shows what C23 removed.
+
+{{REVISIONS}}
+
+### 4.3 `long double`
+
+AArch64 Linux makes `long double` IEEE binary128 (`__LDBL_MANT_DIG__` 113 for this target). Two programs reach it:
+
+{{LONGDOUBLE}}
+
+- **automotive-basicmath** (`MS/MiBench/automotive-basicmath/cubic.c:19-21`) declares `long double a1 = b/a, a2 = c/a, a3 = d/a;` and computes `Q` and `R` in `long double`. The `FloatingCast` nodes are the conversions to and from `double` around calls to `sqrt`, `cos`, `acos` and `pow`. It calls no `*l` function and uses no `%L` format. `snipmath.h:45` also declares `long double ldfloor(long double)`.
+- **sqlite3** (version 3.5.7, amalgamation generated 2008-03-17; `sqlite3.c:553`). `sqlite3.c:6276-6277`: `#ifndef LONGDOUBLE_TYPE` / `# define LONGDOUBLE_TYPE long double`. The only other definition, `sqlite_int64` at `:6160`, applies under `SQLITE_OMIT_FLOATING_POINT`, which the suite does not set. Three places use it:
+  - **Float printing.** `vxprintf` holds the value in `LONGDOUBLE_TYPE realvalue` (`:13881`), loaded with `va_arg(ap,double)` (`:14091`). It normalises by repeated `*= 1e-32`, `*= 1e-8`, `*= 0.1`, `*= 1e8`, `*= 10.0` (`:14120-14124`) and adds a rounder (`:14111`, `:14144`). It then extracts digits with `et_getdigit(LONGDOUBLE_TYPE *val, int *cnt)` (`:13796`): `digit = (int)*val; … *val = (*val - d)*10.0;`. That stops after 16 digits.
+  - **`sqlite3AtoF`** (`:15853`) accumulates `LONGDOUBLE_TYPE v1` with `v1 = v1*10.0 + (*z - '0')`. It keeps a `long double` `divisor` and `scale` (`scale *= 1.0e+64` etc.) and finally stores into a `double *pResult`.
+  - **No library use.** Neither place uses `%Lf` or any `*l` function. All `long double` work is the four arithmetic operators, comparisons and conversions to and from `double` and `int`.
+  - **Tolerance.** The suite compares sqlite3's output with `FP_TOLERANCE 1.0e-9`. `MultiSource/Applications/CMakeLists.txt` excludes sqlite3 only on PowerPC and XCore, so it is also configured on AArch64 Darwin, where `long double` is IEEE double (`gcc-16 -dM -E` there: `__SIZEOF_LONG_DOUBLE__ 8`, `__LDBL_MANT_DIG__ 53`). Whether the reference output still matches there was not checked (section 9).
+- **Inactive only.** consumer-lame and clamscan mention `long double` only inside inactive branches: the AST of the active code has no `long double` node.
+- **Nothing else.** No program has `%Lf`/`%Le`/`%Lg` formats or calls a `<math.h>` `*l` function.
+
+### 4.4 Attributes, builtins and pragmas
+
+The "reached" lists include expansions of glibc macros in program code. For example `__builtin_va_*` comes from `<stdarg.h>`, so it is left out of the builtin list. The "spelled" lists are grep over the program's own files across every branch.
+
+{{ATTRS}}
+
+### 4.5 System headers
+
+`#include <…>` targets in the program's files, plus quoted includes that name a standard header and do not resolve locally. Grep-level, so includes in inactive branches count too.
+
+{{HEADERS}}
+
+### 4.6 Per-program table
+
+Columns:
+- **"Needs"** and **"GCC 16 accepts"**: see 4.2.
+- **`long double`**: "arith" means arithmetic is reached; "inactive" means grep-only.
+- **K&R defs**: K&R function definitions.
+- **`f()` called with args**: calls that pass arguments to a function declared `()`.
+- **`f()` decl conflicts**: `()` declarations that conflict with a definition or another declaration once `()` means `(void)`.
+- **implicit int**, **implicit decl**: clang diagnostic counts in program files.
+- **gnu23 errors**: GCC 16's errors at its default dialect, grouped by message.
+
+{{FEATURES}}
+
+## 5. GCC's default `gnu23` versus `gnu17`
+
+This was measured with GCC 16.1 (Homebrew, `aarch64-apple-darwin24`) given the Linux identity (section 0), not GCC 15.2 on Ubuntu. GCC 16's default is `gnu23`, as GCC 15's is. Each configuration passes the program's own `-D`, `-I`, `-f` and `-W` flags; the `-W` flags are how the suite keeps GCC 14+ permerrors off. Only errors located in program files are counted.
+
+{{GNU23}}
+
+Observations from the error text (`diag-gcc-*.json`):
+- **What C23 changes.**
+  - **`()` now means `(void)`.** Almost all gnu23 errors come from this. Old-style declarations such as `extern int fputs(), fputc();` (plot2fig `closepl.c:29`) now conflict with glibc's prototypes, and calls that pass arguments to `()`-declared functions are now "too many arguments".
+  - **Keywords.** The second cause is `bool`, `true` and `false` becoming keywords: `typedef … bool` in trie and bh, `enum { false, true }` in the Shootout programs and timberwolfmc, and a `bool` parameter name in SPASS's `dfgparser.y`.
+- **K&R definitions still compile in GCC 16 at `gnu23`.** A probe gave `int bar(x) int x; { return x; }` only `warning: old-style function definition [-Wold-style-definition]`, under both `-std=c23` and the default. Clang 17 at `-std=gnu23` rejects the same line with "unknown type name 'x'". So the K&R column in 4.6 does not by itself predict a GCC gnu23 failure; the `()`-call and conflict columns do.
+- **unix-tbl: glibc's C23 `strchr` macro.** `t3.c:6` has `#define index strchr` before `#include <string.h>`. At `gnu23`, glibc 2.43 defines `strchr(S, C)` as `__glibc_const_generic (S, const char *, strchr (S, C))`, a `_Generic` (`string.h:263-265`, `sys/cdefs.h:837-840`). `<strings.h>`'s declaration of `index` then expands into that macro, giving "expected identifier or '(' before '_Generic'". This is the only gnu23 error caused by header text rather than program text.
+- **unix-tbl also fails at gnu17** with "passing argument 2 of 'signal' from incompatible pointer type" (`t1.c:41`). Its `CMakeLists.txt` adds `-Wno-incompatible-function-pointer-types`, a clang-only spelling. GCC's flag is `-Wno-incompatible-pointer-types`.
+- **espresso and cdecl fail at gnu17, gnu11 and gnu99** because of implicit int and `restrict` used as an identifier. The suite pins both to `C_STANDARD 90` (`-std=gnu89`), where they compile.
+- **What GCC 15 sees as the suite configures it.** Without a pin the suite compiles at the compiler's default (section 2), so with GCC 15 or 16 three programs fail as configured:
+  - plot2fig and archie fail at `gnu23` only;
+  - unix-tbl fails at `gnu23`, and at `gnu17` because of its clang-only flag.
+
+## 6. Fallout if the slice dropped a feature
+
+Programs that would fall out if milestone 1 dropped each item. "Falls out" means the program reaches the construct after `gcc -E` (or clang reports it in program code); a construct only in inactive branches does not count. CTMark's six are listed individually.
+
+{{FALLOUT}}
+
+- **C11 row.** Every program that compiles at `gnu17` also compiles at `gnu99` and `gnu11` under GCC 16 (4.2), and none spells a C11 construct. The 33 programs pinned to `C_STANDARD 17` are pinned to stay below C23, not because they need C11. A slice limited to C99 would still meet C11 constructs in glibc's headers (Part C).
+- **C99 rows.** All 46 programs that fail at `-std=gnu89` contain `for (int i = …)` declarations ("'for' loop initial declarations are only allowed in C99 or C11 mode", 1,718 errors), and two of them also use `restrict` as a keyword. GCC accepts the rest of the C99 list in 4.2 in `gnu89` as extensions: `//`, `long long`, mixed declarations, `inline`, VLAs, flexible arrays and `_Bool`.
+- **Inactive branches.** `long double` and pthreads appear only in inactive branches in four programs (4.1). sqlite3 is built with `-DSQLITE_THREADSAFE=0`. smg2000 uses `-DHYPRE_SEQUENTIAL`. ClamAV's and AMGmk's pthread code is not reached on this configuration. No C program's flags include `-pthread`.
+
+{{PARTB}}
+
