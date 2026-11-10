@@ -1,0 +1,280 @@
+run	site	option	message	configurations (roots)
+pedantic	aarch64/bits/fcntl-linux.h:369	-Wpedantic	ISO C forbids zero-size array ‘f_handle’	gnu89+gs=6 gnu99+gs=6 gnu17+gs=6 gnu23+gs=6
+pedantic	aarch64/bits/fenv.h:40	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/bits/mathcalls.h:194	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	aarch64/bits/mathcalls.h:197	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	aarch64/bits/mathcalls.h:203	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	aarch64/bits/mathcalls.h:373	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	aarch64/bits/mathcalls.h:379	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	aarch64/bits/ptrace-shared.h:120	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic	aarch64/bits/ptrace-shared.h:120	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/bits/semaphore.h:32	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/bits/spawn_ext.h:49	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/bits/spawn_ext.h:50	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/bits/spawn_ext.h:61	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/bits/spawn_ext.h:62	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/bits/types/idtype_t.h:10	-Wc90-c99-compat	comma at end of enumerator list	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	aarch64/sys/elf.h:22	-Wc11-c23-compat	‘#warning’ before C23 is a GCC extension	gnu23=1 gnu23+gs=1
+pedantic	aarch64/sys/elf.h:22	-Wcpp	#warning "This header is obsolete; use <sys/procfs.h> instead."	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/sys/elf.h:22	-Wpedantic	‘#warning’ before C23 is a GCC extension	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1
+pedantic	aarch64/sys/epoll.h:66	-Wc11-c23-compat	ISO C restricts enumerator values to range of ‘int’ before C23	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/sys/ifunc.h:73	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/sys/ifunc.h:86	-Wlong-long	use of C99 long long integer constant	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/sys/mount.h:124	-Wc11-c23-compat	ISO C restricts enumerator values to range of ‘int’ before C23	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/sys/personality.h:70	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aarch64/sys/ucontext.h:54	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic	aarch64/sys/ucontext.h:55	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic	aarch64/sys/ucontext.h:56	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic	aarch64/sys/ucontext.h:57	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic	aarch64/sys/ucontext.h:58	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic	aarch64/sys/user.h:24	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=14 gnu89+gs=14 gnu99=14 gnu99+gs=14 gnu17=14 gnu17+gs=14 gnu23=14 gnu23+gs=14
+pedantic	aarch64/sys/user.h:25	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=14 gnu89+gs=14 gnu99=14 gnu99+gs=14 gnu17=14 gnu17+gs=14 gnu23=14 gnu23+gs=14
+pedantic	aarch64/sys/user.h:26	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=14 gnu89+gs=14 gnu99=14 gnu99+gs=14 gnu17=14 gnu17+gs=14 gnu23=14 gnu23+gs=14
+pedantic	aarch64/sys/user.h:27	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=14 gnu89+gs=14 gnu99=14 gnu99+gs=14 gnu17=14 gnu17+gs=14 gnu23=14 gnu23+gs=14
+pedantic	aio.h:52	-Wpedantic	ISO C forbids zero-size array ‘__pad’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aio.h:149	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	aio.h:232	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic	arpa/tftp.h:58	-Wpedantic	ISO C forbids zero-size array ‘tu_data’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	arpa/tftp.h:60	-Wpedantic	ISO C forbids zero-size array ‘tu_stuff’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	asm-generic/posix_types.h:88	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=41 gnu89+gs=52 gnu99=41 gnu99+gs=52 gnu17=41 gnu17+gs=52 gnu23=41 gnu23+gs=52
+pedantic	asm-generic/posix_types.h:89	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=41 gnu89+gs=52 gnu99=41 gnu99+gs=52 gnu17=41 gnu17+gs=52 gnu23=41 gnu23+gs=52
+pedantic	asm-generic/posix_types.h:92	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=41 gnu89+gs=52 gnu99=41 gnu99+gs=52 gnu17=41 gnu17+gs=52 gnu23=41 gnu23+gs=52
+pedantic	assert.h:156		anonymous variadic macros were introduced in C99	gnu99+gs=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	assert.h:156	-Wvariadic-macros	anonymous variadic macros were introduced in C99	gnu89+gs=1
+pedantic	ftw.h:48	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu99=1 gnu17=1 gnu23=1
+pedantic	ftw.h:98	-Wc90-c99-compat	comma at end of enumerator list	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic	gcc/limits.h:200		‘__STDC_VERSION_LIMITS_H__’ redefined	gnu23=6 gnu23+gs=6
+pedantic	gcc/stdarg.h:48		anonymous variadic macros were introduced in C99	gnu23=1 gnu23+gs=1
+pedantic	gcc/stddef.h:441	-Wlong-long	ISO C90 does not support ‘long long’	gnu17=5 gnu17+gs=5 gnu23=5 gnu23+gs=5
+pedantic	gcc/stddef.h:465	-Wc11-c23-compat	ISO C does not support ‘nullptr’ before C23	gnu23=5 gnu23+gs=5
+pedantic	linux/mount.h:106	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/mount.h:204	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic	linux/mount.h:204	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/nfs.h:116	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/pci.h:46	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/quota.h:97	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/quota.h:182	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/quota.h:195	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/rseq.h:18	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/rseq.h:23	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/rseq.h:35	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/rseq.h:49	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/rseq.h:78	-Wpedantic	struct has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic	linux/rseq.h:85	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic	linux/rseq.h:85	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/rseq.h:86	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic	linux/rseq.h:86	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/socket.h:16	-Wpedantic	struct has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic	linux/socket.h:24	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic	linux/socket.h:24	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/socket.h:26	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic	linux/socket.h:26	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	linux/stddef.h:32	-Wvariadic-macros	ISO C does not permit named variadic macros	gnu89=41 gnu89+gs=52 gnu99=41 gnu99+gs=52 gnu17=41 gnu17+gs=52 gnu23=41 gnu23+gs=52
+pedantic	linux/swab.h:75	-Wlong-long	use of C99 long long integer constant	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	linux/swab.h:139	-Wlong-long	use of C99 long long integer constant	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	linux/swab.h:202	-Wlong-long	use of C99 long long integer constant	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	linux/sysinfo.h:22	-Wpedantic	ISO C forbids zero-size array ‘_f’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	math.h:439	-Wc90-c99-compat	comma at end of enumerator list	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	netdb.h:690	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic	netinet/ip6.h:103	-Wpedantic	ISO C forbids zero-size array ‘ip6r0_addr’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	netinet/tcp.h:98	-Wpedantic	struct has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic	netinet/tcp.h:355	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	netinet/tcp.h:496	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	netinet/udp.h:55	-Wpedantic	struct has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic	regex.h:685	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	regex.h:686	-Wc90-c99-compat	ISO C90 forbids variable length array ‘__pmatch’	gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic	spawn.h:79	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic	spawn.h:80	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/atomic_wide_counter.h:27	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=75 gnu89+gs=75 gnu99=75 gnu99+gs=75 gnu17=75 gnu17+gs=75 gnu23=75 gnu23+gs=75
+pedantic-noext	aarch64/bits/fcntl-linux.h:369	-Wpedantic	ISO C forbids zero-size array ‘f_handle’	gnu89+gs=6 gnu99+gs=6 gnu17+gs=6 gnu23+gs=6
+pedantic-noext	aarch64/bits/fenv.h:40	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/mathcalls.h:194	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	aarch64/bits/mathcalls.h:197	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	aarch64/bits/mathcalls.h:203	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	aarch64/bits/mathcalls.h:373	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	aarch64/bits/mathcalls.h:379	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	aarch64/bits/pthreadtypes.h:79	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=74 gnu89+gs=74 gnu99=74 gnu99+gs=74 gnu17=74 gnu17+gs=74 gnu23=74 gnu23+gs=74
+pedantic-noext	aarch64/bits/ptrace-shared.h:120	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/ptrace-shared.h:120	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/semaphore.h:32	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/setjmp.h:30	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=3 gnu89+gs=3 gnu99=3 gnu99+gs=3 gnu17=3 gnu17+gs=3 gnu23=3 gnu23+gs=3
+pedantic-noext	aarch64/bits/spawn_ext.h:49	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/spawn_ext.h:50	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/spawn_ext.h:61	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/spawn_ext.h:62	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/termios-struct.h:36	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=3 gnu89+gs=3
+pedantic-noext	aarch64/bits/termios-struct.h:36	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=3 gnu99+gs=3 gnu17=3 gnu17+gs=3 gnu23=3 gnu23+gs=3
+pedantic-noext	aarch64/bits/termios-struct.h:41	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=3 gnu89+gs=3
+pedantic-noext	aarch64/bits/termios-struct.h:41	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=3 gnu99+gs=3 gnu17=3 gnu17+gs=3 gnu23=3 gnu23+gs=3
+pedantic-noext	aarch64/bits/types/idtype_t.h:10	-Wc90-c99-compat	comma at end of enumerator list	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	aarch64/bits/types/struct_rusage.h:44	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:44	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:51	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:51	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:57	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:57	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:63	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:63	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:70	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:70	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:76	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:76	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:82	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:82	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:89	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:89	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:95	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:95	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:101	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:101	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:107	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:107	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:113	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:113	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:121	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:121	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:128	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	aarch64/bits/types/struct_rusage.h:128	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/sys/elf.h:22	-Wc11-c23-compat	‘#warning’ before C23 is a GCC extension	gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/sys/elf.h:22	-Wcpp	#warning "This header is obsolete; use <sys/procfs.h> instead."	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/sys/elf.h:22	-Wpedantic	‘#warning’ before C23 is a GCC extension	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1
+pedantic-noext	aarch64/sys/epoll.h:66	-Wc11-c23-compat	ISO C restricts enumerator values to range of ‘int’ before C23	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/sys/ifunc.h:73	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/sys/ifunc.h:86	-Wlong-long	use of C99 long long integer constant	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/sys/mount.h:124	-Wc11-c23-compat	ISO C restricts enumerator values to range of ‘int’ before C23	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/sys/personality.h:70	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aarch64/sys/ucontext.h:54	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic-noext	aarch64/sys/ucontext.h:55	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic-noext	aarch64/sys/ucontext.h:56	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic-noext	aarch64/sys/ucontext.h:57	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic-noext	aarch64/sys/ucontext.h:58	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=9 gnu89+gs=9 gnu99=9 gnu99+gs=9 gnu17=9 gnu17+gs=9 gnu23=9 gnu23+gs=9
+pedantic-noext	aarch64/sys/user.h:24	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=14 gnu89+gs=14 gnu99=14 gnu99+gs=14 gnu17=14 gnu17+gs=14 gnu23=14 gnu23+gs=14
+pedantic-noext	aarch64/sys/user.h:25	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=14 gnu89+gs=14 gnu99=14 gnu99+gs=14 gnu17=14 gnu17+gs=14 gnu23=14 gnu23+gs=14
+pedantic-noext	aarch64/sys/user.h:26	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=14 gnu89+gs=14 gnu99=14 gnu99+gs=14 gnu17=14 gnu17+gs=14 gnu23=14 gnu23+gs=14
+pedantic-noext	aarch64/sys/user.h:27	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=14 gnu89+gs=14 gnu99=14 gnu99+gs=14 gnu17=14 gnu17+gs=14 gnu23=14 gnu23+gs=14
+pedantic-noext	aio.h:52	-Wpedantic	ISO C forbids zero-size array ‘__pad’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aio.h:149	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	aio.h:232	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	arpa/tftp.h:58	-Wpedantic	ISO C forbids zero-size array ‘tu_data’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	arpa/tftp.h:60	-Wpedantic	ISO C forbids zero-size array ‘tu_stuff’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	asm-generic/int-ll64.h:30	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=22 gnu89+gs=33 gnu99=22 gnu99+gs=33 gnu17=22 gnu17+gs=33 gnu23=22 gnu23+gs=33
+pedantic-noext	asm-generic/int-ll64.h:31	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=22 gnu89+gs=33 gnu99=22 gnu99+gs=33 gnu17=22 gnu17+gs=33 gnu23=22 gnu23+gs=33
+pedantic-noext	asm-generic/posix_types.h:88	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=41 gnu89+gs=52 gnu99=41 gnu99+gs=52 gnu17=41 gnu17+gs=52 gnu23=41 gnu23+gs=52
+pedantic-noext	asm-generic/posix_types.h:89	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=41 gnu89+gs=52 gnu99=41 gnu99+gs=52 gnu17=41 gnu17+gs=52 gnu23=41 gnu23+gs=52
+pedantic-noext	asm-generic/posix_types.h:92	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=41 gnu89+gs=52 gnu99=41 gnu99+gs=52 gnu17=41 gnu17+gs=52 gnu23=41 gnu23+gs=52
+pedantic-noext	assert.h:156		anonymous variadic macros were introduced in C99	gnu99+gs=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	assert.h:156	-Wvariadic-macros	anonymous variadic macros were introduced in C99	gnu89+gs=1
+pedantic-noext	dlfcn.h:195	-Wpedantic	ISO C forbids zero-size array ‘dls_serpath’	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23+gs=2
+pedantic-noext	dlfcn.h:197	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89+gs=2
+pedantic-noext	dlfcn.h:197	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99+gs=2 gnu17+gs=2 gnu23+gs=2
+pedantic-noext	dlfcn.h:205	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23+gs=2
+pedantic-noext	dlfcn.h:224	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23+gs=2
+pedantic-noext	ftw.h:48	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu99=1 gnu17=1 gnu23=1
+pedantic-noext	ftw.h:98	-Wc90-c99-compat	comma at end of enumerator list	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	gcc/limits.h:200		‘__STDC_VERSION_LIMITS_H__’ redefined	gnu23=6 gnu23+gs=6
+pedantic-noext	gcc/stdarg.h:48		anonymous variadic macros were introduced in C99	gnu23=1 gnu23+gs=1
+pedantic-noext	gcc/stddef.h:441	-Wlong-long	ISO C90 does not support ‘long long’	gnu17=5 gnu17+gs=5 gnu23=5 gnu23+gs=5
+pedantic-noext	gcc/stddef.h:465	-Wc11-c23-compat	ISO C does not support ‘nullptr’ before C23	gnu23=5 gnu23+gs=5
+pedantic-noext	gconv.h:144	-Wpedantic	ISO C forbids zero-size array ‘__data’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	link.h:168	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	link.h:170	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	linux/mount.h:106	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/mount.h:204	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	linux/mount.h:204	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/nfs.h:116	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/pci.h:46	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/quota.h:97	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/quota.h:182	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/quota.h:195	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/rseq.h:18	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/rseq.h:23	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/rseq.h:35	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/rseq.h:49	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/rseq.h:78	-Wpedantic	struct has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic-noext	linux/rseq.h:85	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	linux/rseq.h:85	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/rseq.h:86	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	linux/rseq.h:86	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/socket.h:16	-Wpedantic	struct has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic-noext	linux/socket.h:24	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	linux/socket.h:24	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/socket.h:26	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	linux/socket.h:26	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	linux/stddef.h:32	-Wvariadic-macros	ISO C does not permit named variadic macros	gnu89=41 gnu89+gs=52 gnu99=41 gnu99+gs=52 gnu17=41 gnu17+gs=52 gnu23=41 gnu23+gs=52
+pedantic-noext	linux/swab.h:75	-Wlong-long	use of C99 long long integer constant	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	linux/swab.h:139	-Wlong-long	use of C99 long long integer constant	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	linux/swab.h:202	-Wlong-long	use of C99 long long integer constant	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	linux/sysinfo.h:22	-Wpedantic	ISO C forbids zero-size array ‘_f’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	math.h:439	-Wc90-c99-compat	comma at end of enumerator list	gnu89+gs=2 gnu99+gs=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	netdb.h:690	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	netinet/ip6.h:103	-Wpedantic	ISO C forbids zero-size array ‘ip6r0_addr’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	netinet/tcp.h:98	-Wpedantic	struct has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic-noext	netinet/tcp.h:100	-Wpedantic	union has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic-noext	netinet/tcp.h:126	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	netinet/tcp.h:126	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	netinet/tcp.h:159	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	netinet/tcp.h:159	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	netinet/tcp.h:160	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	netinet/tcp.h:160	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	netinet/tcp.h:355	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	netinet/tcp.h:496	-Wc90-c99-compat	comma at end of enumerator list	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	netinet/udp.h:55	-Wpedantic	struct has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic-noext	netinet/udp.h:57	-Wpedantic	union has no named members	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1
+pedantic-noext	netinet/udp.h:65	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	netinet/udp.h:65	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	netinet/udp.h:72	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	netinet/udp.h:72	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	netinet/udp.h:73	-Wc99-c11-compat	ISO C90 doesn’t support unnamed structs/unions	gnu89=1 gnu89+gs=1
+pedantic-noext	netinet/udp.h:73	-Wc99-c11-compat	ISO C99 doesn’t support unnamed structs/unions	gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	regex.h:685	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=2 gnu89+gs=2 gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	regex.h:686	-Wc90-c99-compat	ISO C90 forbids variable length array ‘__pmatch’	gnu99=2 gnu99+gs=2 gnu17=2 gnu17+gs=2 gnu23=2 gnu23+gs=2
+pedantic-noext	spawn.h:79	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	spawn.h:80	-Wc90-c99-compat	ISO C90 does not support ‘static’ or type qualifiers in parameter array declarators	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:65	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:121	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:177	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:235	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:289	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:347	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:405	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:463	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:521	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:577	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:631	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:686	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:740	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdbit.h:796	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:83	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:84	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:117	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:192	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:197	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:205	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:210	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:230	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:235	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:242	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:247	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:354	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	stdlib.h:360	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	stdlib.h:381	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	stdlib.h:388	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	stdlib.h:620	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:1012	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:1019	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	stdlib.h:1032	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	stdlib.h:1033	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	strings.h:111	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=8 gnu89+gs=8 gnu99=8 gnu99+gs=8 gnu17=8 gnu17+gs=8 gnu23=8 gnu23+gs=8
+pedantic-noext	threads.h:71	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	wchar.h:493	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	wchar.h:500	-Wlong-long	ISO C90 does not support ‘long long’	gnu89=1 gnu89+gs=1 gnu99=1 gnu99+gs=1 gnu17=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	wchar.h:509	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	wchar.h:516	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	wchar.h:533	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	wchar.h:538	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23=1 gnu23+gs=1
+pedantic-noext	wchar.h:544	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	wchar.h:548	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	wchar.h:595	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	wchar.h:600	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	wchar.h:619	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1
+pedantic-noext	wchar.h:625	-Wlong-long	ISO C90 does not support ‘long long’	gnu89+gs=1 gnu99+gs=1 gnu17+gs=1 gnu23+gs=1

@@ -10,7 +10,7 @@ case "$1" in
   facts)   rm -rf "$W/facts"; sh "$S/facts.sh" "$W/facts" ;;
   roots)   python3 -I "$S/roots.py" "$W/roots.tsv" ;;
   accept)  python3 -I "$S/accept.py" ;;
-  pedantic) python3 -I "$S/accept.py" pedantic ;;
+  pedantic) python3 -I "$S/accept.py" pedantic && python3 -I "$S/accept.py" pedantic-noext ;;
   pp)      python3 -I "$S/pp.py" ;;
   extract) python3 -I "$S/extract.py" ;;
   gccsrc)  sh "$S/gccsrc.sh" "$W/gccsrc" ;;
