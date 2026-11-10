@@ -1,0 +1,248 @@
+site	op	operand	in #define	status	GCC answer per configuration (roots)	flip: runs/changed/max lines	flip: constructs added	flip: constructs removed	flip rc
+aarch64/bits/byteswap.h:36	__GNUC_PREREQ	__GNUC_PREREQ (4, 8)		evaluated	gnu89=1:77 gnu89+gs=1:77 gnu99=1:77 gnu99+gs=1:77 gnu17=1:77 gnu17+gs=1:77 gnu23=1:77 gnu23+gs=1:77	24/24/2		id:__builtin_bswap16	0
+aarch64/bits/byteswap.h:51	__GNUC_PREREQ	__GNUC_PREREQ (4, 3)		evaluated	gnu89=1:77 gnu89+gs=1:77 gnu99=1:77 gnu99+gs=1:77 gnu17=1:77 gnu17+gs=1:77 gnu23=1:77 gnu23+gs=1:77	24/24/2		id:__builtin_bswap32	0
+aarch64/bits/byteswap.h:72	__GNUC_PREREQ	__GNUC_PREREQ (4, 3)		evaluated	gnu89=1:77 gnu89+gs=1:77 gnu99=1:77 gnu99+gs=1:77 gnu17=1:77 gnu17+gs=1:77 gnu23=1:77 gnu23+gs=1:77	24/24/2	syntax:long long constant	id:__builtin_bswap64	0
+aarch64/bits/cpu-set.h:45	__GNUC_PREREQ	__GNUC_PREREQ (2, 91)		evaluated	gnu89=1:4 gnu89+gs=1:4 gnu99=1:4 gnu99+gs=1:4 gnu17=1:4 gnu17+gs=1:4 gnu23=1:4 gnu23+gs=1:4	24/24/2		id:__builtin_memset	0
+aarch64/bits/cpu-set.h:83	__GNUC_PREREQ	__GNUC_PREREQ (2, 91)		evaluated	gnu89=1:4 gnu89+gs=1:4 gnu99=1:4 gnu99+gs=1:4 gnu17=1:4 gnu17+gs=1:4 gnu23=1:4 gnu23+gs=1:4	24/24/2	syntax:statement expression	id:__builtin_memcmp	0
+aarch64/bits/fcntl-linux.h:466	__has_include	defined __has_include		evaluated	gnu89+gs=1:6 gnu99+gs=1:6 gnu17+gs=1:6 gnu23+gs=1:6	12/12/111		attr:aligned syntax:empty struct or union syntax:flexible array member syntax:long long	0
+aarch64/bits/fcntl-linux.h:467	__has_include	__has_include ("linux/openat2.h")		evaluated	gnu89+gs=1:6 gnu99+gs=1:6 gnu17+gs=1:6 gnu23+gs=1:6	12/12/111		attr:aligned syntax:empty struct or union syntax:flexible array member syntax:long long	0
+aarch64/bits/floatn-common.h:69	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2			0
+aarch64/bits/floatn-common.h:81	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+aarch64/bits/floatn-common.h:81	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:90	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:90	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2			0
+aarch64/bits/floatn-common.h:98	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:98	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2			0
+aarch64/bits/floatn-common.h:110	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:110	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2			0
+aarch64/bits/floatn-common.h:118	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:118	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2			0
+aarch64/bits/floatn-common.h:130	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+aarch64/bits/floatn-common.h:130	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:139	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+aarch64/bits/floatn-common.h:139	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:148	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:148	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2			0
+aarch64/bits/floatn-common.h:156	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:156	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2			0
+aarch64/bits/floatn-common.h:168	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:168	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2			0
+aarch64/bits/floatn-common.h:176	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:176	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2	syntax:long double		0
+aarch64/bits/floatn-common.h:188	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+aarch64/bits/floatn-common.h:188	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:198	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+aarch64/bits/floatn-common.h:198	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:202	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:213	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:213	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/1			0
+aarch64/bits/floatn-common.h:217	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/4	id:__builtin_huge_valf id:__builtin_inff id:__builtin_nanf id:__builtin_nansf		0
+aarch64/bits/floatn-common.h:237	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+aarch64/bits/floatn-common.h:237	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:241	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:250	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:250	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/1			0
+aarch64/bits/floatn-common.h:254	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/4	id:__builtin_huge_val id:__builtin_inf id:__builtin_nan id:__builtin_nans		0
+aarch64/bits/floatn-common.h:267	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:267	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/1			0
+aarch64/bits/floatn-common.h:271	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/4	id:__builtin_huge_val id:__builtin_inf id:__builtin_nan id:__builtin_nans		0
+aarch64/bits/floatn-common.h:284	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn-common.h:284	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/1	syntax:long double		0
+aarch64/bits/floatn-common.h:288	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/4	id:__builtin_huge_vall id:__builtin_infl id:__builtin_nanl id:__builtin_nansl		0
+aarch64/bits/floatn-common.h:297	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+aarch64/bits/floatn-common.h:297	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:301	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:314	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+aarch64/bits/floatn-common.h:314	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn-common.h:318	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		not evaluated					
+aarch64/bits/floatn.h:58	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn.h:58	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2			0
+aarch64/bits/floatn.h:68	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn.h:68	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/2	syntax:long double		0
+aarch64/bits/floatn.h:79	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		short-circuited					
+aarch64/bits/floatn.h:79	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/1	syntax:long double		0
+aarch64/bits/floatn.h:84	__GNUC_PREREQ	__GNUC_PREREQ (7, 0)		evaluated	gnu89=1:16 gnu89+gs=1:16 gnu99=1:16 gnu99+gs=1:16 gnu17=1:16 gnu17+gs=1:16 gnu23=1:16 gnu23+gs=1:16	24/24/4	id:__builtin_huge_vall id:__builtin_infl id:__builtin_nanl id:__builtin_nansl		0
+aarch64/bits/indirect-return.h:29	__glibc_has_attribute	__glibc_has_attribute (__indirect_return__)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/4	attr:nothrow	attr:indirect_return attr:nothrow	0
+aarch64/bits/indirect-return.h:31	__glibc_has_attribute	__glibc_has_attribute (__returns_twice__)		not evaluated					
+aarch64/bits/math-vector.h:28	__GNUC_PREREQ	__GNUC_PREREQ (6, 0)		short-circuited					
+aarch64/bits/math-vector.h:190	__GNUC_PREREQ	__GNUC_PREREQ(9, 0)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/83		attr:aarch64_vector_pcs	0
+aarch64/bits/math-vector.h:194	__glibc_clang_prereq	__glibc_clang_prereq(8, 0)		not evaluated					
+aarch64/bits/math-vector.h:200	__glibc_clang_prereq	__glibc_clang_prereq(11, 0)		short-circuited					
+aarch64/bits/math-vector.h:200	__GNUC_PREREQ	__GNUC_PREREQ(10, 0)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/83			0
+aarch64/bits/sched.h:59	__has_include	defined __has_include		evaluated	gnu89+gs=1:4 gnu99+gs=1:4 gnu17+gs=1:4 gnu23+gs=1:4	12/12/32			0
+aarch64/bits/sched.h:60	__has_include	__has_include ("linux/sched/types.h")		evaluated	gnu89+gs=1:4 gnu99+gs=1:4 gnu17+gs=1:4 gnu23+gs=1:4	12/12/32			0
+aarch64/bits/statx.h:29	__has_include	defined __has_include		evaluated	gnu89+gs=1:2 gnu99+gs=1:2 gnu17+gs=1:2 gnu23+gs=1:2	8/8/231		attr:aligned syntax:empty struct or union syntax:flexible array member syntax:long long	0
+aarch64/bits/statx.h:30	__has_include	__has_include ("linux/stat.h")		evaluated	gnu89+gs=1:2 gnu99+gs=1:2 gnu17+gs=1:2 gnu23+gs=1:2	8/8/231		attr:aligned syntax:empty struct or union syntax:flexible array member syntax:long long	0
+aarch64/bits/unistd_ext.h:36	__has_include	defined __has_include		evaluated	gnu89+gs=1:9 gnu99+gs=1:9 gnu17+gs=1:9 gnu23+gs=1:9	12/12/5			0
+aarch64/bits/unistd_ext.h:37	__has_include	__has_include ("linux/close_range.h")		evaluated	gnu89+gs=1:9 gnu99+gs=1:9 gnu17+gs=1:9 gnu23+gs=1:9	12/12/5			0
+aarch64/fpu_control.h:27	__GNUC_PREREQ	__GNUC_PREREQ (6,0)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/8	asm:statement (extended) syntax:statement expression	id:__builtin_aarch64_get_fpcr id:__builtin_aarch64_get_fpsr id:__builtin_aarch64_set_fpcr id:__builtin_aarch64_set_fpsr	0
+aarch64/sys/cdefs.h:42	__has_attribute	defined __has_attribute		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2			0
+aarch64/sys/cdefs.h:49	__has_builtin	defined __has_builtin		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2			0
+aarch64/sys/cdefs.h:54	__has_extension	defined __has_extension		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2			0
+aarch64/sys/cdefs.h:64	__GNUC_PREREQ	__GNUC_PREREQ (4, 6)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/4		attr:leaf	0
+aarch64/sys/cdefs.h:77	__glibc_has_attribute	__glibc_has_attribute (__nothrow__)		short-circuited					
+aarch64/sys/cdefs.h:77	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:84	__GNUC_PREREQ	__GNUC_PREREQ (2,8)		not evaluated					
+aarch64/sys/cdefs.h:101	__glibc_has_attribute	__glibc_has_attribute (__cold__)		short-circuited					
+aarch64/sys/cdefs.h:101	__GNUC_PREREQ	__GNUC_PREREQ (4, 3)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:161	__GNUC_PREREQ	__GNUC_PREREQ (12, 0)		short-circuited					
+aarch64/sys/cdefs.h:161	__glibc_clang_prereq	__glibc_clang_prereq (9, 0)		short-circuited					
+aarch64/sys/cdefs.h:365	__GNUC_PREREQ	__GNUC_PREREQ (4,3)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/4		attr:error attr:warning	0
+aarch64/sys/cdefs.h:381	__GNUC_PREREQ	__GNUC_PREREQ (2,97)		evaluated	gnu89=1:209 gnu89+gs=1:209	6/6/4			0
+aarch64/sys/cdefs.h:451	__glibc_has_attribute	__glibc_has_attribute (__malloc__)		short-circuited					
+aarch64/sys/cdefs.h:451	__GNUC_PREREQ	__GNUC_PREREQ (2,96)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:459	__GNUC_PREREQ	__GNUC_PREREQ (4, 3)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2		attr:alloc_size	0
+aarch64/sys/cdefs.h:468	__glibc_has_attribute	__glibc_has_attribute (__alloc_align__)		short-circuited					
+aarch64/sys/cdefs.h:468	__GNUC_PREREQ	__GNUC_PREREQ (4, 9)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:478	__glibc_has_attribute	__glibc_has_attribute (__pure__)		short-circuited					
+aarch64/sys/cdefs.h:478	__GNUC_PREREQ	__GNUC_PREREQ (2,96)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:485	__glibc_has_attribute	__glibc_has_attribute (__const__)		short-circuited					
+aarch64/sys/cdefs.h:485	__GNUC_PREREQ	__GNUC_PREREQ (2,5)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:491	__glibc_has_attribute	__glibc_has_attribute (__unused__)		short-circuited					
+aarch64/sys/cdefs.h:491	__GNUC_PREREQ	__GNUC_PREREQ (2,7)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:500	__glibc_has_attribute	__glibc_has_attribute (__used__)		short-circuited					
+aarch64/sys/cdefs.h:500	__GNUC_PREREQ	__GNUC_PREREQ (3,1)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:509	__glibc_has_attribute	__glibc_has_attribute (__deprecated__)		short-circuited					
+aarch64/sys/cdefs.h:509	__GNUC_PREREQ	__GNUC_PREREQ (3,2)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:518	__glibc_has_extension	__glibc_has_extension (__attribute_deprecated_with_message__)		short-circuited					
+aarch64/sys/cdefs.h:518	__GNUC_PREREQ	__GNUC_PREREQ (4,5)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:532	__glibc_has_attribute	__glibc_has_attribute (__format_arg__)		short-circuited					
+aarch64/sys/cdefs.h:532	__GNUC_PREREQ	__GNUC_PREREQ (2,8)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:542	__glibc_has_attribute	__glibc_has_attribute (__format__)		short-circuited					
+aarch64/sys/cdefs.h:542	__GNUC_PREREQ	__GNUC_PREREQ (2,97)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:554	__glibc_has_attribute	__glibc_has_attribute (__nonnull__)		short-circuited					
+aarch64/sys/cdefs.h:554	__GNUC_PREREQ	__GNUC_PREREQ (3,3)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:567	__glibc_has_attribute	__glibc_has_attribute (__returns_nonnull__)		short-circuited					
+aarch64/sys/cdefs.h:567	__GNUC_PREREQ	__GNUC_PREREQ (4, 9)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:576	__glibc_has_attribute	__glibc_has_attribute (__warn_unused_result__)		short-circuited					
+aarch64/sys/cdefs.h:576	__GNUC_PREREQ	__GNUC_PREREQ (3,4)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:590	__glibc_has_attribute	__glibc_has_attribute (__always_inline__)		short-circuited					
+aarch64/sys/cdefs.h:590	__GNUC_PREREQ	__GNUC_PREREQ (3,2)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:603	__glibc_has_attribute	__glibc_has_attribute (__artificial__)		short-circuited					
+aarch64/sys/cdefs.h:603	__GNUC_PREREQ	__GNUC_PREREQ (4,3)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:618	__GNUC_PREREQ	__GNUC_PREREQ (4,3)		short-circuited					
+aarch64/sys/cdefs.h:637	__GNUC_PREREQ	__GNUC_PREREQ (4,3)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2		id:__builtin_va_arg_pack id:__builtin_va_arg_pack_len	0
+aarch64/sys/cdefs.h:646	__GNUC_PREREQ	__GNUC_PREREQ (2,8)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/1			0
+aarch64/sys/cdefs.h:653	__GNUC_PREREQ	__GNUC_PREREQ (2,92)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/1			0
+aarch64/sys/cdefs.h:665	__GNUC_PREREQ	__GNUC_PREREQ (3,1)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2			0
+aarch64/sys/cdefs.h:680	__glibc_has_builtin	__glibc_has_builtin (__builtin_expect)		short-circuited					
+aarch64/sys/cdefs.h:688	__GNUC_PREREQ	__GNUC_PREREQ (4,7)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209	12/12/1	attr:noreturn		0
+aarch64/sys/cdefs.h:692	__GNUC_PREREQ	__GNUC_PREREQ (2,8)		not evaluated					
+aarch64/sys/cdefs.h:699	__GNUC_PREREQ	__GNUC_PREREQ (8, 0)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2		attr:nonstring	0
+aarch64/sys/cdefs.h:710	__GNUC_PREREQ	__GNUC_PREREQ (9, 0)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2		attr:copy	0
+aarch64/sys/cdefs.h:718	__GNUC_PREREQ	__GNUC_PREREQ (4, 6)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209	12/12/1			0
+aarch64/sys/cdefs.h:806	__glibc_clang_prereq	__glibc_clang_prereq (3,5)		short-circuited					
+aarch64/sys/cdefs.h:806	__GNUC_PREREQ	__GNUC_PREREQ (4,8)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/3		pragma:(text from a macro argument)	0
+aarch64/sys/cdefs.h:821	__glibc_has_extension	__glibc_has_extension (c_generic_selections)		short-circuited					
+aarch64/sys/cdefs.h:821	__GNUC_PREREQ	__GNUC_PREREQ (4, 9)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+aarch64/sys/cdefs.h:843	__GNUC_PREREQ	__GNUC_PREREQ (10, 0)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/6		attr:access	0
+aarch64/sys/cdefs.h:859	__GNUC_PREREQ	__GNUC_PREREQ (11, 0)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2		attr:access	0
+aarch64/sys/cdefs.h:870	__GNUC_PREREQ	__GNUC_PREREQ (11, 0)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/4		attr:malloc id:__builtin_free	0
+aarch64/sys/cdefs.h:883	__GNUC_PREREQ	__GNUC_PREREQ (4, 1)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2		attr:returns_twice	0
+aarch64/sys/cdefs.h:892	__GNUC_PREREQ	__GNUC_PREREQ (7, 1)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/24/2		attr:may_alias	0
+aarch64/sys/mount.h:30	__has_include	defined __has_include		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/260		attr:aligned syntax:anonymous struct or union member syntax:empty struct or union syntax:enum trailing comma syntax:flexible array member syntax:long long	0
+aarch64/sys/mount.h:31	__has_include	__has_include ("linux/mount.h")		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/260		attr:aligned syntax:anonymous struct or union member syntax:empty struct or union syntax:enum trailing comma syntax:flexible array member syntax:long long	0
+aarch64/sys/rseq.h:28	__has_include	defined __has_include		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/7			0
+aarch64/sys/rseq.h:29	__has_include	__has_include ("linux/rseq.h")		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/352	attr:aligned syntax:enum trailing comma	attr:aligned attr:always_inline id:__builtin_constant_p syntax:anonymous struct or union member syntax:empty struct or union syntax:enum trailing comma syntax:flexible array member syntax:long long syntax:long long constant	0
+aarch64/sys/socket.h:57	__GNUC_PREREQ	__GNUC_PREREQ (2, 7)		evaluated	gnu89=1:24 gnu89+gs=1:24 gnu99=1:24 gnu99+gs=1:24 gnu17=1:24 gnu17+gs=1:24 gnu23=1:24 gnu23+gs=1:24	24/12/27		attr:transparent_union	0
+aarch64/sys/types.h:163	__GNUC_PREREQ	__GNUC_PREREQ (2, 7)		evaluated	gnu89=1:73 gnu89+gs=1:73 gnu99=1:73 gnu99+gs=1:73 gnu17=1:73 gnu17+gs=1:73 gnu23=1:73 gnu23+gs=1:73	24/24/2		attr:mode	0
+assert.h:43	__GNUC_PREREQ	__GNUC_PREREQ (2,95)		short-circuited					
+assert.h:57	__GNUC_PREREQ	__GNUC_PREREQ (3, 0)		evaluated	gnu89+gs=1:1 gnu99+gs=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	5/5/5	syntax:statement expression	syntax:statement expression	0
+assert.h:127	__has_builtin	defined __has_builtin		not evaluated					
+assert.h:128	__has_builtin	__has_builtin (__builtin_FILE)		not evaluated					
+assert.h:191	__GNUC_PREREQ	__GNUC_PREREQ (2, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2			0
+assert.h:191	__GNUC_PREREQ	__GNUC_PREREQ (2, 6)		short-circuited					
+assert.h:204	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		evaluated	gnu23=1:1 gnu23+gs=1:1	2/2/2			0
+complex.h:43	__GNUC_PREREQ	__GNUC_PREREQ (2, 97)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/369	attr:leaf attr:nothrow syntax:long double	attr:leaf attr:nothrow syntax:long double	0
+complex.h:43	__GNUC_PREREQ	__GNUC_PREREQ (2, 7)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/0/0			0
+complex.h:59	__glibc_clang_prereq	__glibc_clang_prereq (12, 0)		short-circuited					
+complex.h:59	__GNUC_PREREQ	__GNUC_PREREQ (4, 7)		evaluated	gnu89+gs=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	12/12/3		id:__builtin_complex syntax:long double	0
+dlfcn.h:188	__GNUC_PREREQ	__GNUC_PREREQ (3, 0)		evaluated	gnu89+gs=1:2 gnu99+gs=1:2 gnu17+gs=1:2 gnu23+gs=1:2	8/8/6		syntax:zero-length array member	0
+features.h:451	__GNUC_PREREQ	__GNUC_PREREQ (4, 1)		not evaluated					
+features.h:453	__GNUC_PREREQ	__GNUC_PREREQ (12, 0)		not evaluated					
+features.h:453	__glibc_clang_prereq	__glibc_clang_prereq (9, 0)		not evaluated					
+features.h:552	__GNUC_PREREQ	__GNUC_PREREQ (2, 7)		evaluated	gnu89=1:209 gnu89+gs=1:209 gnu99=1:209 gnu99+gs=1:209 gnu17=1:209 gnu17+gs=1:209 gnu23=1:209 gnu23+gs=1:209	24/0/0			0
+math.h:48	__GNUC_PREREQ	__GNUC_PREREQ (3, 3)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/2		id:__builtin_huge_val	0
+math.h:59	__GNUC_PREREQ	__GNUC_PREREQ (3, 3)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/4		id:__builtin_huge_valf id:__builtin_huge_vall	0
+math.h:92	__GNUC_PREREQ	__GNUC_PREREQ (3, 3)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/2		id:__builtin_inff	0
+math.h:101	__GNUC_PREREQ	__GNUC_PREREQ (3, 3)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/2		id:__builtin_nanf	0
+math.h:114	__GNUC_PREREQ	__GNUC_PREREQ (3, 3)		evaluated	gnu89+gs=1:2 gnu99+gs=1:2 gnu17+gs=1:2 gnu23+gs=1:2	8/8/3		id:__builtin_nans id:__builtin_nansf id:__builtin_nansl	0
+math.h:1095	__glibc_clang_prereq	__glibc_clang_prereq (2,8)		short-circuited					
+math.h:1095	__GNUC_PREREQ	__GNUC_PREREQ (4,4)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/2		id:__builtin_fpclassify	0
+math.h:1111	__glibc_clang_prereq	__glibc_clang_prereq (3,3)		short-circuited					
+math.h:1111	__GNUC_PREREQ	__GNUC_PREREQ (6,0)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/2	id:__builtin_signbit	id:__builtin_signbit	0
+math.h:1122	__GNUC_PREREQ	__GNUC_PREREQ (4,0)		not evaluated					
+math.h:1129	__glibc_clang_prereq	__glibc_clang_prereq (2,8)		short-circuited					
+math.h:1129	__GNUC_PREREQ	__GNUC_PREREQ (4,4)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/2		id:__builtin_isfinite	0
+math.h:1137	__glibc_clang_prereq	__glibc_clang_prereq (2,8)		short-circuited					
+math.h:1137	__GNUC_PREREQ	__GNUC_PREREQ (4,4)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/2		id:__builtin_isnormal	0
+math.h:1146	__glibc_clang_prereq	__glibc_clang_prereq (2,8)		short-circuited					
+math.h:1146	__GNUC_PREREQ	__GNUC_PREREQ (4,4)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/2		id:__builtin_isnan	0
+math.h:1154	__GNUC_PREREQ	__GNUC_PREREQ (7,0)		short-circuited					
+math.h:1165	__glibc_clang_prereq	__glibc_clang_prereq (3,7)		short-circuited					
+math.h:1165	__GNUC_PREREQ	__GNUC_PREREQ (4,4)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/2		id:__builtin_isinf_sign	0
+math.h:1436	__GNUC_PREREQ	__GNUC_PREREQ (3, 1)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/12	syntax:statement expression	id:__builtin_isgreater id:__builtin_isgreaterequal id:__builtin_isless id:__builtin_islessequal id:__builtin_islessgreater id:__builtin_isunordered	0
+math.h:1532	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+math.h:1542	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+math.h:1552	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+math.h:1568	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+math.h:1578	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		not evaluated					
+pthread.h:765	__GNUC_PREREQ	__GNUC_PREREQ (11, 0)		evaluated	gnu89=1:2 gnu89+gs=1:2 gnu99=1:2 gnu99+gs=1:2 gnu17=1:2 gnu17+gs=1:2 gnu23=1:2 gnu23+gs=1:2	16/16/5	attr:nothrow	asm:label attr:nothrow attr:returns_twice	0
+stdbit.h:47	__GNUC_PREREQ	__GNUC_PREREQ (11, 0)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/20			0
+stdbit.h:67	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_leading_zeros)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2	syntax:long long constant	id:__builtin_stdc_leading_zeros	0
+stdbit.h:75	__glibc_has_builtin	__glibc_has_builtin (__builtin_clzll)		short-circuited					
+stdbit.h:75	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:123	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_leading_ones)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2	syntax:long long syntax:long long constant	id:__builtin_stdc_leading_ones	0
+stdbit.h:131	__glibc_has_builtin	__glibc_has_builtin (__builtin_clzll)		short-circuited					
+stdbit.h:131	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:179	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_trailing_zeros)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_trailing_zeros	0
+stdbit.h:189	__glibc_has_builtin	__glibc_has_builtin (__builtin_ctzll)		short-circuited					
+stdbit.h:189	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:237	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_trailing_ones)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_trailing_ones	0
+stdbit.h:243	__glibc_has_builtin	__glibc_has_builtin (__builtin_ctzll)		short-circuited					
+stdbit.h:243	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:291	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_first_leading_zero)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_first_leading_zero	0
+stdbit.h:301	__glibc_has_builtin	__glibc_has_builtin (__builtin_clzll)		short-circuited					
+stdbit.h:301	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:349	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_first_leading_one)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_first_leading_one	0
+stdbit.h:359	__glibc_has_builtin	__glibc_has_builtin (__builtin_clzll)		short-circuited					
+stdbit.h:359	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:407	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_first_trailing_zero)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_first_trailing_zero	0
+stdbit.h:417	__glibc_has_builtin	__glibc_has_builtin (__builtin_ctzll)		short-circuited					
+stdbit.h:417	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:465	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_first_trailing_one)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_first_trailing_one	0
+stdbit.h:475	__glibc_has_builtin	__glibc_has_builtin (__builtin_ctzll)		short-circuited					
+stdbit.h:475	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:523	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_count_zeros)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2	syntax:long long constant	id:__builtin_stdc_count_zeros	0
+stdbit.h:531	__glibc_has_builtin	__glibc_has_builtin (__builtin_popcountll)		short-circuited					
+stdbit.h:531	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:579	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_count_ones)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_count_ones	0
+stdbit.h:585	__glibc_has_builtin	__glibc_has_builtin (__builtin_popcountll)		short-circuited					
+stdbit.h:585	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:633	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_has_single_bit)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_has_single_bit	0
+stdbit.h:688	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_bit_width)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_bit_width	0
+stdbit.h:694	__glibc_has_builtin	__glibc_has_builtin (__builtin_clzll)		short-circuited					
+stdbit.h:694	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:742	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_bit_floor)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_bit_floor	0
+stdbit.h:748	__glibc_has_builtin	__glibc_has_builtin (__builtin_clzll)		short-circuited					
+stdbit.h:748	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+stdbit.h:798	__glibc_has_builtin	__glibc_has_builtin (__builtin_stdc_bit_ceil)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/2		id:__builtin_stdc_bit_ceil	0
+stdbit.h:804	__glibc_has_builtin	__glibc_has_builtin (__builtin_clzll)		short-circuited					
+stdbit.h:804	__GNUC_PREREQ	__GNUC_PREREQ (3, 4)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+string.h:40	__glibc_clang_prereq	__glibc_clang_prereq (3, 5)		short-circuited					
+string.h:40	__GNUC_PREREQ	__GNUC_PREREQ (4, 4)		short-circuited					
+string.h:577	__GNUC_PREREQ	__GNUC_PREREQ (3,4)		evaluated	gnu89=1:7 gnu89+gs=1:7 gnu99=1:7 gnu99+gs=1:7 gnu17=1:7 gnu17+gs=1:7 gnu23=1:7 gnu23+gs=1:7	24/0/0			0
+strings.h:26	__GNUC_PREREQ	__GNUC_PREREQ (4, 4)		short-circuited					
+strings.h:140	__GNUC_PREREQ	__GNUC_PREREQ (3,4)		evaluated	gnu89=1:8 gnu89+gs=1:8 gnu99=1:8 gnu99+gs=1:8 gnu17=1:8 gnu17+gs=1:8 gnu23=1:8 gnu23+gs=1:8	24/0/0			0
+tgmath.h:53	__GNUC_PREREQ	__GNUC_PREREQ (8, 0)	__HAVE_BUILTIN_TGMATH	evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/68	id:__builtin_classify_type	id:__builtin_tgmath	0
+tgmath.h:54	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)	__HAVE_BUILTIN_TGMATH_C23	evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/33	id:__builtin_classify_type id:__builtin_types_compatible_p	id:__builtin_tgmath	0
+tgmath.h:56	__GNUC_PREREQ	__GNUC_PREREQ (2, 7)		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/8/55		id:__builtin_tgmath	1
+tgmath.h:204	__GNUC_PREREQ	__GNUC_PREREQ (3, 1)		not evaluated					
+threads.h:31	__GNUC_PREREQ	__GNUC_PREREQ (13, 0)		evaluated	gnu23=1:1 gnu23+gs=1:1	2/2/1			0
+uchar.h:41	__GNUC_PREREQ	__GNUC_PREREQ (10, 0)		evaluated	gnu89+gs=1:1 gnu99+gs=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	5/0/0			0
+uchar.h:48	__GNUC_PREREQ	__GNUC_PREREQ (10, 0)		evaluated	gnu89+gs=1:1 gnu99+gs=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	5/0/0			0
+wchar.h:68	__GNUC_PREREQ	__GNUC_PREREQ (4, 4)		short-circuited					
+wchar.h:729	__has_builtin	defined __has_builtin		evaluated	gnu89=1:1 gnu89+gs=1:1 gnu99=1:1 gnu99+gs=1:1 gnu17=1:1 gnu17+gs=1:1 gnu23=1:1 gnu23+gs=1:1	8/0/0			0
+wchar.h:730	__has_builtin	__has_builtin (__builtin_fclose)		evaluated	gnu89=0:1 gnu89+gs=0:1 gnu99=0:1 gnu99+gs=0:1 gnu17=0:1 gnu17+gs=0:1 gnu23=0:1 gnu23+gs=0:1	8/8/4	attr:malloc id:__builtin_fclose	attr:malloc	0
+gcc/stddef.h:97	__has_feature	__has_feature(modules)		not evaluated					
+gcc/stddef.h:97	__has_feature	defined(__has_feature)		not evaluated					

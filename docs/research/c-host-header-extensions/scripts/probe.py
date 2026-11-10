@@ -56,7 +56,7 @@ COND_OPEN = {"if", "ifdef", "ifndef"}
 COND_MID = {"elif", "else", "elifdef", "elifndef"}
 INST = os.path.join(common.WORK, "inst")
 TREES = [("/usr/include", "usr-include"), (common.GCC_INC, "gcc-include")]
-PROBE_RE = re.compile(r'"__forge_(dt|df|qt|qf|flip)_(\d+)" is not defined')
+PROBE_RE = re.compile(r'["\u2018`]__forge_(dt|df|qt|qf|flip)_(\d+)["\u2019\'] is not defined')
 
 
 def comment_state(text):
@@ -228,6 +228,11 @@ def instrument_file(path, dest, fid, sites):
         fh.write("\n".join(out[1:]))
 
 
+def selftest():
+    rc, out, err = common.run_gcc("gnu17", ["-E", "-Wundef"], "#if __forge_dt_7 || __forge_qt_9\n#endif\n")
+    print(repr(err[:300]), [m.groups() for m in PROBE_RE.finditer(err)])
+
+
 def instrument():
     ex = json.load(open(os.path.join(common.WORK, "extract.json")))
     opened = sorted({f for _c, f, _rs in ex["opened"] if f.startswith("/")})
@@ -358,4 +363,4 @@ def flips():
 
 
 if __name__ == "__main__":
-    {"instrument": instrument, "run": run, "flips": flips}[sys.argv[1]]()
+    {"instrument": instrument, "run": run, "flips": flips, "selftest": selftest}[sys.argv[1]]()

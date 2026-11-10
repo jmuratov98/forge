@@ -15,8 +15,11 @@ case "$1" in
   extract) python3 -I "$S/extract.py" ;;
   gccsrc)  sh "$S/gccsrc.sh" "$W/gccsrc" ;;
   gccnames) python3 -I "$S/gccnames.py" ;;
-  probe)   python3 -I "$S/probe.py" instrument && python3 -I "$S/probe.py" run ;;
-  flips)   python3 -I "$S/probe.py" flips ;;
+  probe)   python3 -I "$S/probe.py" instrument
+           sudo env C13_WORK="$W" unshare -m sh "$S/probe-mount.sh" "$W/inst" python3 -I "$S/probe.py" run
+           sudo chown -R "$(id -u):$(id -g)" "$W" ;;
+  flips)   sudo env C13_WORK="$W" unshare -m sh "$S/probe-mount.sh" "$W/inst" python3 -I "$S/probe.py" flips
+           sudo chown -R "$(id -u):$(id -g)" "$W" ;;
   asm)     python3 -I "$S/asmlabels.py" ;;
   export)  rm -rf "$W/export"; mkdir -p "$W/export"; python3 -I "$S/export.py" "$W/export" ;;
   *) echo "unknown step $1" >&2; exit 2 ;;

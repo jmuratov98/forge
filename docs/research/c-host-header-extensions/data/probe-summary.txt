@@ -1,0 +1,10 @@
+instrumented files 507
+conditional sites 4483 (uninstrumented: 6)
+query sites 247
+pairs whose emitted code equals the uninstrumented run: 1904 of 1904
+uninstrumented: pthread.h:602 #ifdef __USE_GNU
+uninstrumented: pthread.h:619 #else 
+uninstrumented: pthread.h:651 #ifdef __USE_GNU
+uninstrumented: pthread.h:673 #else 
+uninstrumented: pthread.h:712 #ifdef __USE_GNU
+uninstrumented: pthread.h:1162 #ifdef __USE_GNU
