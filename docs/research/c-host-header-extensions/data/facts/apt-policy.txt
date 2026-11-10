@@ -1,0 +1,27 @@
+libc6-dev:
+  Installed: 2.43-2ubuntu2.4
+  Candidate: 2.43-2ubuntu2.4
+  Version table:
+ *** 2.43-2ubuntu2.4 500
+        500 http://archive.ubuntu.com/ubuntu resolute-updates/main arm64 Packages
+        500 http://security.ubuntu.com/ubuntu resolute-security/main arm64 Packages
+        100 /var/lib/dpkg/status
+     2.43-2ubuntu2 500
+        500 http://archive.ubuntu.com/ubuntu resolute/main arm64 Packages
+linux-libc-dev:
+  Installed: 7.0.0-43.43
+  Candidate: 7.0.0-43.43
+  Version table:
+ *** 7.0.0-43.43 500
+        500 http://archive.ubuntu.com/ubuntu resolute-updates/main arm64 Packages
+        500 http://security.ubuntu.com/ubuntu resolute-security/main arm64 Packages
+        100 /var/lib/dpkg/status
+     7.0.0-14.14 500
+        500 http://archive.ubuntu.com/ubuntu resolute/main arm64 Packages
+gcc-15:
+  Installed: 15.2.0-16ubuntu1
+  Candidate: 15.2.0-16ubuntu1
+  Version table:
+ *** 15.2.0-16ubuntu1 500
+        500 http://archive.ubuntu.com/ubuntu resolute/main arm64 Packages
+        100 /var/lib/dpkg/status

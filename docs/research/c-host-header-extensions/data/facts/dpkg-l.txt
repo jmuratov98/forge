@@ -1,0 +1,13 @@
++-- Desired=Unknown/Install/Remove/Purge/Hold
+|+- Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+||+ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+||| Name                     Version          Architecture Description
++++-========================-================-============-=====================================================
+ii  cpp-15                   15.2.0-16ubuntu1 arm64        GNU C preprocessor
+ii  cpp-15-aarch64-linux-gnu 15.2.0-16ubuntu1 arm64        GNU C preprocessor for aarch64-linux-gnu
+ii  gcc-15                   15.2.0-16ubuntu1 arm64        GNU C compiler
+ii  gcc-15-aarch64-linux-gnu 15.2.0-16ubuntu1 arm64        GNU C compiler for the aarch64-linux-gnu architecture
+ii  libc6:arm64              2.43-2ubuntu2.4  arm64        GNU C Library: Shared libraries
+ii  libc6-dev:arm64          2.43-2ubuntu2.4  arm64        GNU C Library: Development Libraries and Header Files
+ii  libgcc-15-dev:arm64      15.2.0-16ubuntu1 arm64        GCC support library (development files)
+ii  linux-libc-dev:arm64     7.0.0-43.43      arm64        Linux Kernel Headers for development
