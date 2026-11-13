@@ -139,7 +139,7 @@ This document is the index of Forge's architecture specifications. It was assemb
 
 7 *Tests.* Tests use lit, FileCheck and GoogleTest. Diagnostics are tested with `-verify`, matching a stable kebab-case ID and an exact line and column. A test skip names the missing feature, and the harness checks that the compiler stops with the not-yet-supported error that names it ([m1.skips]).
 
-8 *No Python tooling.* The generators of paragraph 6 are one in-tree C++ host tool ([compat.tracking]).
+8 *Generators are C++.* The generators of paragraph 6 are one in-tree C++ host tool, with no Python in generation ([compat.tracking]). This rule does not cover the `./x` driver.
 
 ## 7 Document index [roadmap.index]
 

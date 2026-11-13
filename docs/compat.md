@@ -147,7 +147,7 @@ Status: draft, 2026-11-13. Stable-name prefix: `[compat]`.
 
 ## 12 Tracking [compat.tracking]
 
-1 Two committed tables, one for flags and one for extensions, shall be the single source. They are fixed-schema text, like the `.isa` files, and a C++ generator built in-tree reads them ([codegen.isa.gen]). There is no Python tooling, and no generated C++ is committed.
+1 Two committed tables, one for flags and one for extensions, shall be the single source. They are fixed-schema text, like the `.isa` files, and a C++ generator built in-tree reads them ([codegen.isa.gen]). There is no Python in generation, and no generated C++ is committed.
 
 2 *The flags table generates* the driver's option parser. Every compiler job takes the same option language ([pipe.driver]). *The extensions table generates* the C-family core's builtin, attribute and pragma tables, and so the `__has_*` answers. The flag map of [opt.levels] is columns of the flags table.
 
