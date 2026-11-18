@@ -14,6 +14,18 @@ The part of Forge that compiles C, from ANSI C through C2y.
 **Forge's C++ compiler**
 The part of Forge that compiles C++, from C++98 through C++26.
 
+**C frontend**
+The part of Forge's C compiler that turns C source into a C AST and lowers it to Ingot.
+_Avoid_: "the frontend" when the C++ frontend could also be meant.
+
+**C++ frontend**
+The part of Forge's C++ compiler that turns C++ source into a C++ AST and lowers it to Ingot. It has its own parser, semantic analysis, and AST, separate from the C frontend's.
+_Avoid_: "the frontend" when the C frontend could also be meant.
+
+**C-family layer**
+The library beneath the C frontend and the C++ frontend that holds what the two languages share: the preprocessor, the lexer, and the rules that are the same in C and C++.
+_Avoid_: "c-common", "shared frontend".
+
 **core**
 The library every other part of Forge builds on: containers, strings, algorithms, text formatting, I/O, threads, and the platform layer over the host OS. In Forge's own source it takes the place of the C++ standard library.
 _Avoid_: "Support", "ADT", or "the standard library" for it; flibc++ is the standard library Forge ships to users.
