@@ -13,3 +13,10 @@ The part of Forge that compiles C, from ANSI C through C2y.
 
 **Forge's C++ compiler**
 The part of Forge that compiles C++, from C++98 through C++26.
+
+**Forge runtime**
+The low-level support Forge links into every program it builds, on every platform: the startup objects that run before `main`, and the compiler builtins that generated code calls for operations the target lacks.
+_Avoid_: using "runtime" for the unwinder, the C++ ABI support, or a runtime for the Forge language. Those are separate.
+
+**Drop-in replacement**
+The property that Forge can stand in for gcc, clang, or msvc in an existing build: it accepts their command-line flags, links against libraries and objects they built, and compiles the platform's system headers. It does not promise every flag or identical output.
