@@ -1,6 +1,6 @@
 # Forge is written in restricted C++20
 
-Forge's own source is C++20 without RTTI, exceptions, modules, or coroutines. Errors travel as return values. Allocation failure is fatal, and no standard-library call is used where it would report an error by throwing (for example `.at()`). On MSVC that means `/GR- /EHs-c-` and `_HAS_EXCEPTIONS=0`; googletest builds with `GTEST_HAS_EXCEPTIONS=0`. Which standard headers are allowed is a separate decision.
+Forge's own source is C++20 without RTTI, exceptions, modules, or coroutines. Errors travel as return values ([ADR 0006](0006-failures-and-assertions.md)). Allocation failure is fatal, and no standard-library call is used where it would report an error by throwing (for example `.at()`). On MSVC that means `/GR- /EHs-c-` and `_HAS_EXCEPTIONS=0`; googletest builds with `GTEST_HAS_EXCEPTIONS=0`. Which standard headers are allowed is [ADR 0004](0004-core-replaces-the-standard-library.md).
 
 Forge must eventually compile itself, so every language feature it uses is one Forge's C++ compiler and flibc++ must support first. RTTI and exceptions also cost compile time and binary size.
 

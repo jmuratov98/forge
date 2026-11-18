@@ -14,6 +14,10 @@ The part of Forge that compiles C, from ANSI C through C2y.
 **Forge's C++ compiler**
 The part of Forge that compiles C++, from C++98 through C++26.
 
+**core**
+The library every other part of Forge builds on: containers, strings, algorithms, text formatting, I/O, threads, and the platform layer over the host OS. In Forge's own source it takes the place of the C++ standard library.
+_Avoid_: "Support", "ADT", or "the standard library" for it; flibc++ is the standard library Forge ships to users.
+
 **Forge runtime**
 The low-level support Forge links into every program it builds, on every platform: the startup objects that run before `main`, and the compiler builtins that generated code calls for operations the target lacks.
 _Avoid_: using "runtime" for the unwinder, the C++ ABI support, or a runtime for the Forge language. Those are separate.
