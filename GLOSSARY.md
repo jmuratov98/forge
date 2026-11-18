@@ -24,3 +24,18 @@ _Avoid_: using "runtime" for the unwinder, the C++ ABI support, or a runtime for
 
 **Drop-in replacement**
 The property that Forge can stand in for gcc, clang, or msvc in an existing build: it accepts their command-line flags, links against libraries and objects they built, and compiles the platform's system headers. It does not promise every flag or identical output.
+
+**Ingot** (HIR, _High IR_)
+The typed, tree-shaped representation that every frontend lowers its source into, whatever the language. It is the first layer that is independent of the source language.
+_Avoid_: "AST" for it; each frontend's AST is the language-specific tree above it.
+
+**Billet** (FIR, _Forge's IR_)
+The SSA representation shared by every language and every target, where optimization happens. It depends on the target only through its data layout, never through its calling conventions.
+_Avoid_: confusing it with Flang's FIR.
+
+**Blank** (MIR, _Machine IR_)
+The representation of one function as one target's instructions, where register allocation happens.
+_Avoid_: "MIR" in rustc's sense of a mid-level IR.
+
+**Stamp** (MC or MCIR, _Machine Code_)
+The last representation before bytes: encodable instructions with the sections, symbols, and relocations of an object file. Both the compiler and fas produce it.
