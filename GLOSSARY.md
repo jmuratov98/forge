@@ -25,6 +25,17 @@ _Avoid_: using "runtime" for the unwinder, the C++ ABI support, or a runtime for
 **Drop-in replacement**
 The property that Forge can stand in for gcc, clang, or msvc in an existing build: it accepts their command-line flags, links against libraries and objects they built, and compiles the platform's system headers. It does not promise every flag or identical output.
 
+**driver**
+The part of Forge that reads a command line in one of the styles it accepts (gcc/clang, cl.exe, assembler, or linker) and runs the compilers, fas, and fold to carry it out.
+_Avoid_: "frontend" for it; a frontend turns source into Ingot.
+
+**fas**
+Forge's assembler: it turns assembly source into object files. The compilers read inline assembly through it too.
+
+**fold**
+Forge's linker: it combines object files and libraries into executables and shared libraries, in the flavor of each platform's native linker.
+_Avoid_: `fold` as a command name; that is the POSIX line-wrapping utility. The command is `fld` or a flavor name.
+
 **Ingot** (HIR, _High IR_)
 The typed, tree-shaped representation that every frontend lowers its source into, whatever the language. It is the first layer that is independent of the source language.
 _Avoid_: "AST" for it; each frontend's AST is the language-specific tree above it.
