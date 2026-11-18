@@ -23,7 +23,7 @@ forward-ported to `main`. `research/*` holds wayfinder research findings: pushed
   the version it carries.
 
 **Version header.** The public, handwritten `forge/version.hpp` declares
-`[[nodiscard]] std::string_view version() noexcept;`. CMake generates the private
+`[[nodiscard]] forge::string_view version() noexcept;` (core's `string_view`, per ADR 0004). CMake generates the private
 `version.inc.hpp` into the build tree at configure time; only `version.cpp` includes it, so a
 version change recompiles one file. CI passes the timestamp as `FORGE_BUILD_TIMESTAMP`.
 
