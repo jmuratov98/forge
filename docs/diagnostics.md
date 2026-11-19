@@ -1,6 +1,6 @@
 # Diagnostics
 
-How Forge tells the user about their input: how diagnostics are defined, how their severity is decided, how they are rendered, and how they are tested. [ADR 0012](adr/0012-one-diagnostics-engine.md) records why it is shaped this way. [ADR 0006](adr/0006-failures-and-assertions.md) says every failure reaches the user as a diagnostic and core never emits one. [ADR 0008](adr/0008-split-frontends-over-a-shared-c-family-layer.md) says frontends never write to stdout or stderr. The engine lives in `source` ([layout.md](layout.md)). How a source location is encoded is decided in [How are source locations and the source manager designed?](https://github.com/jmuratov98/forge/issues/20). Here a location is an opaque value. How the flags below are spelled on each command line belongs to the driver's options model.
+How Forge tells the user about their input: how diagnostics are defined, how their severity is decided, how they are rendered, and how they are tested. [ADR 0012](adr/0012-one-diagnostics-engine.md) records why it is shaped this way. [ADR 0006](adr/0006-failures-and-assertions.md) says every failure reaches the user as a diagnostic and core never emits one. [ADR 0008](adr/0008-split-frontends-over-a-shared-c-family-layer.md) says frontends never write to stdout or stderr. The engine lives in `source` ([layout.md](layout.md)). Source locations and debug locations are described in [source.md](source.md); here a location is an opaque value. How the flags below are spelled on each command line belongs to the driver's options model.
 
 ## Pipeline
 
@@ -57,7 +57,7 @@ Groups are one table in `source`. A group has a name, which is its flag (`unused
 
 ## What a diagnostic carries
 
-- **Position**: a source location, an **input** (a path, or an object or archive member, such as `missing.c` or `main.o`), or nothing (`no input files`).
+- **Position**: a source location, a **debug location** (a file, line, and column from Billet or below, so the backend can report without a source manager; the renderer shows the source line only if the current translation unit has that file loaded), an **input** (a path, or an object or archive member, such as `missing.c` or `main.o`), or nothing (`no input files`).
 - **Ranges**: highlighted source ranges, one of which may be primary. Each range may carry a short **label** ("expected 'int', found 'char *'"). The GNU and MSVC renderers ignore labels; the forge renderer and SARIF show them.
 - **Notes**: each with its own position, message, ranges, and fix-its. Notes are suppressed with their diagnostic.
 - **Fix-its**: replace a source range with text. An insertion is an empty range and a removal is empty text. The engine drops a fix-it that is not one edit to one file's spelled text, such as one inside a macro expansion.

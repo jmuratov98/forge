@@ -111,7 +111,7 @@ Contraction follows `#pragma STDC FP_CONTRACT` and `-ffp-contract`, the way clan
 - `fast`: the frontend sets `contract` on `fmul` and `fadd`, which allows fusing across expressions.
 - `off`: neither.
 
-A Billet source location is a file, a line, and a column, with an inlining scope to come. It keeps what DWARF line tables need and no macro expansion stack.
+A Billet instruction's source location is a **debug location**: a file, a line, and a column, with an inlining scope to come. It keeps what DWARF line tables need and no macro expansion stack. How Ingot → Billet produces it is in [source.md](source.md#below-the-ast).
 
 ## Aliasing
 

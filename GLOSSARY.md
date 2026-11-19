@@ -67,8 +67,39 @@ _Avoid_: "MIR" in rustc's sense of a mid-level IR.
 **Stamp** (MC or MCIR, _Machine Code_)
 The last representation before bytes: encodable instructions with the sections, symbols, and relocations of an object file. Both the compiler and fas produce it.
 
+**Source manager**
+The part of Forge that owns one translation unit's source: every file it includes and every macro expansion, and the locations that point into them. It answers where a location is: its file, line, and column, what included that file, and which macro expansions produced it.
+_Avoid_: "file manager" for it; the file manager sits beneath it and knows nothing of translation units.
+
+**File manager**
+The cache of files read through the file-system interface, one entry per file on disk, identified by the operating system rather than by path. Several source managers can share one.
+
+**File-system interface**
+The one route by which Forge reads files and directories. Behind it can be the real disk, files held in memory, or in-memory buffers laid over the disk, which is how a language server supplies files the user has not saved.
+_Avoid_: "VFS".
+
+**Inclusion**
+One entry of a file into a translation unit: the main file, or a file named by one `#include`. A header included twice is two inclusions of one file.
+_Avoid_: "file" when one particular entry is meant.
+
+**Expansion**
+One use of a macro and the tokens it produced. A token that came from a macro has a chain of expansions, from the innermost macro out to the use in the source the user wrote.
+
+**Spelling position**
+The file, line, and column where a piece of text physically is.
+
+**Presumed position**
+The file and line a piece of text claims to have, after `#line` directives and line markers. Diagnostics, `__FILE__`, `__LINE__`, and debug locations use it; edits to the source use the spelling position.
+
+**Source location**
+A point in a translation unit's source, as the frontends, the C-family layer, fas's assembly parser, and Ingot see it. It knows its inclusion, its spelling position, and, for text that came from a macro, the chain of expansions that produced it. It means something only to the source manager that made it.
+
+**Debug location**
+A file, line, and column, which is all Billet, Blank, and Stamp know of where code came from. It is what debug-info line tables record, so it keeps no macro expansions.
+_Avoid_: "source location" for it.
+
 **Diagnostic**
-One message to the user about their input: a severity, a position (a source location, an input such as a file or object, or nothing), a message, and the notes and fix-its that belong to it. Every failure the user hears about is a diagnostic.
+One message to the user about their input: a severity, a position (a source location, a debug location, an input such as a file or object, or nothing), a message, and the notes and fix-its that belong to it. Every failure the user hears about is a diagnostic.
 _Avoid_: "error" for a diagnostic in general; an error is one severity.
 
 **Diagnostics engine**
