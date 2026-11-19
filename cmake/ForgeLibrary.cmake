@@ -30,21 +30,21 @@ function(_forge_allowed_dependencies out_var name)
 endfunction()
 
 # Stops with an error unless library <name> may depend on each of the given
-# libraries and each is already declared. <who> names the dependent in the
-# message: the library, or its tests.
-function(_forge_check_dependencies who name)
+# libraries and each is already declared. <label> names the dependent in the
+# error messages: the library, or its tests.
+function(_forge_check_dependencies label name)
   _forge_allowed_dependencies(allowed "${name}")
   foreach(dependency IN LISTS ARGN)
     if(NOT "*" IN_LIST allowed AND NOT dependency IN_LIST allowed)
       string(REPLACE ";" ", " allowed_text "${allowed}")
       message(FATAL_ERROR
-        "Forge: ${who} may not depend on ${dependency}.\n"
+        "Forge: ${label} may not depend on ${dependency}.\n"
         "docs/layout.md, Dependency rules. ${name} may depend on:\n"
         "  ${allowed_text}")
     endif()
     if(NOT TARGET forge_${dependency})
       message(FATAL_ERROR
-        "Forge: ${who} depends on ${dependency}, which is not declared yet. "
+        "Forge: ${label} depends on ${dependency}, which is not declared yet. "
         "Declare ${dependency} first.")
     endif()
   endforeach()
