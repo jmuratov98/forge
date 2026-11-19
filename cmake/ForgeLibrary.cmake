@@ -109,7 +109,7 @@ function(forge_add_unit_tests library)
   _forge_check_dependencies("${library}'s tests" "${library}" ${ARG_PRIVATE_DEPENDS})
 
   _forge_add_googletest_binary(${library}_tests SOURCES ${ARG_SOURCES})
-  target_link_libraries(${library}_tests PRIVATE forge::${library})
+  target_link_libraries(${library}_tests PRIVATE forge_${library})
   foreach(dependency IN LISTS ARG_PRIVATE_DEPENDS)
     target_link_libraries(${library}_tests PRIVATE forge_${dependency})
   endforeach()
