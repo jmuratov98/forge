@@ -35,7 +35,7 @@ Each library is static. A library's directory appears when its milestone arrives
 | ---------- | -------------------------------------------------------------------------------------------------- | ------- |
 | `core`     | Everything in [ADR 0004](adr/0004-core-replaces-the-standard-library.md), plus `forge/version.hpp`  | M1      |
 | `driver`   | The options model, mode dispatch, compile orchestration, the list of targets                       | M1      |
-| `source`   | The source manager, source locations, and the diagnostics engine                                   | M1      |
+| `source`   | The file-system interface, the file manager, the source manager, source locations, and the diagnostics engine ([source.md](source.md)) | M1 |
 | `cfamily`  | The C-family layer ([ADR 0008](adr/0008-split-frontends-over-a-shared-c-family-layer.md))           | M1      |
 | `c`        | The C frontend, including C AST → Ingot                                                            | M1      |
 | `ingot`    | Ingot, and Ingot → Billet                                                                          | M1      |
