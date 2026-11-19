@@ -21,7 +21,7 @@ How Forge tells the user about their input: how diagnostics are defined, how the
 
 ## Definitions
 
-Each library that reports diagnostics defines them in its own X-macro file, `diagnostics.def`, next to its sources. A build-time generator may replace these files later ([layout.md](layout.md)). `constexpr` checks reject duplicate names, unknown groups, and templates that don't match their arguments.
+Each library that reports diagnostics defines them in its own X-macro file, `diagnostics.inc.hpp`, next to its sources. A build-time generator may replace these files later ([layout.md](layout.md)). `constexpr` checks reject duplicate names, unknown groups, and templates that don't match their arguments.
 
 | Field            | Meaning                                                                                                   |
 | ---------------- | --------------------------------------------------------------------------------------------------------- |
@@ -125,13 +125,13 @@ t.c:3:13: error: expected ';' after return statement
     3 |     return x
       |             ^
       |             ;
-t.c:2:9: error: unused variable 'unused' [-Werror,-Wunused-variable]
-    2 |     int unused;
-      |         ^~~~~~
+t.c:5:22: error: call to undeclared function 'h'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+    5 | int g(void) { return h(1); }
+      |                      ^
 2 errors generated.
 ```
 
-- The header is `file:line:col: severity: message`, followed by `[-W<group>]` for a warning, or `[-Werror,-W<group>]` for a warning the user made an error.
+- The header is `file:line:col: severity: message`, followed by `[-W<group>]` for a warning or a warning that is an error by default (as above), or `[-Werror,-W<group>]` for a warning the user made an error.
 - Columns are 1-based **bytes**. A tab counts as one.
 - The caret line is laid out by display width, with tabs expanded to 8. `~` underlines ranges, and any fix-it insertion goes on the line below.
 - Notes follow their diagnostic in the same layout.
@@ -176,7 +176,7 @@ int f(void) {
     // expected-note@+1 {{previous definition is here}}
     int x = 1;
     int x = 2;  // expected-error {{redefinition of 'x'}}
-    return 0    // expected-error {{expected ';' after return statement}}
+    return x    // expected-error {{expected ';' after return statement}}
 }
 ```
 
