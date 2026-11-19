@@ -11,7 +11,7 @@ M0 builds no C++ beyond a `main`: core's first slice, `FORGE_ASSERT` and the cra
 | M2  | Real C                | Full C17, the preprocessor, the platform's system headers, **arm64 Linux and x86-64 Linux**, DWARF line info                               | Lua 5.4 builds and passes its own tests on all three targets                                  |
 | M3  | fas                   | Built-in assembler writing ELF and Mach-O objects directly, plus a standalone `fas`; the system `as` is no longer used                      | M2 still passes, built through fas                                                            |
 | M4  | fold                  | ELF and Mach-O linker; the system `ld` is no longer used                                                                                   | M2 still passes; fold also links clang-built objects                                          |
-| M5  | Optimizer             | Optimization passes                                                                                                                        | Speed goals met on a C benchmark suite                                                        |
+| M5  | Optimizer             | Optimization passes                                                                                                                        | Speed goals met on C benchmarks on all three targets                                          |
 | M6  | Windows               | COFF/PE, the Win64 C calling convention, the `cl.exe`-style driver, CodeView/PDB, MinGW                                                    | Lua passes on native Windows and on MinGW                                                     |
 | M7  | C breadth             | C89 through C2y modes, GNU and MSVC extensions, RISC-V                                                                                     | SQLite passes its tests on every target                                                       |
 | M8  | flibc + Forge runtime | Startup objects, compiler builtins, the C library                                                                                          | Lua and SQLite pass when linked against flibc (Linux)                                         |
@@ -23,7 +23,7 @@ M0 builds no C++ beyond a `main`: core's first slice, `FORGE_ASSERT` and the cra
 
 ## Speed goals
 
-Both are upper bounds measured against gcc and clang; being faster is never a miss.
+Both are upper bounds measured against a baseline: on each metric, the best of gcc and clang, plus AppleClang on macOS. A goal is judged by the geometric mean over a corpus; being faster is never a miss. [benchmarks.md](benchmarks.md) has the details.
 
-- **Compile time**: at most 1.25× gcc's or clang's, at the same `-O` level.
-- **Generated code**: at most 1.25× slower, at `-O2`.
+- **Compile time**: at most 1.25× the baseline's, at the same `-O` level.
+- **Generated code**: at most 1.25× slower than the baseline's, at `-O2`.

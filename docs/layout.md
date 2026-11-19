@@ -10,7 +10,7 @@ How Forge's source is divided into libraries, which libraries may depend on whic
 | `docs/`    | ADRs, the roadmap, and the guides                                                      |
 | `forge/`   | The host libraries below and the `forge` executable                                    |
 | `test/`    | Test suites that cross libraries; `test/e2e/` is the end-to-end corpus                 |
-| `scripts/` | Dev and test tooling: `update-e2e`, the lit test format, the policy checks, CI helpers |
+| `scripts/` | Dev and test tooling: `update-e2e`, the lit test format, the policy checks, CI helpers, and from M5 the benchmark harness `bench` |
 | `runtime/` | The Forge runtime, built by Forge for each target (M8)                                 |
 | `flibc/`   | The C library, built by Forge for each target (M8)                                     |
 | `flibcxx/` | The C++ standard library, built by Forge for each target (M12)                         |
