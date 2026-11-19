@@ -58,6 +58,20 @@ function(_forge_write_selftest_compiler path)
   file(WRITE "${path}" "[${command}]\n")
 endfunction()
 
+# _forge_add_googletest_binary(<target> SOURCES <files...>)
+#
+# Creates a googletest binary linked with googletest's main and the build
+# options, registers its tests with CTest so an IDE lists each one, and records
+# it so check-unit builds it before running CTest. The caller links what the
+# tests are about.
+function(_forge_add_googletest_binary target)
+  cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "SOURCES")
+  add_executable(${target} ${ARG_SOURCES})
+  target_link_libraries(${target} PRIVATE GTest::gtest_main forge_build_options)
+  gtest_discover_tests(${target} DISCOVERY_MODE PRE_TEST)
+  set_property(GLOBAL APPEND PROPERTY FORGE_UNIT_TEST_TARGETS ${target})
+endfunction()
+
 # Makes googletest and gtest_discover_tests available. The root file calls it
 # before it adds the libraries, so each library's own test/ directory can
 # declare its googletest binary.

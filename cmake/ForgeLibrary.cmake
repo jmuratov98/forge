@@ -88,12 +88,11 @@ endfunction()
 #   [PRIVATE_DEPENDS <libraries...>])
 #
 # Creates <library>'s googletest binary, <library>_tests, from its test/
-# directory. It links forge::<library> and googletest's main, may link only the
+# directory. It links the library and googletest's main, may link only the
 # libraries <library> itself may depend on, and registers its tests with CTest
-# so `check-unit` runs them and an IDE lists them. Each binary is recorded in
-# the global property FORGE_UNIT_TEST_TARGETS, which check-unit depends on, so
-# a new library's tests need no edit to a shared file. With FORGE_BUILD_TESTS
-# off it does nothing.
+# so `check-unit` runs them and an IDE lists them; a new library's tests need
+# no edit to a shared file. With FORGE_BUILD_TESTS off it does nothing; with
+# it on, the root file has included ForgeTesting, whose helper it builds on.
 function(forge_add_unit_tests library)
   if(NOT FORGE_BUILD_TESTS)
     return()
@@ -109,13 +108,9 @@ function(forge_add_unit_tests library)
   endif()
   _forge_check_dependencies("${library}'s tests" "${library}" ${ARG_PRIVATE_DEPENDS})
 
-  set(target ${library}_tests)
-  add_executable(${target} ${ARG_SOURCES})
-  target_link_libraries(${target} PRIVATE
-    forge::${library} GTest::gtest_main forge_build_options)
+  _forge_add_googletest_binary(${library}_tests SOURCES ${ARG_SOURCES})
+  target_link_libraries(${library}_tests PRIVATE forge::${library})
   foreach(dependency IN LISTS ARG_PRIVATE_DEPENDS)
-    target_link_libraries(${target} PRIVATE forge_${dependency})
+    target_link_libraries(${library}_tests PRIVATE forge_${dependency})
   endforeach()
-  gtest_discover_tests(${target} DISCOVERY_MODE PRE_TEST)
-  set_property(GLOBAL APPEND PROPERTY FORGE_UNIT_TEST_TARGETS ${target})
 endfunction()

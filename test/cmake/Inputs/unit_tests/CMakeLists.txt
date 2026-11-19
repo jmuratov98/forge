@@ -3,6 +3,7 @@ project(unit_tests_fixture LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${FORGE_ROOT}/cmake")
 include(ForgeLibrary)
+include(ForgeTesting)
 
 add_library(forge_build_options INTERFACE)
 
