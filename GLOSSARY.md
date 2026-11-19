@@ -66,3 +66,23 @@ _Avoid_: "MIR" in rustc's sense of a mid-level IR.
 
 **Stamp** (MC or MCIR, _Machine Code_)
 The last representation before bytes: encodable instructions with the sections, symbols, and relocations of an object file. Both the compiler and fas produce it.
+
+**Diagnostic**
+One message to the user about their input: a severity, a position (a source location, an input such as a file or object, or nothing), a message, and the notes and fix-its that belong to it. Every failure the user hears about is a diagnostic.
+_Avoid_: "error" for a diagnostic in general; an error is one severity.
+
+**Diagnostics engine**
+The part of Forge that every producer reports diagnostics to during one compilation. It decides each diagnostic's final severity, counts errors, and passes what survives to the diagnostic consumer.
+
+**Diagnostic consumer**
+Whatever receives finished diagnostics from the diagnostics engine: a text renderer, a SARIF writer, a language server, or a test checker.
+
+**Warning group**
+A named set of warnings that one flag turns on, off, or into errors, such as `unused-variable` for `-Wunused-variable`. Groups nest: `all` contains `unused`, which contains `unused-variable`. Every warning belongs to exactly one group.
+_Avoid_: "warning flag" for the group itself; the flag is how a command line names it.
+
+**Note**
+A diagnostic's supporting message that points somewhere else, such as "previous declaration is here". A note belongs to one diagnostic and is never reported on its own.
+
+**Fix-it**
+A suggested edit attached to a diagnostic or note: replace a range of source text with new text.

@@ -13,6 +13,7 @@ Forge is built test-first:
 Put the test at the highest layer that can observe the behavior. That way, reworking the inside of a layer doesn't break its tests.
 
 - **Compiler behavior** gets an end-to-end case, or an IR test once that layer has a text format.
+- **Diagnostics** get a verify test: a source file whose `expected-error {{…}}` comments state what Forge must report ([diagnostics.md](diagnostics.md#testing)).
 - **googletest** is for core and for self-contained algorithms such as the register allocator or core's hash map.
 
 Running a single test must take well under a second:
@@ -27,7 +28,8 @@ Running a single test must take well under a second:
 | Unit tests                      | googletest, one binary per component library; at M0, one binary that checks the toolchain's flags                  | M0               |
 | End-to-end                      | Compile a program, run it, and compare its exit code and stdout with committed expectations                        | M0 runner, M1 corpus |
 | Cross-host assembly             | Every CI host compiles the end-to-end corpus for arm64 macOS; CI checks that the assembly is byte-identical across hosts | M1           |
-| IR and diagnostic tests         | Feed text into one layer or the frontend and match its output against patterns                                     | When each layer's text format lands |
+| Diagnostic tests                | Compile a file with the verify consumer, which checks the diagnostics against the `expected-…` comments in it       | M1               |
+| IR tests                        | Feed text into one layer and match its output against patterns                                                     | When each layer's text format lands |
 | Cross-host objects              | The same check as cross-host assembly, applied to object files ([ADR 0005](adr/0005-byte-identical-output-across-hosts.md)) | M3 (fas)  |
 | Differential and fuzzing        | Random programs from Csmith- or YARPGen-style generators, compared live against clang and gcc across `-O` levels   | M5 (optimizer)   |
 | Bootstrap                       | Stage-2 and stage-3 builds of Forge compared with `cmp`                                                            | M9               |
@@ -38,7 +40,7 @@ The pattern matcher for IR tests (FileCheck, a port, or one of our own) is chose
 
 ## Runners
 
-- **lit**: runs all file-based tests (end-to-end, and later IR and diagnostic tests).
+- **lit**: runs all file-based tests (end-to-end, diagnostic, and later IR tests).
 - **CTest**: runs googletest, which registers through `gtest_discover_tests` so IDE test explorers list each test.
 - **`check`**: a single CMake target that runs both.
 
