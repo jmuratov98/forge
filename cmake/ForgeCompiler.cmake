@@ -48,13 +48,19 @@ function(forge_configure_compiler)
     string(REGEX REPLACE "[/-]EH[a-z-]*" "" flags "${CMAKE_CXX_FLAGS}")
     string(REGEX REPLACE "[/-]GR-?( |$)" "" flags "${flags}")
     set(CMAKE_CXX_FLAGS "${flags}" PARENT_SCOPE)
+    # googletest compiles with its own flags, -EHsc -D_HAS_EXCEPTIONS=1 among them
+    # and -W4 -WX, and they sit between the definitions and the options on the
+    # command line. Only an option overrides them, so _HAS_EXCEPTIONS=0 is one
+    # (as a definition, the STL would keep its exception handlers: C4530). For
+    # the same reason /wd4577 is global: googletest's own sources use `noexcept`.
     add_compile_options(
       "$<$<COMPILE_LANGUAGE:CXX>:/GR->"
       "$<$<COMPILE_LANGUAGE:CXX>:/EHs-c->"
+      "$<$<COMPILE_LANGUAGE:CXX>:/D_HAS_EXCEPTIONS=0>"
+      "$<$<COMPILE_LANGUAGE:CXX>:/wd4577>"
       "$<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>"
       "$<$<COMPILE_LANGUAGE:CXX>:/permissive->"
       "$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
-    add_compile_definitions("$<$<COMPILE_LANGUAGE:CXX>:_HAS_EXCEPTIONS=0>")
     # C4577 says `noexcept` is used with no exception handling mode, which is
     # what ADR 0003 asks for. /external:W0 silences system headers, googletest's.
     set(warnings /W4 /wd4577 /external:W0)

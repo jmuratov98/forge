@@ -6,7 +6,6 @@
 Checks: '-*,readability-identifier-naming'
 WarningsAsErrors: 'readability-identifier-naming'
 HeaderFilterRegex: '.*'
-ExcludeHeaderFilterRegex: '.*/_deps/.*'
 CheckOptions:
   readability-identifier-naming.NamespaceCase: lower_case
   readability-identifier-naming.ClassCase: lower_case

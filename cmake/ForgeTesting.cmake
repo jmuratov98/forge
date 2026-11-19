@@ -71,8 +71,12 @@ function(forge_setup_testing)
   file(TO_CMAKE_PATH "${CMAKE_MAKE_PROGRAM}" FORGE_NINJA)
   file(TO_CMAKE_PATH "${FORGE_PYTHON}" FORGE_PYTHON_EXE)
   find_program(FORGE_CLANG_TIDY NAMES clang-tidy)
+  # A failed search leaves FORGE_CLANG_TIDY-NOTFOUND, which lit would read as a
+  # path; an empty string is what turns the clang-tidy tests off.
   if(FORGE_CLANG_TIDY)
     file(TO_CMAKE_PATH "${FORGE_CLANG_TIDY}" FORGE_CLANG_TIDY)
+  else()
+    set(FORGE_CLANG_TIDY "")
   endif()
   set(FORGE_EXE "${FORGE_BUILD_DIR}/bin/forge${CMAKE_EXECUTABLE_SUFFIX}")
   configure_file("${CMAKE_SOURCE_DIR}/test/lit.site.cfg.py.in"
