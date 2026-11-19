@@ -33,6 +33,7 @@ config.substitutions += [
     ("%configure", quoted(config.cmake_exe) + " -G Ninja -DCMAKE_MAKE_PROGRAM=" + quoted(config.ninja_exe)),
     ("%ninja", quoted(config.ninja_exe)),
     ("%cmake", quoted(config.cmake_exe)),
+    ("%ctest", quoted(config.ctest_exe)),
     ("%python", python),
     ("%scripts", scripts),
     ("%graph_check", python + " " + os.path.join(scripts, "check_target_graph.py") + " --cmake "

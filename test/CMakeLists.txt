@@ -1,4 +1,4 @@
-add_executable(toolchain_contract_tests toolchain_contract_test.cpp)
-target_link_libraries(toolchain_contract_tests PRIVATE
-  GTest::gtest_main forge_build_options)
-gtest_discover_tests(toolchain_contract_tests DISCOVERY_MODE PRE_TEST)
+# The toolchain contract checks the build's flags, not a library, so it lives
+# here and not in a library's test/ directory.
+_forge_add_googletest_binary(toolchain_contract_tests
+  SOURCES toolchain_contract_test.cpp)

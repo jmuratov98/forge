@@ -29,6 +29,27 @@ function(_forge_allowed_dependencies out_var name)
   set(${out_var} "${result}" PARENT_SCOPE)
 endfunction()
 
+# Stops with an error unless library <name> may depend on each of the given
+# libraries and each is already declared. <label> names the dependent in the
+# error messages: the library, or its tests.
+function(_forge_check_dependencies label name)
+  _forge_allowed_dependencies(allowed "${name}")
+  foreach(dependency IN LISTS ARGN)
+    if(NOT "*" IN_LIST allowed AND NOT dependency IN_LIST allowed)
+      string(REPLACE ";" ", " allowed_text "${allowed}")
+      message(FATAL_ERROR
+        "Forge: ${label} may not depend on ${dependency}.\n"
+        "docs/layout.md, Dependency rules. ${name} may depend on:\n"
+        "  ${allowed_text}")
+    endif()
+    if(NOT TARGET forge_${dependency})
+      message(FATAL_ERROR
+        "Forge: ${label} depends on ${dependency}, which is not declared yet. "
+        "Declare ${dependency} first.")
+    endif()
+  endforeach()
+endfunction()
+
 # forge_add_library(<name>
 #   SOURCES <files...>
 #   [PUBLIC_DEPENDS <libraries...>]
@@ -45,21 +66,7 @@ function(forge_add_library name)
     message(FATAL_ERROR "forge_add_library(${name}): SOURCES is required.")
   endif()
 
-  _forge_allowed_dependencies(allowed "${name}")
-  foreach(dependency IN LISTS ARG_PUBLIC_DEPENDS ARG_PRIVATE_DEPENDS)
-    if(NOT "*" IN_LIST allowed AND NOT dependency IN_LIST allowed)
-      string(REPLACE ";" ", " allowed_text "${allowed}")
-      message(FATAL_ERROR
-        "Forge: ${name} may not depend on ${dependency}.\n"
-        "docs/layout.md, Dependency rules. ${name} may depend on:\n"
-        "  ${allowed_text}")
-    endif()
-    if(NOT TARGET forge_${dependency})
-      message(FATAL_ERROR
-        "Forge: ${name} depends on ${dependency}, which is not declared yet. "
-        "Declare ${dependency} first.")
-    endif()
-  endforeach()
+  _forge_check_dependencies("${name}" "${name}" ${ARG_PUBLIC_DEPENDS} ${ARG_PRIVATE_DEPENDS})
 
   add_library(forge_${name} STATIC ${ARG_SOURCES})
   add_library(forge::${name} ALIAS forge_${name})
@@ -74,4 +81,36 @@ function(forge_add_library name)
     target_link_libraries(forge_${name} PRIVATE forge_${dependency})
   endforeach()
   target_link_libraries(forge_${name} PRIVATE forge_build_options)
+endfunction()
+
+# forge_add_unit_tests(<library>
+#   SOURCES <files...>
+#   [PRIVATE_DEPENDS <libraries...>])
+#
+# Creates <library>'s googletest binary, <library>_tests, from its test/
+# directory. It links the library and googletest's main, may link only the
+# libraries <library> itself may depend on, and registers its tests with CTest
+# so `check-unit` runs them and an IDE lists them; a new library's tests need
+# no edit to a shared file. With FORGE_BUILD_TESTS off it does nothing; with
+# it on, the root file has included ForgeTesting, whose helper it builds on.
+function(forge_add_unit_tests library)
+  if(NOT FORGE_BUILD_TESTS)
+    return()
+  endif()
+  cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "SOURCES;PRIVATE_DEPENDS")
+  if(NOT ARG_SOURCES)
+    message(FATAL_ERROR "forge_add_unit_tests(${library}): SOURCES is required.")
+  endif()
+  if(NOT TARGET forge_${library})
+    message(FATAL_ERROR
+      "Forge: tests for ${library}, which is not declared yet. "
+      "Declare it with forge_add_library first.")
+  endif()
+  _forge_check_dependencies("${library}'s tests" "${library}" ${ARG_PRIVATE_DEPENDS})
+
+  _forge_add_googletest_binary(${library}_tests SOURCES ${ARG_SOURCES})
+  target_link_libraries(${library}_tests PRIVATE forge::${library})
+  foreach(dependency IN LISTS ARG_PRIVATE_DEPENDS)
+    target_link_libraries(${library}_tests PRIVATE forge::${dependency})
+  endforeach()
 endfunction()

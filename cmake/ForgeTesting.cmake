@@ -58,16 +58,42 @@ function(_forge_write_selftest_compiler path)
   file(WRITE "${path}" "[${command}]\n")
 endfunction()
 
+# _forge_add_googletest_binary(<target> SOURCES <files...>)
+#
+# Creates a googletest binary linked with googletest's main and the build
+# options, registers its tests with CTest so an IDE lists each one, and records
+# it so check-unit builds it before running CTest. The caller links what the
+# tests are about.
+function(_forge_add_googletest_binary target)
+  cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "SOURCES")
+  add_executable(${target} ${ARG_SOURCES})
+  target_link_libraries(${target} PRIVATE GTest::gtest_main forge_build_options)
+  gtest_discover_tests(${target} DISCOVERY_MODE PRE_TEST)
+  set_property(GLOBAL APPEND PROPERTY FORGE_UNIT_TEST_TARGETS ${target})
+endfunction()
+
+# Makes googletest and gtest_discover_tests available. The root file calls it
+# before it adds the libraries, so each library's own test/ directory can
+# declare its googletest binary.
+#
+# A macro, so what GoogleTest sets lands in the root directory's scope and
+# reaches the libraries' directories below it.
+macro(forge_enable_unit_testing)
+  _forge_make_googletest_available()
+  include(GoogleTest)
+endmacro()
+
+# Finds lit, then adds the cross-library tests in test/, lit's configuration,
+# and the check targets. The root file calls it after the libraries, whose test
+# binaries check-unit runs.
 function(forge_setup_testing)
   _forge_find_lit()
-  _forge_make_googletest_available()
-
-  include(GoogleTest)
   add_subdirectory("${CMAKE_SOURCE_DIR}/test" "${CMAKE_BINARY_DIR}/test")
 
   file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}" FORGE_SOURCE_DIR)
   file(TO_CMAKE_PATH "${CMAKE_BINARY_DIR}" FORGE_BUILD_DIR)
   file(TO_CMAKE_PATH "${CMAKE_COMMAND}" FORGE_CMAKE)
+  file(TO_CMAKE_PATH "${CMAKE_CTEST_COMMAND}" FORGE_CTEST)
   file(TO_CMAKE_PATH "${CMAKE_MAKE_PROGRAM}" FORGE_NINJA)
   file(TO_CMAKE_PATH "${FORGE_PYTHON}" FORGE_PYTHON_EXE)
   find_program(FORGE_CLANG_TIDY NAMES clang-tidy)
@@ -83,10 +109,12 @@ function(forge_setup_testing)
     "${CMAKE_BINARY_DIR}/test/lit.site.cfg.py" @ONLY)
   _forge_write_selftest_compiler("${CMAKE_BINARY_DIR}/test/e2e_selftest_compiler.json")
 
+  # Every googletest binary, so ctest finds each one built.
+  get_property(unit_tests GLOBAL PROPERTY FORGE_UNIT_TEST_TARGETS)
   add_custom_target(check-unit
     COMMAND "${CMAKE_CTEST_COMMAND}" --test-dir "${CMAKE_BINARY_DIR}" --output-on-failure
-    DEPENDS toolchain_contract_tests
     USES_TERMINAL)
+  add_dependencies(check-unit ${unit_tests})
   add_custom_target(check-lit
     COMMAND "${FORGE_PYTHON}" -c "from lit.main import main; main()"
       -sv "${CMAKE_BINARY_DIR}/test"

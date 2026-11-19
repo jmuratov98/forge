@@ -19,8 +19,6 @@ forge_configure_version()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-add_subdirectory(forge)
-
 option(FORGE_BUILD_TESTS "Build the tests and the check target" ON)
 if(FORGE_BUILD_TESTS)
   # The end-to-end runner's self-test compiles C with the host's C compiler.
@@ -28,5 +26,12 @@ if(FORGE_BUILD_TESTS)
   # enable_testing() only takes effect when called from the root file itself.
   enable_testing()
   include(ForgeTesting)
+  # Before the libraries, so their own test/ directories can use googletest.
+  forge_enable_unit_testing()
+endif()
+
+add_subdirectory(forge)
+
+if(FORGE_BUILD_TESTS)
   forge_setup_testing()
 endif()

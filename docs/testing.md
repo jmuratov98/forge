@@ -25,7 +25,7 @@ Running a single test must take well under a second:
 
 | Layer                           | What it checks                                                                                                     | Arrives          |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------- |
-| Unit tests                      | googletest, one binary per component library; at M0, one binary that checks the toolchain's flags                  | M0               |
+| Unit tests                      | googletest, one binary per component library (`<library>_tests`), plus one that checks the toolchain's flags       | M0               |
 | End-to-end                      | Compile a program, run it, and compare its exit code and stdout with committed expectations                        | M0 runner, M1 corpus |
 | Cross-host assembly             | Every CI host compiles the end-to-end corpus for arm64 macOS; CI checks that the assembly is byte-identical across hosts | M1           |
 | Diagnostic tests                | Compile a file with the verify consumer, which checks the diagnostics against the `expected-…` comments in it       | M1               |
