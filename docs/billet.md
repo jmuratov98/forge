@@ -89,7 +89,7 @@ Calling-convention lowering runs after Billet, so every call (direct, indirect, 
 
 ## Intrinsics
 
-An intrinsic is its own instruction, `intrinsic <name>(args) -> results`. It is never a call to a reserved symbol. One registry records each intrinsic's type rules, memory effects, and whether it can unwind. The generic intrinsics include `memcpy`, `memset`, `memmove`, the `va_*` intrinsics, `trap`, `assume`, `expect`, `stacksave`, `stackrestore`, the overflow arithmetic, and the bit operations.
+An intrinsic is its own instruction, `intrinsic <name>(args) -> results`. It is never a call to a reserved symbol. One registry records each intrinsic's type rules, memory effects, and whether it can unwind. The generic intrinsics include `memcpy`, `memset`, `memmove`, the `va_*` intrinsics, `trap`, `assume`, `expect`, `fmuladd`, `stacksave`, `stackrestore`, the overflow arithmetic, and the bit operations.
 
 **Target intrinsics** are named by ISA (`aarch64.neon.sdot`). A module that uses one can be compiled only for a target with that ISA, and generic passes treat it as an opaque operation with the effects it declares. Each ISA library registers its own intrinsics, so `billet` never names a target.
 
@@ -103,7 +103,13 @@ There is no generic metadata. Every field an instruction carries is defined by B
 - an atomic ordering
 - an alias class
 
-The fast-math flags are LLVM's seven: `nnan ninf nsz arcp contract afn reassoc`. The C frontend sets `contract` according to `#pragma STDC FP_CONTRACT` and `-ffp-contract`, matching clang's default. Every floating-point operation assumes the default floating-point environment.
+The fast-math flags are LLVM's seven: `nnan ninf nsz arcp contract afn reassoc`. Every floating-point operation assumes the default floating-point environment.
+
+Contraction follows `#pragma STDC FP_CONTRACT` and `-ffp-contract`, the way clang does it:
+
+- `on` (clang's default): the C frontend emits the `fmuladd` intrinsic for each multiply and add within one expression. `fmuladd` is fused or not as the target decides, and that decision is fixed per target, so output doesn't depend on the host (ADR 0005). arm64 always fuses.
+- `fast`: the frontend sets `contract` on `fmul` and `fadd`, which allows fusing across expressions.
+- `off`: neither.
 
 A Billet source location is a file, a line, and a column, with an inlining scope to come. It keeps what DWARF line tables need and no macro expansion stack.
 
