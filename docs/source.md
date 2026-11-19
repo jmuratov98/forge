@@ -86,7 +86,7 @@ How a location is encoded is open. M1 has one inclusion and no expansions, and e
 | AST, Ingot              | `source_location`  |
 | Billet, Blank, Stamp    | debug location     |
 
-Ingot → Billet converts each source location to a **debug location**: a file, a line, and a column, with an inlining scope to come ([billet.md](billet.md#data-on-instructions)). It takes the outermost expansion's location (the macro use the user wrote, which is what a debugger steps through), then that location's presumed position. The file is an index into the Billet module's file table ([What does a Billet module contain?](https://github.com/jmuratov98/forge/issues/27)). Billet → Blank and Blank → Stamp copy debug locations through.
+Ingot → Billet converts each source location to a **debug location**: a file, a line, and a column, with an inlining scope to come ([billet.md](billet.md#data-on-instructions)). It takes the outermost expansion's location (the macro use the user wrote, which is what a debugger steps through), then that location's presumed position. The file is an index into the Billet module's file table ([billet.md](billet.md#module-tables)). Billet → Blank and Blank → Stamp copy debug locations through.
 
 In Stamp:
 
