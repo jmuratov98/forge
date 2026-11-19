@@ -1,0 +1,15 @@
+# The MSVC flags that switch exceptions off (ADR 0003) reach googletest too.
+#
+# googletest compiles with its own COMPILE_FLAGS, which say -EHsc and
+# -D_HAS_EXCEPTIONS=1 and come before the directory's options on the command
+# line. Options come after them, so they win; definitions come before them, so
+# they lose, and the STL is left with exception handlers but no unwinding (C4530).
+# googletest's -WX also makes `noexcept` without exception handling (C4577) an error.
+
+# RUN: rm -rf %t
+# RUN: %configure -S %S/Inputs/msvc_flags_project -B %t/msvc -DFORGE_ROOT=%forge_source_dir > %t.configure 2>&1
+
+# RUN: grep -E 'option: .*/EHs-c-' %t.configure
+# RUN: grep -E 'option: .*/D_HAS_EXCEPTIONS=0' %t.configure
+# RUN: grep -E 'option: .*/wd4577' %t.configure
+# RUN: not grep -E 'definition: .*_HAS_EXCEPTIONS' %t.configure

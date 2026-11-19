@@ -6,16 +6,24 @@ How Forge's source is divided into libraries, which libraries may depend on whic
 
 | Directory  | Holds                                                                                  |
 | ---------- | -------------------------------------------------------------------------------------- |
-| `cmake/`   | CMake modules: warnings, version generation, sanitizers                                |
+| `cmake/`   | CMake modules: compiler flags and minimums, build configurations, version generation, the library helper, test setup |
 | `docs/`    | ADRs, the roadmap, and the guides                                                      |
 | `forge/`   | The host libraries below and the `forge` executable                                    |
 | `test/`    | Test suites that cross libraries; `test/e2e/` is the end-to-end corpus                 |
-| `scripts/` | Dev and test tooling: `update-e2e`, the lit test format, CI helpers                    |
+| `scripts/` | Dev and test tooling: `update-e2e`, the lit test format, the policy checks, CI helpers |
 | `runtime/` | The Forge runtime, built by Forge for each target (M8)                                 |
 | `flibc/`   | The C library, built by Forge for each target (M8)                                     |
 | `flibcxx/` | The C++ standard library, built by Forge for each target (M12)                         |
 
-The directory layout inside `forge/` is not fixed yet. Whatever it is, it must let the build enforce the dependency rules below: either each library gets its own include root, so a library can include only the headers of libraries it links, or CI checks the include graph.
+Inside `forge/`, each library lives in a directory named after it, with its own include root, so a library can include only the headers of libraries it links:
+
+| Path                                  | Holds                                                            |
+| ------------------------------------- | ---------------------------------------------------------------- |
+| `forge/<name>/include/forge/<name>/`  | Public headers. core's sit directly in `include/forge/`          |
+| `forge/<name>/src/`                   | Sources and private headers, on no other library's include path  |
+| `forge/<name>/test/`                  | The library's googletest sources                                 |
+
+`forge_add_library` ([building.md](building.md)) creates this and enforces the dependency rules below at configure time. The `forge` executable's own source sits directly in `forge/`. Rules that single out core, such as the policy checks on includes and `float`/`double`, recognize it as `forge/core/`.
 
 `scripts/` may use Python and never runs during a plain build ([ADR 0009](adr/0009-tests-may-use-outside-tools.md)). Code generators that run at build time (instruction tables, selection patterns, diagnostic tables) are C++ host executables that live with the library that uses them and follow every rule in [style.md](style.md).
 
@@ -25,8 +33,8 @@ Each library is static. A library's directory appears when its milestone arrives
 
 | Library    | Holds                                                                                              | Arrives |
 | ---------- | -------------------------------------------------------------------------------------------------- | ------- |
-| `core`     | Everything in [ADR 0004](adr/0004-core-replaces-the-standard-library.md), plus `forge/version.hpp`  | M0      |
-| `driver`   | The options model, mode dispatch, compile orchestration, the list of targets                       | M0      |
+| `core`     | Everything in [ADR 0004](adr/0004-core-replaces-the-standard-library.md), plus `forge/version.hpp`  | M1      |
+| `driver`   | The options model, mode dispatch, compile orchestration, the list of targets                       | M1      |
 | `source`   | The source manager, source locations, and the diagnostics engine                                   | M1      |
 | `cfamily`  | The C-family layer ([ADR 0008](adr/0008-split-frontends-over-a-shared-c-family-layer.md))           | M1      |
 | `c`        | The C frontend, including C AST → Ingot                                                            | M1      |
@@ -67,7 +75,7 @@ A lowering lives with the layer it lowers from. Billet → Blank is the exceptio
 5. `fold` depends only on `object`, `source`, and `core`. `fas` depends on `stamp`, `source`, and `core`. Neither depends on Billet, Blank, or a frontend.
 6. Every link is `PRIVATE` unless the library's public headers expose the dependency's types.
 
-The build enforces the edges, and a CI check rejects any cycle.
+The build enforces the edges at configure time, from the table in `cmake/library_edges.json`. A CI check reads the generated target graph and rejects any cycle and any edge outside the table, so a raw `target_link_libraries` can't bypass the rule.
 
 ## Names
 
@@ -88,7 +96,7 @@ One executable, `forge`, built from `driver` and every library it needs. It pick
 
 | Name        | Mode                                                                  | Arrives |
 | ----------- | --------------------------------------------------------------------- | ------- |
-| `forge`     | gcc/clang-style driver; picks the language from the file extension    | M0      |
+| `forge`     | gcc/clang-style driver; picks the language from the file extension    | M1      |
 | `forge++`   | The same, but C++ by default and links the C++ runtime                 | M9      |
 | `forge-cl`  | cl.exe-style driver                                                   | M6      |
 | `fas`       | Assembler, GNU `as` syntax                                            | M3      |
@@ -97,6 +105,7 @@ One executable, `forge`, built from `driver` and every library it needs. It pick
 | `fold-link` | fold, COFF flavor, link.exe flags                                     | M6      |
 | `fld`       | fold in the host's native flavor: Mach-O on macOS, ELF on Linux and MinGW, COFF on MSVC Windows | M4 |
 
+- At M0 `forge` is a `main` that returns 0, built to give the tests something to run. The rest of this section describes what it grows into.
 - The mode comes from the basename of `argv[0]`, with any extension stripped.
 - A target-triple prefix (`aarch64-linux-gnu-forge`) is reserved for cross-compiling. How it is parsed is decided with the target description.
 - `--driver-mode=<mode>` as the first argument overrides the name.

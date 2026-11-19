@@ -1,0 +1,28 @@
+# The version is composed as ADR 0001 says: X.Y.Z, an optional stage, and
+# +dev.local or +dev.{timestamp}.g{sha} for build metadata.
+
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DSTAGE=alpha -P %S/Inputs/compose_version.cmake 2>&1 | grep -Fx '0.1.0-alpha+dev.local'
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DSTAGE= -P %S/Inputs/compose_version.cmake 2>&1 | grep -Fx '0.1.0+dev.local'
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=2.0.0 -DSTAGE=alpha.1 -P %S/Inputs/compose_version.cmake 2>&1 | grep -Fx '2.0.0-alpha.1+dev.local'
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=2.10.3 -DSTAGE=rc.12 -P %S/Inputs/compose_version.cmake 2>&1 | grep -Fx '2.10.3-rc.12+dev.local'
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DSTAGE=beta -DTIMESTAMP=20261118153000 -DSHA=7643163 -P %S/Inputs/compose_version.cmake 2>&1 | grep -Fx '0.1.0-beta+dev.20261118153000.g7643163'
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DSTAGE= -DTIMESTAMP=20261118153000 -DSHA=abcdef0 -P %S/Inputs/compose_version.cmake 2>&1 | grep -Fx '0.1.0+dev.20261118153000.gabcdef0'
+
+# Every composed version is valid SemVer 2.0.0 and a dev version.
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=1.20.3 -DSTAGE=rc.4 -P %S/Inputs/compose_version.cmake 2>&1 | %python %scripts/check_dev_version.py --stdin
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=1.20.3 -DSTAGE=rc.4 -DTIMESTAMP=20261118153000 -DSHA=7643163 -P %S/Inputs/compose_version.cmake 2>&1 | %python %scripts/check_dev_version.py --stdin --require-ci-form
+
+# A timestamp without a commit, or a commit without a timestamp, is a wiring mistake.
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DTIMESTAMP=20261118153000 -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'must be given together'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DSHA=7643163 -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'must be given together'
+
+# Malformed pieces fail the configure instead of producing an invalid version.
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DTIMESTAMP=2026111815300 -DSHA=7643163 -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'must be 14 digits'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DTIMESTAMP=2026-11-18T15:3 -DSHA=7643163 -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'must be 14 digits'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DTIMESTAMP=20261118153000 -DSHA=7643163a -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'first 7 lowercase'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DTIMESTAMP=20261118153000 -DSHA=ABCDEF0 -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'first 7 lowercase'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DSTAGE=dev -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'must be alpha, beta or rc'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DSTAGE=alpha.0 -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'must be alpha, beta or rc'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0 -DSTAGE=alpha.01 -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'must be alpha, beta or rc'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=0.1.0.4 -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'must be exactly X.Y.Z'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DVERSION=01.2.3 -P %S/Inputs/compose_version.cmake 2>&1 | grep -F 'must be exactly X.Y.Z'

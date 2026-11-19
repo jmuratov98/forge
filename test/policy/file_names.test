@@ -1,0 +1,10 @@
+# Source file names are snake_case; clang-tidy can't check them.
+
+# Files under Inputs are fixtures and are not checked.
+# RUN: %python %scripts/check_file_names.py --root %S/Inputs/filenames/clean | grep -F 'check_file_names: 4 files ok'
+
+# RUN: not %python %scripts/check_file_names.py --root %S/Inputs/filenames/violations > %t.out 2>&1
+# RUN: grep -F 'forge/c/src/ParserImpl.cpp: error: file names are snake_case' %t.out
+# RUN: grep -F 'forge/c/src/parser-impl.hpp: error: file names are snake_case' %t.out
+# RUN: grep -F 'test/MyTest.cpp: error: file names are snake_case' %t.out
+# RUN: not grep -F 'ok_name.cpp' %t.out

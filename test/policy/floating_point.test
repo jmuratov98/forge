@@ -1,0 +1,20 @@
+# float and double are banned outside core (ADR 0005).
+
+# RUN: rm -rf %t
+
+# core may use them; elsewhere, comments, strings, <float.h>, and longer
+# identifiers such as `doubled` are not uses.
+# RUN: %python %scripts/check_floating_point.py --root %S/Inputs/floating/clean | grep -F 'check_floating_point: 1 files ok'
+
+# RUN: not %python %scripts/check_floating_point.py --root %S/Inputs/floating/violations > %t.out 2>&1
+# RUN: grep -F "forge/c/src/bad.cpp:1: error: 'double' outside core" %t.out
+# RUN: grep -F "forge/c/src/bad.cpp:2: error: 'float' outside core" %t.out
+# RUN: grep -F "forge/c/src/bad.cpp:3: error: 'double' outside core" %t.out
+# RUN: grep -F "forge/c/src/bad.cpp:4: error: 'double' outside core" %t.out
+# RUN: grep -F "forge/c/src/bad.cpp:5: error: 'double' outside core" %t.out
+# RUN: grep -F "forge/c/src/bad.cpp:6: error: 'float' outside core" %t.out
+# RUN: grep -F "forge/c/src/bad.cpp:6: error: 'double' outside core" %t.out
+# RUN: grep -F "forge/c/test/bad_test.cpp:2: error: 'double' outside core" %t.out
+# RUN: grep -F "forge/billet/src/also_bad.cpp:2: error: 'float' outside core" %t.out
+# The comment on line 1 of also_bad.cpp is not a use.
+# RUN: not grep -F "also_bad.cpp:1:" %t.out

@@ -1,0 +1,197 @@
+# CI for Forge (ADR 0001: main is protected and CI must pass).
+#
+# Required checks for main: every `build-test (...)` job and `policy`. Branch
+# protection refers to these names, so rename them only together with the
+# repository settings. docs/building.md lists them.
+#
+# Third-party actions are pinned to a commit SHA; the comment names the release.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "release/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # One timestamp and commit for the whole run, so every host composes the same
+  # version string (ADR 0005: output is byte-identical across hosts).
+  stamp:
+    name: stamp
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      timestamp: ${{ steps.stamp.outputs.timestamp }}
+      sha: ${{ steps.stamp.outputs.sha }}
+    steps:
+      - id: stamp
+        env:
+          COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          echo "timestamp=$(date -u +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
+          echo "sha=${COMMIT:0:7}" >> "$GITHUB_OUTPUT"
+
+  build-test:
+    name: build-test (${{ matrix.name }})
+    needs: stamp
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The compiler minimums in cmake/ForgeCompiler.cmake and a newer
+          # gcc and clang, installed with apt if the image lacks them.
+          - { name: linux-gcc-11, os: ubuntu-24.04, cc: gcc-11, cxx: g++-11, package: g++-11 }
+          - { name: linux-gcc-14, os: ubuntu-24.04, cc: gcc-14, cxx: g++-14, package: g++-14 }
+          - { name: linux-clang-16, os: ubuntu-24.04, cc: clang-16, cxx: clang++-16, package: clang-16 }
+          - { name: linux-clang-18, os: ubuntu-24.04, cc: clang-18, cxx: clang++-18, package: clang-18, assertions: true }
+          - { name: macos-appleclang, os: macos-15, cc: clang, cxx: clang++ }
+    env:
+      STAMP_TIMESTAMP: ${{ needs.stamp.outputs.timestamp }}
+      STAMP_SHA: ${{ needs.stamp.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install tools
+        shell: bash
+        run: |
+          python -m pip install -r test/requirements.txt
+          if [ "$RUNNER_OS" = Linux ]; then
+            missing=()
+            command -v "${{ matrix.cxx }}" >/dev/null || missing+=("${{ matrix.package }}")
+            command -v ninja >/dev/null || missing+=(ninja-build)
+            if [ "${#missing[@]}" -gt 0 ]; then
+              sudo apt-get update
+              sudo apt-get install -y --no-install-recommends "${missing[@]}"
+            fi
+          elif ! command -v ninja >/dev/null; then
+            brew install ninja
+          fi
+      - name: Debug
+        run: >-
+          python scripts/ci_build.py --preset ci-debug
+          --cc "${{ matrix.cc }}" --cxx "${{ matrix.cxx }}"
+          --timestamp "$STAMP_TIMESTAMP" --sha "$STAMP_SHA"
+      - name: Release
+        run: >-
+          python scripts/ci_build.py --preset ci-release
+          --cc "${{ matrix.cc }}" --cxx "${{ matrix.cxx }}"
+          --timestamp "$STAMP_TIMESTAMP" --sha "$STAMP_SHA"
+      - name: RelWithDebInfo with assertions
+        if: matrix.assertions
+        run: >-
+          python scripts/ci_build.py --preset ci-relwithdebinfo-assertions
+          --cc "${{ matrix.cc }}" --cxx "${{ matrix.cxx }}"
+          --timestamp "$STAMP_TIMESTAMP" --sha "$STAMP_SHA"
+
+  # Windows with MSVC. lit needs grep and sed, which Git for Windows has;
+  # its directory goes last on PATH so its link.exe doesn't shadow MSVC's.
+  build-test-windows-msvc:
+    name: build-test (windows-msvc)
+    needs: stamp
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      STAMP_TIMESTAMP: ${{ needs.stamp.outputs.timestamp }}
+      STAMP_SHA: ${{ needs.stamp.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: x64
+      - name: Install tools
+        shell: pwsh
+        run: python -m pip install -r test/requirements.txt
+      - name: Debug
+        shell: pwsh
+        run: |
+          $env:PATH += ";C:\Program Files\Git\usr\bin"
+          python scripts/ci_build.py --preset ci-debug --cc cl --cxx cl --timestamp $env:STAMP_TIMESTAMP --sha $env:STAMP_SHA
+      - name: Release
+        shell: pwsh
+        run: |
+          $env:PATH += ";C:\Program Files\Git\usr\bin"
+          python scripts/ci_build.py --preset ci-release --cc cl --cxx cl --timestamp $env:STAMP_TIMESTAMP --sha $env:STAMP_SHA
+
+  # Windows with MinGW-w64 gcc, from MSYS2. Python comes from setup-python and
+  # reaches the MSYS2 shell through the inherited PATH.
+  build-test-windows-mingw:
+    name: build-test (windows-mingw)
+    needs: stamp
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      STAMP_TIMESTAMP: ${{ needs.stamp.outputs.timestamp }}
+      STAMP_SHA: ${{ needs.stamp.outputs.sha }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
+        with:
+          msystem: MINGW64
+          path-type: inherit
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+      - name: Install tools
+        run: python -m pip install -r test/requirements.txt
+      - name: Debug
+        run: python scripts/ci_build.py --preset ci-debug --cc gcc --cxx g++ --timestamp "$STAMP_TIMESTAMP" --sha "$STAMP_SHA"
+      - name: Release
+        run: python scripts/ci_build.py --preset ci-release --cc gcc --cxx g++ --timestamp "$STAMP_TIMESTAMP" --sha "$STAMP_SHA"
+
+  # The checks one host runs: the target graph against docs/layout.md, and
+  # clang-tidy's naming rules over the tree and over their fixtures.
+  policy:
+    name: policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CC: clang-18
+      CXX: clang++-18
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install tools
+        run: |
+          python -m pip install -r test/requirements.txt
+          missing=()
+          command -v clang++-18 >/dev/null || missing+=(clang-18)
+          command -v clang-tidy-18 >/dev/null || missing+=(clang-tidy-18)
+          command -v ninja >/dev/null || missing+=(ninja-build)
+          if [ "${#missing[@]}" -gt 0 ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends "${missing[@]}"
+          fi
+      - name: Policy checks
+        run: python scripts/ci_policy.py --clang-tidy clang-tidy-18

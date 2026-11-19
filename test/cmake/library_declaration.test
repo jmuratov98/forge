@@ -1,0 +1,7 @@
+# A library that docs/layout.md doesn't list, a dependency that isn't declared
+# yet, and a library with no sources are configure errors.
+
+# RUN: rm -rf %t
+# RUN: not %configure -S %S/Inputs/library -B %t/unknown -DFORGE_ROOT=%forge_source_dir -DCASE=unknown_library 2>&1 | grep -F "'widgets' is not a library in docs/layout.md"
+# RUN: not %configure -S %S/Inputs/library -B %t/undeclared -DFORGE_ROOT=%forge_source_dir -DCASE=undeclared_dependency 2>&1 | grep -F 'depends on core, which is not declared yet'
+# RUN: not %configure -S %S/Inputs/library -B %t/nosources -DFORGE_ROOT=%forge_source_dir -DCASE=no_sources 2>&1 | grep -F 'SOURCES is required'

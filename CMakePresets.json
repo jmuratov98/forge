@@ -1,0 +1,65 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": { "major": 3, "minor": 24, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "relwithdebinfo",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+    },
+    {
+      "name": "relwithdebinfo-assertions",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "FORGE_ENABLE_ASSERTIONS": "ON"
+      }
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "ci-debug",
+      "inherits": "debug",
+      "cacheVariables": { "FORGE_WARNINGS_AS_ERRORS": "ON" }
+    },
+    {
+      "name": "ci-relwithdebinfo-assertions",
+      "inherits": "relwithdebinfo-assertions",
+      "cacheVariables": { "FORGE_WARNINGS_AS_ERRORS": "ON" }
+    },
+    {
+      "name": "ci-release",
+      "inherits": "release",
+      "cacheVariables": { "FORGE_WARNINGS_AS_ERRORS": "ON" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "relwithdebinfo", "configurePreset": "relwithdebinfo" },
+    { "name": "relwithdebinfo-assertions", "configurePreset": "relwithdebinfo-assertions" },
+    { "name": "release", "configurePreset": "release" },
+    { "name": "ci-debug", "configurePreset": "ci-debug" },
+    { "name": "ci-relwithdebinfo-assertions", "configurePreset": "ci-relwithdebinfo-assertions" },
+    { "name": "ci-release", "configurePreset": "ci-release" }
+  ],
+  "testPresets": [
+    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true } },
+    { "name": "relwithdebinfo", "configurePreset": "relwithdebinfo", "output": { "outputOnFailure": true } },
+    { "name": "relwithdebinfo-assertions", "configurePreset": "relwithdebinfo-assertions", "output": { "outputOnFailure": true } },
+    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } }
+  ]
+}

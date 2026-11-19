@@ -1,0 +1,30 @@
+# Every #include in Forge's source is checked against ADR 0004's allowlist.
+
+# RUN: rm -rf %t
+
+# Allowed: the allowlist, Forge's own headers, quoted includes, anything in core
+# (C library and OS headers), anything in tests, and includes in comments or strings.
+# RUN: %python %scripts/check_includes.py --root %S/Inputs/includes/clean | grep -F 'check_includes: 2 files ok'
+
+# Violations are reported as file:line with the reason.
+# RUN: not %python %scripts/check_includes.py --root %S/Inputs/includes/violations > %t.out 2>&1
+# RUN: grep -Fx 'forge/c/src/bad.cpp:1: error: <vector> is a C++ standard library header; core provides it (ADR 0004)' %t.out
+# RUN: grep -F 'forge/c/src/bad.cpp:3: error: <stdio.h> is a C library, OS or third-party header; only core includes those (ADR 0004)' %t.out
+# RUN: grep -F 'forge/c/src/bad.cpp:4: error: <cstdio> is a C library header; only core includes those (ADR 0004)' %t.out
+# RUN: grep -F 'forge/c/src/bad.cpp:5: error: <windows.h>' %t.out
+# RUN: grep -F 'forge/c/src/bad.cpp:6: error: <string> is a C++ standard library header' %t.out
+# RUN: grep -F 'forge/c/src/bad.cpp:7: error: <cmath> is a C library header' %t.out
+# The allowlisted <cstdint> on line 2 and the include in a comment on line 8 are fine;
+# a third-party header outside a test directory is not.
+# RUN: not grep -F 'bad.cpp:2:' %t.out
+# RUN: not grep -F 'bad.cpp:8:' %t.out
+# RUN: grep -F 'forge/c/src/bad.cpp:9: error: <gtest/gtest.h>' %t.out
+
+# Even core may not include the C++ standard library; it implements it.
+# RUN: grep -F 'forge/core/src/bad_core.cpp:4: error: <vector> is a C++ standard library header' %t.out
+# RUN: grep -F 'forge/core/src/bad_core.cpp:5: error: <iostream> is a C++ standard library header' %t.out
+# RUN: not grep -F 'bad_core.cpp:2:' %t.out
+# RUN: not grep -F 'bad_core.cpp:3:' %t.out
+
+# A build-time code generator follows every rule.
+# RUN: grep -F 'forge/c/tools/generate.cpp:2: error: <iostream>' %t.out

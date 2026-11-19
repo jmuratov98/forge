@@ -1,0 +1,13 @@
+# .clang-tidy encodes the naming table in docs/style.md.
+# REQUIRES: clang-tidy
+
+# Names spelled as the style guide says draw nothing.
+# RUN: %clang_tidy --config-file=%forge_source_dir/.clang-tidy %S/Inputs/good.cpp -- -std=c++20 > %t.good 2>&1
+# RUN: not grep -F 'readability-identifier-naming' %t.good
+
+# Each line of bad.cpp breaks one row of the table, except the lines that
+# open a template, open a class, or close it. bad_lines.txt lists the lines
+# that must be flagged, and no others.
+# RUN: not %clang_tidy --config-file=%forge_source_dir/.clang-tidy %S/Inputs/bad.cpp -- -std=c++20 > %t.bad 2>&1
+# RUN: sed -n -E 's/.*bad\.cpp:([0-9]+):[0-9]+: error: .*readability-identifier-naming.*/\1/p' %t.bad > %t.lines
+# RUN: diff -u %S/Inputs/bad_lines.txt %t.lines

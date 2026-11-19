@@ -1,0 +1,15 @@
+# An edge docs/layout.md doesn't allow is a configure error that names the rule.
+
+# RUN: rm -rf %t
+
+# Frontends never depend on each other.
+# RUN: not %configure -S %S/Inputs/library -B %t/frontends -DFORGE_ROOT=%forge_source_dir -DCASE=frontend_on_frontend > %t.frontends 2>&1
+# RUN: grep -F 'cxx may not depend on c.' %t.frontends
+# RUN: grep -F 'Dependency rules' %t.frontends
+# RUN: grep -F 'core, source, cfamily, ingot' %t.frontends
+
+# fold depends only on object, besides source and core.
+# RUN: not %configure -S %S/Inputs/library -B %t/fold -DFORGE_ROOT=%forge_source_dir -DCASE=fold_on_blank 2>&1 | grep -F 'fold may not depend on blank.'
+
+# core is at the bottom.
+# RUN: not %configure -S %S/Inputs/library -B %t/core -DFORGE_ROOT=%forge_source_dir -DCASE=core_on_source 2>&1 | grep -F 'core may not depend on source.'
