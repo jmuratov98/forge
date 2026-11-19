@@ -53,8 +53,12 @@ The typed, tree-shaped representation that every frontend lowers its source into
 _Avoid_: "AST" for it; each frontend's AST is the language-specific tree above it.
 
 **Billet** (FIR, _Forge's IR_)
-The SSA representation shared by every language and every target, where optimization happens. It depends on the target only through its data layout, never through its calling conventions.
+The SSA representation shared by every language and every target, where optimization happens. It depends on the target only through its data layout and through any target intrinsics a module uses, never through its calling conventions.
 _Avoid_: confusing it with Flang's FIR.
+
+**Target intrinsic**
+A Billet intrinsic that exists only on one instruction set, such as a Neon dot product. A module that uses one can be compiled only for a target with that instruction set.
+_Avoid_: "builtin" for it; builtins are what the frontends expose to source code.
 
 **Blank** (MIR, _Machine IR_)
 The representation of one function as one target's instructions, where register allocation happens.
