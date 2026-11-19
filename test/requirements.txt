@@ -1,0 +1,2 @@
+# Python tools the tests use (ADR 0009). Install with: pip install -r test/requirements.txt
+lit==23.1.6

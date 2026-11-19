@@ -1,0 +1,6 @@
+# Forge's own source passes the policy checks that CI runs on it.
+
+# RUN: %python %scripts/check_includes.py --root %forge_source_dir
+# RUN: %python %scripts/check_floating_point.py --root %forge_source_dir
+# RUN: %python %scripts/check_file_names.py --root %forge_source_dir
+# RUN: %python %scripts/check_dev_version.py --header %forge_build_dir/generated/version.inc.hpp

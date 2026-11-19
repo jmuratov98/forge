@@ -1,0 +1,19 @@
+{
+  "_comment": "Which libraries each library may depend on (docs/layout.md, Dependency rules). Read by forge_add_library and by scripts/check_target_graph.py. \"*\" means every library.",
+  "core": [],
+  "source": ["core"],
+  "cfamily": ["core", "source", "ingot"],
+  "c": ["core", "source", "cfamily", "ingot"],
+  "cxx": ["core", "source", "cfamily", "ingot"],
+  "ingot": ["core", "source", "billet"],
+  "billet": ["core", "source"],
+  "blank": ["core", "source", "billet"],
+  "stamp": ["core", "source", "object"],
+  "aarch64": ["core", "source", "billet", "blank", "stamp", "fas"],
+  "x86_64": ["core", "source", "billet", "blank", "stamp", "fas"],
+  "riscv": ["core", "source", "billet", "blank", "stamp", "fas"],
+  "object": ["core", "source"],
+  "fas": ["core", "source", "stamp"],
+  "fold": ["core", "source", "object"],
+  "driver": ["*"]
+}

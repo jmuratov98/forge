@@ -2,9 +2,11 @@
 
 Each milestone is a vertical slice with a testable exit criterion. Milestones after M1 get their own planning effort when they come up; this ladder fixes their order and their exit criteria, not their contents.
 
+M0 builds no C++ beyond a `main`: core's first slice, `FORGE_ASSERT` and the crash handler, `version()` and `forge --version`, and the multi-call dispatch start the work that follows it ([#13](https://github.com/jmuratov98/forge/issues/13) places them).
+
 | #   | Milestone             | Adds                                                                                                                                       | Done when                                                                                     |
 | --- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| M0  | Skeleton              | Repo layout, CMake + Ninja, the multi-call `forge` binary, versioning (ADR 0001), googletest + end-to-end runner, CI on Linux, macOS, Windows (MSVC), and MinGW | CI green on all four hosts; `forge --version` prints a dev version                          |
+| M0  | Skeleton              | Repo layout, CMake + Ninja, the version composed in CMake (ADR 0001), the build configurations (ADR 0006), googletest + lit + the end-to-end runner, the policy checks, and CI on Linux, macOS, Windows (MSVC), and MinGW; the only Forge C++ is a `main` that returns 0 | CI green on all four hosts; `forge` builds and exits 0; each CI build's configured version is a dev version |
 | M1  | First light           | A small C subset through every IR layer to text assembly for **arm64 macOS**, using the system `as` and `ld`; no optimization                | A corpus of small programs gives the same exit code and stdout as clang                      |
 | M2  | Real C                | Full C17, the preprocessor, the platform's system headers, **arm64 Linux and x86-64 Linux**, DWARF line info                               | Lua 5.4 builds and passes its own tests on all three targets                                  |
 | M3  | fas                   | Built-in assembler writing ELF and Mach-O objects directly, plus a standalone `fas`; the system `as` is no longer used                      | M2 still passes, built through fas                                                            |

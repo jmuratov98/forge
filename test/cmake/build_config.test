@@ -1,0 +1,27 @@
+# Build configurations and the assertion switch (ADR 0006).
+
+# RUN: rm -rf %t
+
+# With no build type, Debug is chosen and says so.
+# RUN: %configure -S %S/Inputs/build_config_project -B %t/unset -DFORGE_ROOT=%forge_source_dir 2>&1 | grep -F 'using Debug'
+# RUN: %cmake -L -N %t/unset | grep -Fx 'CMAKE_BUILD_TYPE:STRING=Debug'
+
+# Debug always has assertions on, whatever the switch says.
+# RUN: %configure -S %S/Inputs/build_config_project -B %t/debug -DFORGE_ROOT=%forge_source_dir -DCMAKE_BUILD_TYPE=Debug 2>&1 | grep -F 'build type: Debug; assertions: ON'
+# RUN: %configure -S %S/Inputs/build_config_project -B %t/debug-off -DFORGE_ROOT=%forge_source_dir -DCMAKE_BUILD_TYPE=Debug -DFORGE_ENABLE_ASSERTIONS=OFF 2>&1 | grep -F 'build type: Debug; assertions: ON'
+
+# RelWithDebInfo has them off unless asked.
+# RUN: %configure -S %S/Inputs/build_config_project -B %t/rwdi -DFORGE_ROOT=%forge_source_dir -DCMAKE_BUILD_TYPE=RelWithDebInfo 2>&1 | grep -F 'build type: RelWithDebInfo; assertions: OFF'
+# RUN: %configure -S %S/Inputs/build_config_project -B %t/rwdi-on -DFORGE_ROOT=%forge_source_dir -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFORGE_ENABLE_ASSERTIONS=ON 2>&1 | grep -F 'build type: RelWithDebInfo; assertions: ON'
+
+# Release compiles them out, and asking for them is an error.
+# RUN: %configure -S %S/Inputs/build_config_project -B %t/release -DFORGE_ROOT=%forge_source_dir -DCMAKE_BUILD_TYPE=Release 2>&1 | grep -F 'build type: Release; assertions: OFF'
+# RUN: not %configure -S %S/Inputs/build_config_project -B %t/release-on -DFORGE_ROOT=%forge_source_dir -DCMAKE_BUILD_TYPE=Release -DFORGE_ENABLE_ASSERTIONS=ON 2>&1 | grep -F 'not allowed in a Release build'
+
+# MinSizeRel and anything else are rejected, and the message names what is supported.
+# RUN: not %configure -S %S/Inputs/build_config_project -B %t/minsize -DFORGE_ROOT=%forge_source_dir -DCMAKE_BUILD_TYPE=MinSizeRel 2>&1 | grep -F 'does not support CMAKE_BUILD_TYPE=MinSizeRel'
+# RUN: not %configure -S %S/Inputs/build_config_project -B %t/minsize2 -DFORGE_ROOT=%forge_source_dir -DCMAKE_BUILD_TYPE=MinSizeRel 2>&1 | grep -F 'Debug, RelWithDebInfo, Release'
+# RUN: not %configure -S %S/Inputs/build_config_project -B %t/bogus -DFORGE_ROOT=%forge_source_dir -DCMAKE_BUILD_TYPE=Fast 2>&1 | grep -F 'does not support CMAKE_BUILD_TYPE=Fast'
+
+# Only Ninja: a multi-config generator can't honor per-configuration assertion rules.
+# RUN: not %cmake -G "Ninja Multi-Config" -DCMAKE_MAKE_PROGRAM=%ninja -S %S/Inputs/build_config_project -B %t/multi -DFORGE_ROOT=%forge_source_dir 2>&1 | grep -F 'single-configuration generators only'

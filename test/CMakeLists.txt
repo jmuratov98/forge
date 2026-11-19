@@ -1,0 +1,4 @@
+add_executable(toolchain_contract_tests toolchain_contract_test.cpp)
+target_link_libraries(toolchain_contract_tests PRIVATE
+  GTest::gtest_main forge_build_options)
+gtest_discover_tests(toolchain_contract_tests DISCOVERY_MODE PRE_TEST)

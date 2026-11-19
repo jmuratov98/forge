@@ -1,0 +1,18 @@
+# A compiler older than the minimum is rejected, with the minimum named.
+
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DID=GNU -DVERSION=11.0.0 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'accepted GNU 11.0.0'
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DID=GNU -DVERSION=14.2.1 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'accepted GNU 14.2.1'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DID=GNU -DVERSION=10.5.0 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'needs GNU 11.0 or newer; this is GNU 10.5.0'
+
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DID=Clang -DVERSION=16.0.0 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'accepted Clang 16.0.0'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DID=Clang -DVERSION=15.0.7 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'needs Clang 16.0 or newer'
+
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DID=AppleClang -DVERSION=15.0.0.15000040 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'accepted AppleClang'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DID=AppleClang -DVERSION=14.0.3.14030022 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'needs AppleClang 15.0 or newer'
+
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DID=MSVC -DVERSION=19.30.30705 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'accepted MSVC'
+# RUN: %cmake -DFORGE_ROOT=%forge_source_dir -DID=MSVC -DVERSION=19.44.35211 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'accepted MSVC'
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DID=MSVC -DVERSION=19.29.30159 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'needs MSVC 19.30 or newer'
+
+# Compilers Forge has not been built with are not accepted by default.
+# RUN: not %cmake -DFORGE_ROOT=%forge_source_dir -DID=Intel -DVERSION=2024.0 -P %S/Inputs/check_compiler.cmake 2>&1 | grep -F 'does not support the Intel C++ compiler'

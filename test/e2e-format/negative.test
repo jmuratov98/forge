@@ -1,0 +1,25 @@
+# The end-to-end format reports what differed, and treats a case it can't read
+# or can't build as a failure.
+
+# RUN: rm -rf %t
+
+# RUN: not %lit %S/Inputs/wrong_exit > %t.exit 2>&1
+# RUN: grep -F 'exit code: expected 5, got 3' %t.exit
+
+# RUN: not %lit %S/Inputs/wrong_stdout > %t.stdout 2>&1
+# RUN: grep -F -- '-two' %t.stdout
+# RUN: grep -F -- '+three' %t.stdout
+# RUN: not grep -F 'exit code:' %t.stdout
+
+# EXPECT-EXIT is required, and comes first.
+# RUN: not %lit %S/Inputs/missing_expectation 2>&1 | grep -F "must end with a '// EXPECT-EXIT: <code>' line"
+# RUN: not %lit %S/Inputs/stdout_before_exit 2>&1 | grep -F "must end with a '// EXPECT-EXIT: <code>' line"
+
+# A case that doesn't compile fails, and shows the compiler's complaint.
+# RUN: not %lit %S/Inputs/compile_error > %t.compile 2>&1
+# RUN: grep -F 'compiling failed' %t.compile
+# RUN: grep -F 'not_declared' %t.compile
+
+# lit's requirement and expected-failure lines apply as for any lit test.
+# RUN: %lit %S/Inputs/unsupported | grep -F 'Unsupported: 1'
+# RUN: %lit %S/Inputs/expected_to_fail | grep -F 'Expectedly Failed: 1'

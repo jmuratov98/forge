@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+"""Rewrites the expectation block of end-to-end cases from a reference compiler.
+
+Compiles each case, runs it, and replaces the trailing EXPECT-EXIT and
+EXPECT-STDOUT lines with what the program did. Review the diff before
+committing: the reference compiler's behavior is the oracle (ADR 0009).
+
+    update-e2e test/e2e/hello.c test/e2e/arith
+    update-e2e --compile-command 'gcc -o {out} {src}' hello.c
+
+Directories are searched for .c files. The default compiler is clang.
+"""
+
+import argparse
+import json
+import os
+import shlex
+import sys
+import tempfile
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import e2e_cases  # noqa: E402
+
+DEFAULT_COMMAND = ["clang", "-o", "{out}", "{src}"]
+
+
+def find_cases(paths):
+    for path in paths:
+        if os.path.isdir(path):
+            for directory, _, names in sorted(os.walk(path)):
+                for name in sorted(names):
+                    if name.endswith(".c"):
+                        yield os.path.join(directory, name)
+        else:
+            yield path
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("paths", nargs="+", help="case files or directories of cases")
+    command = parser.add_mutually_exclusive_group()
+    command.add_argument("--compile-command", help="reference compiler command line; "
+                         "{src}, {out} and {obj} are filled in")
+    command.add_argument("--compile-command-json", help="file holding the command as a JSON list")
+    parser.add_argument("--timeout", type=int, default=e2e_cases.DEFAULT_TIMEOUT)
+    args = parser.parse_args()
+
+    if args.compile_command:
+        template = shlex.split(args.compile_command)
+    elif args.compile_command_json:
+        with open(args.compile_command_json, encoding="utf-8") as handle:
+            template = json.load(handle)
+    else:
+        template = DEFAULT_COMMAND
+
+    failures = 0
+    with tempfile.TemporaryDirectory(prefix="update-e2e-") as workdir:
+        for path in find_cases(args.paths):
+            try:
+                with open(path, encoding="utf-8", newline="") as handle:
+                    text = handle.read()
+                result = e2e_cases.build_and_run(os.path.abspath(path), template, workdir,
+                                                 timeout=args.timeout)
+                updated = e2e_cases.replace_block(text.replace("\r\n", "\n"),
+                                                  result.exit_code, result.stdout)
+            except e2e_cases.CaseError as error:
+                print("%s: error: %s" % (path, error), file=sys.stderr)
+                failures += 1
+                continue
+            if updated != text:
+                with open(path, "w", encoding="utf-8", newline="\n") as handle:
+                    handle.write(updated)
+                print("updated " + path)
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

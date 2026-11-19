@@ -1,0 +1,30 @@
+forge_add_library(core SOURCES empty.cpp)
+forge_add_library(source SOURCES empty.cpp PRIVATE_DEPENDS core)
+forge_add_library(billet SOURCES empty.cpp PRIVATE_DEPENDS core source)
+forge_add_library(ingot SOURCES empty.cpp PUBLIC_DEPENDS billet PRIVATE_DEPENDS core source)
+forge_add_library(cfamily SOURCES empty.cpp PRIVATE_DEPENDS core source ingot)
+forge_add_library(c SOURCES empty.cpp PRIVATE_DEPENDS core source cfamily ingot)
+forge_add_library(cxx SOURCES empty.cpp PRIVATE_DEPENDS core source cfamily ingot)
+forge_add_library(driver SOURCES empty.cpp PRIVATE_DEPENDS core source c cxx billet)
+
+# Target, alias and include root follow the naming in docs/layout.md.
+foreach(library core source billet ingot cfamily c cxx driver)
+  if(NOT TARGET forge_${library} OR NOT TARGET forge::${library})
+    message(FATAL_ERROR "forge_${library} and forge::${library} should exist")
+  endif()
+  get_target_property(includes forge_${library} INTERFACE_INCLUDE_DIRECTORIES)
+  if(NOT "${includes}" MATCHES "/include$")
+    message(FATAL_ERROR "forge_${library} should export its include/ directory: ${includes}")
+  endif()
+endforeach()
+
+# Links are PRIVATE unless asked for: PUBLIC_DEPENDS reaches consumers as a
+# plain link, PRIVATE_DEPENDS only as LINK_ONLY.
+get_target_property(interface forge_ingot INTERFACE_LINK_LIBRARIES)
+if(NOT "forge_billet" IN_LIST interface)
+  message(FATAL_ERROR "ingot's PUBLIC dependency on billet should be public: ${interface}")
+endif()
+if("forge_core" IN_LIST interface)
+  message(FATAL_ERROR "ingot's PRIVATE dependency on core should not be public: ${interface}")
+endif()
+message(STATUS "library fixture ok")

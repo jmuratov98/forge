@@ -1,0 +1,45 @@
+# Forge's naming rules (docs/style.md), the one thing clang-tidy checks here.
+# File names are checked by scripts/check_file_names.py; clang-tidy can't.
+#
+# snake_case is clang-tidy's `lower_case`: variables, types, functions,
+# concepts, enumerators, constexpr constants, and namespaces.
+Checks: '-*,readability-identifier-naming'
+WarningsAsErrors: 'readability-identifier-naming'
+HeaderFilterRegex: '.*'
+ExcludeHeaderFilterRegex: '.*/_deps/.*'
+CheckOptions:
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.ClassCase: lower_case
+  readability-identifier-naming.StructCase: lower_case
+  readability-identifier-naming.UnionCase: lower_case
+  readability-identifier-naming.EnumCase: lower_case
+  readability-identifier-naming.EnumConstantCase: lower_case
+  readability-identifier-naming.TypedefCase: lower_case
+  readability-identifier-naming.TypeAliasCase: lower_case
+  readability-identifier-naming.ConceptCase: lower_case
+  readability-identifier-naming.FunctionCase: lower_case
+  readability-identifier-naming.MethodCase: lower_case
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.ConstexprVariableCase: lower_case
+
+  # Template parameters are CamelCase: template <typename ValueType>.
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+
+  # Globals get g_. Constants, constexpr ones included, are plain snake_case.
+  readability-identifier-naming.GlobalVariableCase: lower_case
+  readability-identifier-naming.GlobalVariablePrefix: g_
+  readability-identifier-naming.GlobalConstantCase: lower_case
+
+  # Private members get m_ and static data members s_ (style.md names private
+  # static ones; the check can't tell them from public static ones). Public
+  # struct members get no prefix; the check can't forbid one, only require case.
+  readability-identifier-naming.PrivateMemberCase: lower_case
+  readability-identifier-naming.PrivateMemberPrefix: m_
+  readability-identifier-naming.ClassMemberCase: lower_case
+  readability-identifier-naming.ClassMemberPrefix: s_
+  readability-identifier-naming.PublicMemberCase: lower_case
+
+  # Macros are FORGE_UPPER_SNAKE.
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.MacroDefinitionPrefix: FORGE_

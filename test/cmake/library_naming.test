@@ -1,0 +1,8 @@
+# forge_add_library names things as docs/layout.md says: the target, the alias,
+# the include root, and links that are PRIVATE unless asked otherwise.
+
+# RUN: rm -rf %t
+# RUN: %configure -S %S/Inputs/library -B %t/allowed -DFORGE_ROOT=%forge_source_dir -DCASE=allowed 2>&1 | grep -F 'library fixture ok'
+
+# Every library besides core may depend on core and source.
+# RUN: %configure -S %S/Inputs/library -B %t/open -DFORGE_ROOT=%forge_source_dir -DCASE=open_to_source

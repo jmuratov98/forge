@@ -24,7 +24,7 @@ Running a single test must take well under a second:
 
 | Layer                           | What it checks                                                                                                     | Arrives          |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------- |
-| Unit tests                      | googletest, one binary per component library                                                                       | M0               |
+| Unit tests                      | googletest, one binary per component library; at M0, one binary that checks the toolchain's flags                  | M0               |
 | End-to-end                      | Compile a program, run it, and compare its exit code and stdout with committed expectations                        | M0 runner, M1 corpus |
 | Cross-host assembly             | Every CI host compiles the end-to-end corpus for arm64 macOS; CI checks that the assembly is byte-identical across hosts | M1           |
 | IR and diagnostic tests         | Feed text into one layer or the frontend and match its output against patterns                                     | When each layer's text format lands |
@@ -60,8 +60,8 @@ int main(void) {
 
 The expectation block:
 
-- **Exit code.** `EXPECT-EXIT` is required.
-- **Stdout.** Each line of stdout is one `EXPECT-STDOUT:` line. No such lines means stdout must be empty. The comparison is exact.
+- **Exit code.** `EXPECT-EXIT` is required and comes first.
+- **Stdout.** Each line of stdout is one `EXPECT-STDOUT:` line. No such lines means stdout must be empty. The comparison is exact, except that `\r\n` counts as `\n`, so a case passes on Windows. A program whose stdout doesn't end in a newline can't be written this way.
 - **Restrictions.** lit's `REQUIRES:` and `UNSUPPORTED:` restrict a case to the targets that can run it.
 
 Nobody writes the block by hand. `update-e2e`, a Python script modeled on LLVM's `update_test_checks.py`, compiles each case with clang, runs it, and rewrites the block. You review the diff before committing. The TDD loop for a compiler feature is:
@@ -72,6 +72,8 @@ Nobody writes the block by hand. `update-e2e`, a Python script modeled on LLVM's
 4. Make it pass.
 
 In M1, a case is one translation unit with no stdin and no arguments. Multi-file cases, stdin, and arguments are added when a milestone needs them.
+
+Forge can't compile at M0, so the runner and `update-e2e` are tested with the host's C compiler standing in for Forge: the format takes its compile command as a lit parameter (`--param e2e_compile_command='...'`), and the self-test in `test/e2e-format/` points it at the compiler CMake found. Forge's own corpus is `test/e2e/`, empty until M1.
 
 ## Corpora
 
@@ -88,7 +90,7 @@ In M1, a case is one translation unit with no stdin and no arguments. Multi-file
 
 - **googletest**: CMake `FetchContent`, pinned to a release tag and hash, with a `find_package` fallback for offline builds. It is built with `GTEST_HAS_EXCEPTIONS=0` ([ADR 0003](adr/0003-implementation-language-subset.md)).
 - **lit**: installed with `pip` from a pinned requirements file. Tests need Python 3.8 or later.
-- **Windows**: lit needs `cmp`, `grep`, and `sed`, which come from Git for Windows.
+- **Windows**: lit's shell-style tests need `grep` and `sed`, which come from Git for Windows. The bootstrap comparison at M9 will add `cmp`.
 - **Reference compilers**: `update-e2e` needs clang. CI doesn't.
 
 ## Benchmarks

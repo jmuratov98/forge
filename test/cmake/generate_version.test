@@ -1,0 +1,25 @@
+# Configure writes version.inc.hpp into the build tree and sets nothing else.
+
+# RUN: rm -rf %t
+# RUN: %configure -S %S/Inputs/version_project -B %t/local -DFORGE_ROOT=%forge_source_dir -DFORGE_VERSION_STAGE=beta.1 2>&1 | grep -F 'Forge version: 1.2.3-beta.1+dev.local'
+# RUN: diff %t/local/generated/version.inc.hpp %S/Inputs/version_project/expected_local.hpp
+# RUN: %python %scripts/check_dev_version.py --header %t/local/generated/version.inc.hpp
+
+# A CI build carries the timestamp and the commit.
+# RUN: %configure -S %S/Inputs/version_project -B %t/ci -DFORGE_ROOT=%forge_source_dir -DFORGE_VERSION_STAGE=beta.1 -DFORGE_BUILD_TIMESTAMP=20261118153000 -DFORGE_BUILD_SHA=7643163 2>&1 | grep -F 'Forge version: 1.2.3-beta.1+dev.20261118153000.g7643163'
+# RUN: %python %scripts/check_dev_version.py --require-ci-form --header %t/ci/generated/version.inc.hpp | grep -Fx '1.2.3-beta.1+dev.20261118153000.g7643163'
+
+# A local build is not a CI-form version.
+# RUN: not %python %scripts/check_dev_version.py --require-ci-form --header %t/local/generated/version.inc.hpp
+
+# Reconfiguring a local build leaves the header alone, so nothing rebuilds.
+# RUN: %python %S/Inputs/mtime.py backdate %t/local/generated/version.inc.hpp
+# RUN: %configure -S %S/Inputs/version_project -B %t/local -DFORGE_ROOT=%forge_source_dir -DFORGE_VERSION_STAGE=beta.1
+# RUN: %python %S/Inputs/mtime.py untouched %t/local/generated/version.inc.hpp
+
+# A changed version does rewrite it.
+# RUN: %configure -S %S/Inputs/version_project -B %t/local -DFORGE_ROOT=%forge_source_dir -DFORGE_VERSION_STAGE=rc
+# RUN: not %python %S/Inputs/mtime.py untouched %t/local/generated/version.inc.hpp
+
+# A half-wired CI build fails the configure.
+# RUN: not %configure -S %S/Inputs/version_project -B %t/bad -DFORGE_ROOT=%forge_source_dir -DFORGE_BUILD_TIMESTAMP=20261118153000 2>&1 | grep -F 'must be given together'

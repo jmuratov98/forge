@@ -1,0 +1,15 @@
+# CI rejects dependency cycles and edges outside docs/layout.md, even when
+# someone bypasses forge_add_library with a raw target_link_libraries.
+
+# RUN: %graph_check --source-dir %S/../cmake/Inputs/library --cmake-arg=-DFORGE_ROOT=%forge_source_dir --cmake-arg=-DCASE=allowed | grep -F 'check_target_graph: 8 libraries, 22 edges ok'
+
+# One frontend linking the other.
+# RUN: not %graph_check --source-dir %S/../cmake/Inputs/library --cmake-arg=-DFORGE_ROOT=%forge_source_dir --cmake-arg=-DCASE=raw_link 2>&1 | grep -F 'error: forge_cxx links forge_c, which docs/layout.md does not allow'
+
+# Two libraries depending on each other.
+# RUN: not %graph_check --source-dir %S/../cmake/Inputs/library --cmake-arg=-DFORGE_ROOT=%forge_source_dir --cmake-arg=-DCASE=cycle > %t.cycle 2>&1
+# RUN: grep -F 'error: dependency cycle: forge_billet -> forge_ingot -> forge_billet' %t.cycle
+# RUN: grep -F 'error: forge_billet links forge_ingot, which docs/layout.md does not allow' %t.cycle
+
+# A static library named forge_* that docs/layout.md doesn't list.
+# RUN: not %graph_check --source-dir %S/../cmake/Inputs/library --cmake-arg=-DFORGE_ROOT=%forge_source_dir --cmake-arg=-DCASE=unknown_target 2>&1 | grep -F 'error: forge_widgets is not a library in docs/layout.md'

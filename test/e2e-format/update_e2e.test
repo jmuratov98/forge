@@ -1,0 +1,33 @@
+# update-e2e rewrites the expectation block from what the program did.
+
+# RUN: rm -rf %t
+# RUN: mkdir -p %t
+
+# A stale block is replaced; the code above it is untouched.
+# RUN: cat %S/Inputs/update/stale.c > %t/stale.c
+# RUN: %python %scripts/update-e2e --compile-command-json %selftest_compiler %t/stale.c | grep -F 'updated'
+# RUN: diff -u %S/Inputs/update/fresh.c %t/stale.c
+
+# A second run changes nothing and says nothing.
+# RUN: %python %scripts/update-e2e --compile-command-json %selftest_compiler %t/stale.c > %t.again
+# RUN: not grep -F 'updated' %t.again
+# RUN: diff -u %S/Inputs/update/fresh.c %t/stale.c
+
+# A case with no block gets one.
+# RUN: cat %S/Inputs/update/no_block.c > %t/no_block.c
+# RUN: %python %scripts/update-e2e --compile-command-json %selftest_compiler %t/no_block.c
+# RUN: diff -u %S/Inputs/update/no_block_updated.c %t/no_block.c
+
+# A directory is searched for cases, and what it writes passes under the runner format.
+# RUN: mkdir -p %t/dir
+# RUN: cat %S/Inputs/update/stale.c > %t/dir/stale.c
+# RUN: %python %scripts/update-e2e --compile-command-json %selftest_compiler %t/dir | grep -F 'dir'
+# RUN: diff -u %S/Inputs/update/fresh.c %t/dir/stale.c
+
+# Output that can't be written as EXPECT-STDOUT lines is an error, and the file stays as it was.
+# RUN: cat %S/Inputs/update/no_trailing_newline.c > %t/no_newline.c
+# RUN: not %python %scripts/update-e2e --compile-command-json %selftest_compiler %t/no_newline.c 2>&1 | grep -F 'must end with a newline'
+# RUN: diff -u %S/Inputs/update/no_trailing_newline.c %t/no_newline.c
+
+# The compiler is replaceable from the command line as well.
+# RUN: not %python %scripts/update-e2e --compile-command 'no-such-compiler-anywhere {src} {out}' %t/no_block.c 2>&1 | grep -F 'compiler not found: no-such-compiler-anywhere'
