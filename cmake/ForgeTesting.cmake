@@ -58,23 +58,22 @@ function(_forge_write_selftest_compiler path)
   file(WRITE "${path}" "[${command}]\n")
 endfunction()
 
-# Finds lit and makes googletest and gtest_discover_tests available. The root
-# file calls it before it adds the libraries, so each library's own test/
-# directory can declare its googletest binary. lit is looked for first, so a
-# missing lit is reported before anything is downloaded.
+# Makes googletest and gtest_discover_tests available. The root file calls it
+# before it adds the libraries, so each library's own test/ directory can
+# declare its googletest binary.
 #
-# A macro, so what GoogleTest and _forge_find_lit set lands in the root
-# directory's scope and reaches the libraries' directories below it.
+# A macro, so what GoogleTest sets lands in the root directory's scope and
+# reaches the libraries' directories below it.
 macro(forge_enable_unit_testing)
-  _forge_find_lit()
   _forge_make_googletest_available()
   include(GoogleTest)
 endmacro()
 
-# Adds the cross-library tests in test/, lit's configuration, and the check
-# targets. The root file calls it after the libraries, whose test binaries
-# check-unit runs.
+# Finds lit, then adds the cross-library tests in test/, lit's configuration,
+# and the check targets. The root file calls it after the libraries, whose test
+# binaries check-unit runs.
 function(forge_setup_testing)
+  _forge_find_lit()
   add_subdirectory("${CMAKE_SOURCE_DIR}/test" "${CMAKE_BINARY_DIR}/test")
 
   file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}" FORGE_SOURCE_DIR)
