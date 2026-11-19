@@ -85,15 +85,22 @@ forge/<name>/src/...                    sources and private headers
 forge/<name>/test/...                   its googletest sources
 ```
 
-Declare it in its `CMakeLists.txt`, add `add_subdirectory(<name>)` to `forge/CMakeLists.txt`, and add a googletest binary in `test/`'s style:
+Declare it in its `CMakeLists.txt`, declare its tests in its own `test/CMakeLists.txt`, and add `add_subdirectory(<name>)` to `forge/CMakeLists.txt`:
 
 ```cmake
+# forge/c/CMakeLists.txt
 forge_add_library(c
   SOURCES src/parser.cpp
   PRIVATE_DEPENDS core source cfamily ingot)
+add_subdirectory(test)
+
+# forge/c/test/CMakeLists.txt
+forge_add_unit_tests(c SOURCES parser_test.cpp)
 ```
 
 `forge_add_library` creates the target `forge_c` and the alias `forge::c`, puts `include/` on the include path of every library that links it, and keeps `src/` private. Dependencies are `PRIVATE` unless listed under `PUBLIC_DEPENDS`, which is for libraries whose types appear in the new library's public headers. An edge that [layout.md](layout.md) does not allow is a configure error. The allowed edges are in `cmake/library_edges.json`; keep the table in `layout.md` in step with it.
+
+`forge_add_unit_tests(<library> SOURCES … [PRIVATE_DEPENDS …])` creates the googletest binary `<library>_tests`, links it with the library, and registers its tests with CTest, so `check` runs them without an edit to any shared file. Its `PRIVATE_DEPENDS` are checked against the same edge table as the library's. With `-DFORGE_BUILD_TESTS=OFF` it does nothing.
 
 ## Adding an end-to-end case
 
