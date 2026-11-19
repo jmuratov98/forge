@@ -1,0 +1,22 @@
+# forge_add_unit_tests gives a library a googletest binary, <library>_tests,
+# registered with CTest from the library's own directory, and holds it to the
+# library's dependency rules. With tests off it does nothing.
+
+# RUN: rm -rf %t
+
+# Two libraries, each declaring its tests in its own test/ directory.
+# RUN: %configure -S %S/Inputs/unit_tests -B %t/on -DFORGE_ROOT=%forge_source_dir -DCASE=two_libraries -DFORGE_BUILD_TESTS=ON 2>&1 | grep -F 'unit tests fixture ok'
+# RUN: %ctest -N --test-dir %t/on > %t.on
+# RUN: grep -F ': core_tests' %t.on
+# RUN: grep -F ': source_tests' %t.on
+
+# RUN: %configure -S %S/Inputs/unit_tests -B %t/off -DFORGE_ROOT=%forge_source_dir -DCASE=two_libraries -DFORGE_BUILD_TESTS=OFF 2>&1 | grep -F 'unit tests fixture ok'
+# RUN: %ctest -N --test-dir %t/off | grep -F 'Total Tests: 0'
+
+# A library's tests may depend only on what the library itself may.
+# RUN: not %configure -S %S/Inputs/unit_tests -B %t/disallowed -DFORGE_ROOT=%forge_source_dir -DCASE=disallowed_dependency -DFORGE_BUILD_TESTS=ON > %t.disallowed 2>&1
+# RUN: grep -F "source's tests may not depend on billet." %t.disallowed
+# RUN: grep -F 'Dependency rules' %t.disallowed
+
+# Tests belong to a declared library.
+# RUN: not %configure -S %S/Inputs/unit_tests -B %t/undeclared -DFORGE_ROOT=%forge_source_dir -DCASE=undeclared_library -DFORGE_BUILD_TESTS=ON 2>&1 | grep -F 'tests for core, which is not declared yet'

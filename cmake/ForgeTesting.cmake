@@ -80,6 +80,7 @@ function(forge_setup_testing)
   file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}" FORGE_SOURCE_DIR)
   file(TO_CMAKE_PATH "${CMAKE_BINARY_DIR}" FORGE_BUILD_DIR)
   file(TO_CMAKE_PATH "${CMAKE_COMMAND}" FORGE_CMAKE)
+  file(TO_CMAKE_PATH "${CMAKE_CTEST_COMMAND}" FORGE_CTEST)
   file(TO_CMAKE_PATH "${CMAKE_MAKE_PROGRAM}" FORGE_NINJA)
   file(TO_CMAKE_PATH "${FORGE_PYTHON}" FORGE_PYTHON_EXE)
   find_program(FORGE_CLANG_TIDY NAMES clang-tidy)
@@ -95,10 +96,12 @@ function(forge_setup_testing)
     "${CMAKE_BINARY_DIR}/test/lit.site.cfg.py" @ONLY)
   _forge_write_selftest_compiler("${CMAKE_BINARY_DIR}/test/e2e_selftest_compiler.json")
 
+  # Every googletest binary, so ctest finds each one built.
+  get_property(unit_tests GLOBAL PROPERTY FORGE_UNIT_TEST_TARGETS)
   add_custom_target(check-unit
     COMMAND "${CMAKE_CTEST_COMMAND}" --test-dir "${CMAKE_BINARY_DIR}" --output-on-failure
-    DEPENDS toolchain_contract_tests
     USES_TERMINAL)
+  add_dependencies(check-unit ${unit_tests})
   add_custom_target(check-lit
     COMMAND "${FORGE_PYTHON}" -c "from lit.main import main; main()"
       -sv "${CMAKE_BINARY_DIR}/test"
