@@ -117,3 +117,14 @@ A diagnostic's supporting message that points somewhere else, such as "previous 
 
 **Fix-it**
 A suggested edit attached to a diagnostic or note: replace a range of source text with new text.
+
+**Baseline compiler**
+A compiler Forge's speed goals are measured against: gcc and clang on every host, plus AppleClang on macOS. On each metric, the best of them is the bar.
+_Avoid_: "reference compiler", which means the compiler the end-to-end tests take their expectations from.
+
+**Baseline series**
+A run of benchmark results that all used the same versions of the baseline compilers. Results are only compared within one series.
+
+**Reference machine**
+A named, fixed machine, physical or virtual, that benchmarks run on with nothing else running. Results from different reference machines are never compared.
+_Avoid_: "benchmark host", "CI runner".

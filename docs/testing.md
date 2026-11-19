@@ -97,4 +97,4 @@ Forge can't compile at M0, so the runner and `update-e2e` are tested with the ho
 
 ## Benchmarks
 
-Compile time and generated-code speed are measured against the roadmap's speed goals by a separate benchmark harness, not by the tests. Timings are noisy and depend on the host, so they don't belong in a pass/fail suite. Its design is decided in [How are compile speed and generated-code quality benchmarked?](https://github.com/jmuratov98/forge/issues/21).
+Compile time and generated-code speed are measured against the roadmap's speed goals by a separate benchmark harness, not by the tests. Timings are noisy and depend on the host, so they don't belong in a pass/fail suite. [benchmarks.md](benchmarks.md) describes it; it arrives in M5.
