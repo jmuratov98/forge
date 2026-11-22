@@ -39,3 +39,9 @@ A target-specific representation of instructions over virtual or physical regist
 
 **MCIR** (Machine Code IR):
 The representation closest to encoded machine instructions, from which object files and assembly are emitted.
+
+## Development
+
+**dev script**:
+The developer entry point (`dev.py` and its `dev`, `dev.bat` and `dev.ps1` shims) that sets up, builds, tests and lints Forge. It is not part of Forge's shipped tools.
+_Avoid_: the wrapper, forge.py
