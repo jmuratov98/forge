@@ -1,0 +1,5 @@
+# Tests inherit Forge's checks, minus what googletest's TEST macros trip.
+# googletest requires PascalCase suite and test names: TEST(Lexer, LexesIntegerLiteral).
+InheritParentConfig: true
+Checks: >
+  -cppcoreguidelines-avoid-non-const-global-variables
