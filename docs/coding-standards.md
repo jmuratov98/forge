@@ -86,7 +86,7 @@ Failures fall into three channels that never mix:
 
 ## Tooling
 
-- **clang-format 23.1.4**, pinned through the pip `clang-format` wheel. Google style with 4-space indent, 100 columns, `int *p`, braces on every `if` and loop, and no single-line `if` or loops. CI runs `clang-format --dry-run --Werror`.
+- **clang-format 23.1.4**, pinned through the pip `clang-format` wheel. Google style with 4-space indent, 100 columns, `int *p`, braces on every `if` and loop, and no single-line `if` or loops. Authors run it locally through the wrapper's `format` command; CI doesn't check formatting.
 - **clang-tidy 23.1.4**, pinned through the pip `clang-tidy` wheel. It's a required check on one Linux CI job, using `compile_commands.json`, with every warning treated as an error. The root `.clang-tidy` lists each disabled check and its reason; `tests/.clang-tidy` relaxes only what googletest's macros trip.
 - A `NOLINT` must name its check and give a reason: `// NOLINT(check-name): reason`.
 - Disabling a check takes a PR that adds a one-line reason to `.clang-tidy`.
