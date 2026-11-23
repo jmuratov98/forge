@@ -39,3 +39,9 @@ A target-specific representation of instructions over virtual or physical regist
 
 **MCIR** (Machine Code IR):
 The representation closest to encoded machine instructions, from which object files and assembly are emitted.
+
+## Host tools
+
+**Host assembler**:
+The platform's own assembler, which `forge` runs to produce object files until fas exists.
+_Avoid_: system `as` (when the platform-neutral role is meant)
