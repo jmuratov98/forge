@@ -39,3 +39,13 @@ A target-specific representation of instructions over virtual or physical regist
 
 **MCIR** (Machine Code IR):
 The representation closest to encoded machine instructions, from which object files and assembly are emitted.
+
+## Source locations
+
+**Spelling location**:
+Where a token's characters are written in the source.
+_Avoid_: source location (when this one specifically is meant)
+
+**Expansion location**:
+Where the macro that produced a token was used; for nested expansions, each level has its own.
+_Avoid_: instantiation location, use site
