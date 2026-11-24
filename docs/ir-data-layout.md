@@ -55,7 +55,7 @@ An entity is named by a `forge::id<Entity, T>`: an index into the array that hol
 ## Uses and other computed facts
 
 - No layer stores the users of a value. A pass that needs uses or use counts (instruction selection's single-use matching and dead-code dropping, liveness, the verifiers) computes them in one walk.
-- When FIR construction removes a trivial block argument, it records the replacement in an alias table. One fix-up walk at the end of the function rewrites every operand through it, and no alias survives construction.
+- When FIR construction removes a trivial block parameter, it records the replacement in an alias table. One fix-up walk at the end of the function rewrites every operand through it, and no alias survives construction.
 - Computed facts live in **side tables** owned by the pass that computes them, never in the container. Examples are use counts, liveness, the dominator tree, register assignments and a lowering's mappings. `forge::side_table<Id, T>` is a vector indexed by id, sized once from the container's count and filled with a default value. A pass drops its side tables when it ends or hands them explicitly to the next pass; sema's results, for example, are handed to AST → HIR.
 - Sparse facts use `std::unordered_map<Id, T>` until profiling justifies a dense hash map of Forge's own.
 
@@ -64,7 +64,7 @@ An entity is named by a `forge::id<Entity, T>`: an index into the array that hol
 - Every entity has a location, a 32-bit opaque handle kept in a column. How it is encoded (spelling and expansion locations, `#line`) belongs to the shared source-location infrastructure.
 - Everything a lowering creates for an entity gets that entity's location. `%` lowered to `sdiv` + `msub` gives both the `%`'s location.
 - Code with no single source entity takes the location of what it serves. Register allocation's moves take the location of the instruction they were added for, the prologue and epilogue take the function's, and `main`'s implicit `return 0` takes its closing brace.
-- There is no "unknown" location, so the verifiers check that every entity has one. A layer may derive an entity's location instead of storing it (an instruction's result value from its instruction); each layer's design says which.
+- There is no "unknown" location, so the verifiers check that every entity has one. A layer may derive an entity's location instead of storing it (an instruction's result value from its instruction); each layer's design says which. A value that stands for no source entity has none: FIR's constants and `undef` are shared by all their uses (see [docs/fir.md](fir.md#locations)).
 
 ## Types
 
@@ -87,7 +87,7 @@ Every verifier runs these structural checks first, and runs the layer's own sema
 - Every id stored in the container is in range, and is valid wherever the field requires an entity.
 - Every pool range lies inside its pool.
 - Every column is as long as its entity array.
-- Every entity has a location.
+- Every entity has a location, except FIR's constants and `undef`.
 - In FIR and MIR:
   - The layout lists every block exactly once, with the entry block first.
   - Taken in layout order, the blocks' instruction ranges cover the instruction array with no gaps or overlaps.

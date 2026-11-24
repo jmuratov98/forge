@@ -6,7 +6,7 @@ Every layer from the AST to MCIR keeps its entities (nodes, values, instructions
 
 - **Pointer-linked nodes in bump arenas** (LLVM, clang). The natural fit for a recursive-descent parser and for passes that edit in place, but every reference is an 8-byte pointer to chase, and nodes scatter in memory as the IR is edited. V8 measured about 3x more L1 dcache misses for that reason before replacing sea of nodes with a CFG IR.
 - **A linked layout over dense storage** (Cranelift's CLIF: prev/next ids for every instruction and block). Insertion takes constant time and passes can edit in place, at 8 or more bytes per instruction and a scattered order after edits. The slice has no passes that edit in place, and its insertions (register allocation, frame lowering) are linear rewrites anyway, like V8 Turboshaft's copying phases.
-- **Use-lists** (LLVM). They make replacing every use of a value proportional to its uses, but every operand write has to maintain them and operand storage roughly doubles. The one replacement the slice needs, removing trivial block arguments during FIR construction, goes through an alias table instead.
+- **Use-lists** (LLVM). They make replacing every use of a value proportional to its uses, but every operand write has to maintain them and operand storage roughly doubles. The one replacement the slice needs, removing trivial block parameters during FIR construction, goes through an alias table instead.
 - **Variable-size records in one buffer** (Turboshaft). Ids become byte offsets, which side tables can't index densely.
 
 ## Consequences
