@@ -128,6 +128,10 @@ _Avoid_: frameless function (a leaf can still have a frame for its spill slots)
 How far register allocation and frame lowering have rewritten a MIR body: before allocation, after it, or after frame lowering.
 _Avoid_: phase (the driver's), stage
 
+**Allocation checker**:
+A check that a body after register allocation computes the same values as the body before it, as distinct from the MIR verifier, which checks one body on its own.
+_Avoid_: register allocation verifier, regalloc verifier
+
 **Symbol**:
 A name in an MCIR module for a position in a section, or for something another object defines. A named symbol carries a C-level name into the object's symbol table, a private one reaches the table but is never exported, and a temporary one never leaves the assembler.
 _Avoid_: label (in MCIR; Label is HIR's), local label

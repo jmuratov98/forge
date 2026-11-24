@@ -1,6 +1,6 @@
 # Register allocation
 
-How the first slice's register allocator turns a MIR body in `ssa` into one in `allocated`, and what the allocation checker asserts. MIR itself is [docs/mir.md](mir.md), storage follows [docs/ir-data-layout.md](ir-data-layout.md), and terms follow [GLOSSARY.md](../GLOSSARY.md).
+How the first slice's register allocator turns a MIR body in `ssa` into one in `allocated`, and how the allocation checker checks it. MIR itself is [docs/mir.md](mir.md), storage follows [docs/ir-data-layout.md](ir-data-layout.md), and terms follow [GLOSSARY.md](../GLOSSARY.md).
 
 Two decisions are recorded as ADRs: the allocator is local, and every value that crosses a block boundary lives in its spill slot there ([ADR 0018](adr/0018-the-slices-register-allocator-is-local-and-values-that-cross-a-block-live-in-spill-slots.md)), and `x16` and `x17` are scratch registers ([ADR 0019](adr/0019-x16-and-x17-are-scratch-registers-that-register-allocation-never-assigns.md)).
 
@@ -104,7 +104,34 @@ Unreachable blocks are allocated like any other, and reach the object file as de
 
 ## The allocation checker
 
-How the checker is built is still open, in the map's IR verification fog. It receives the body in `ssa`, the body in `allocated`, and a side table from the allocator that maps each allocated instruction to the `ssa` instruction it copies or marks it as added, and each new block to its edge. It runs a symbolic dataflow over every block reachable from the entry. For each register and spill slot it tracks the set of virtual registers that location holds: a def removes its virtual register from every location and puts it in its own, `mov_rr`, `ldr_ui` and `str_ui` copy a set, a `bl` empties `x0`–`x17` and `x30`, a merge keeps only what every predecessor agrees on, and an edge renames each argument to its parameter. It doesn't assume that values cross blocks in their slots, so it holds for a later allocator too.
+The checker shows, for one function, that the body in `allocated` computes the values the body in `ssa` computes. The MIR verifier checks one body on its own, and the checker compares two. It trusts none of the allocator's decisions and doesn't assume that values cross blocks in their slots, so it holds for a later allocator too.
+
+### What register allocation hands it
+
+- **Two bodies.** Register allocation reads the `ssa` body as `const` and writes `allocated` into a second MIR body, in every preset and even when it inserts nothing, as for `add`. The allocator never depends on whether the checker runs, so RelWithAsserts checks the code Release ships. Both bodies are cleared once the function reaches MCIR, and keep their capacity. Frame lowering rewrites the second.
+- **The origin table**, a side table the allocator fills as it writes, in every preset, and drops once the checker has run (or at once where it doesn't run):
+  - for each allocated instruction, the `ssa` instruction it copies, or *added*;
+  - for each new block, the `ssa` edge it stands for, as its terminator and edge index (0 taken, 1 not taken), since edges have no ids.
+
+  Moves at the top of a one-predecessor target need no mark: the checker renames on the CFG edge before them. In the throwaway prototype that gave the same verdicts as renaming after them, on 3,000 random bodies and 600 mutants.
+
+### Where it runs
+
+Per function, in Debug and RelWithAsserts, behind the same switch as the verifiers, with no flag to run it in Release or to turn it off:
+
+1. instruction selection, then the MIR verifier on `ssa`;
+2. register allocation, then the MIR verifier on `allocated`, so the checker can index freely;
+3. the allocation checker;
+4. frame lowering, then the MIR verifier on `final`.
+
+It reads MIR's own tables, not copies of them: the opcode effect table for what `bl` clobbers, the allocatable set, and the rules of [docs/mir.md](mir.md#registers). A wrong table fools both the allocator and the checker, and the link-and-run tests against `cc` catch it.
+
+### How it checks
+
+It stops at the first failure, in this order:
+
+1. One pass in layout order checks assertions 2 to 5 below, pairing each original instruction with its `ssa` instruction through the origin table.
+2. Only if they hold, a symbolic dataflow over the blocks reachable from the entry checks assertion 1. For each register and spill slot it tracks the set of virtual registers that location holds. The entry block starts with each parameter in its fixed register. A def removes its virtual register from every location and puts it in its own. `mov_rr`, `ldr_ui` and `str_ui` copy a set. A `bl` empties `x0`–`x17` and `x30`. An original edge renames each argument to its parameter as it reaches its target, on the edge itself or on the `b` of the new block that stands for it. A merge keeps only what every predecessor agrees on, and the states are recomputed in reverse postorder until nothing changes. A last walk checks each original instruction's register uses, in layout order.
 
 It asserts:
 
@@ -115,6 +142,31 @@ It asserts:
 5. **The CFG.** Every original edge reaches its target directly, or through exactly one new block that holds only moves and a `b` to that target.
 
 Unreachable blocks aren't checked.
+
+### When it fails
+
+The checker is a function that returns its first failure, or none. A failure names the assertion, the allocated block, the instruction's position in it (counting from 0), and the `ssa` instruction it copies or that it was added. A value failure also names the location, the virtual register expected and what the location holds. It also names where the value was lost: the location is traced back through copies and one-predecessor blocks to the merge where one predecessor delivers the value and another doesn't, and the failure names the first predecessor in layout order that doesn't.
+
+The pipeline prints the failure to stderr, then the `ssa` body and the `allocated` body (no flag prints `allocated` otherwise), and stops through `FORGE_ASSERT`. It is a bug in Forge, never a diagnostic ([ADR 0009](adr/0009-only-the-frontend-reports-diagnostics.md)). Dropping `sum`'s back-edge store `str_ui w9, [fi1, #0]` from `bb2` ([A loop](#a-loop)) prints:
+
+```
+forge: internal error: allocation checker failed in @sum
+  bb2, instruction 2, copying ssa bb2, instruction 0: add_rr w9, w9, w8
+  values: w9 holds %6 here, not %3
+  fi1 lost %3 at the entry of bb1: bb0 delivers it, bb2 doesn't
+```
+
+### What it costs
+
+In the throwaway prototype the checker took 2.9 times the allocator's time over 3,000 random bodies, and 7 times on the 30 largest (about 765 instructions). A block took 3.2 visits on average, 4.2 on the largest, and no set held more than 11 virtual registers. The block-entry states grow as blocks × spill slots, because a slot keeps its value once written: 3,667 elements for the ten largest bodies, of about 820 instructions. That is quadratic in the worst case and microseconds per function for the slice's tests, and the compile-speed targets are out of scope. If it shows in a profile, the fix is to drop virtual registers that are dead in the `ssa` body from the state.
+
+### Tests
+
+- **googletest**, in `unittests/<library>/`: `allocated` has no textual surface and there is no IR parser. Bodies come from C source through the library pipeline up to allocation, so the two bodies and the origin table are the real ones.
+- **Rejected mutants.** A test-only helper copies an allocated body with one edit (drop, insert, swap, or replace an operand) and keeps the origin table in step. It finds each target by pattern, such as the first added `ldr_ui` after a `bl`, not by index. The catalog has at least one mutant per assertion and per kind of added instruction: a store after a def, a reload at the top of a block, after a `bl` and after an eviction, a fixed def's copy, a duplicate argument's copy, the entry's parallel move, an edge's parallel move in each of its three places, the `x16` cycle break and the `x17` slot-to-slot move. A test compares the returned failure's assertion, block and instruction, not its text, and one test checks the printed report.
+- **By construction.** A mutant is chosen to break an assertion, not by whether it changes behaviour: in the prototype the checker rejected all 287 mutants that changed behaviour, and 243 of the 313 that showed no change in six runs.
+- **Accepted mutants.** Correct code this allocator never writes must pass, so that the checker judges values and not this allocator's discipline: a reload dropped where every predecessor leaves the value in that register (`pick`), and edge moves hoisted where they still deliver (`count`).
+- **At scale.** The lit suites in RelWithAsserts are the false-alarm test, since every function they compile goes through the checker.
 
 ## Worked examples
 

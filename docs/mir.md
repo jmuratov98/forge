@@ -6,7 +6,7 @@ Three decisions are recorded as ADRs: terminators keep their edges and MIR → M
 
 ## Entities
 
-MIR has two containers. The **MIR module** lives for the translation unit and holds every global and the signature of every function. A **MIR body** lives for one function: instruction selection builds it, register allocation and frame lowering rewrite it, and it is cleared once the function has been appended to MCIR.
+MIR has two containers. The **MIR module** lives for the translation unit and holds every global and the signature of every function. A **MIR body** lives for one function: instruction selection builds it, register allocation reads it and writes a second body, which frame lowering rewrites, and both are cleared once the function has been appended to MCIR.
 
 | Entity | Id | Record | Columns |
 |---|---|---|---|
@@ -261,7 +261,7 @@ Every MIR entity has a location, following the rules in [docs/ir-data-layout.md]
 
 ## Verifier
 
-These checks run after the structural checks every verifier starts with ([docs/ir-data-layout.md](ir-data-layout.md#verification)), and only if those pass. The verifier runs after instruction selection and after frame lowering in Debug and RelWithAsserts.
+These checks run after the structural checks every verifier starts with ([docs/ir-data-layout.md](ir-data-layout.md#verification)), and only if those pass. The verifier runs after instruction selection, after register allocation and after frame lowering in Debug and RelWithAsserts.
 
 - **Every state**
   - Every instruction's operand kinds, count, defs and uses, and register classes follow its opcode's shape, and every immediate satisfies its opcode's rule.
@@ -283,7 +283,7 @@ These checks run after the structural checks every verifier starts with ([docs/i
   - No other instruction writes `sp` or `x29`, and only `bl` and `ldp_post` write `x30`.
   - `x19`–`x28` never appear.
   - Every `[sp, #off]` access lies inside the outgoing and spill area, which ends at the last spill slot, or inside the incoming area. None lies inside the frame record or the padding.
-- **Not checked:** that allocation preserved the program's values, which is the allocation checker's job ([docs/register-allocation.md](register-allocation.md#the-allocation-checker) lists what it asserts; how it is built is still open), that blocks are reachable, and that a virtual register nothing uses is defined.
+- **Not checked:** that allocation preserved the program's values, which is the allocation checker's job ([docs/register-allocation.md](register-allocation.md#the-allocation-checker) says what it asserts and how it runs), that blocks are reachable, and that a virtual register nothing uses is defined.
 
 ## What MIR removes, and what MCIR receives
 
