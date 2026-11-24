@@ -7,7 +7,7 @@ Forge is a compiler toolchain written in C++20, built as a learning project. It 
 - `fold`: the linker
 - `fls`, `fdb`, `ffmt`, `flint`: the language server, debugger, formatter and linter
 
-Terms are defined in [GLOSSARY.md](GLOSSARY.md); decisions are recorded in [docs/adr/](docs/adr/). Planning happens on the [first vertical slice map](https://github.com/jmuratov98/forge/issues/1).
+Terms are defined in [GLOSSARY.md](GLOSSARY.md); decisions are recorded in [docs/adr/](docs/adr/). Code follows [docs/coding-standards.md](docs/coding-standards.md). Planning happens on the [first vertical slice map](https://github.com/jmuratov98/forge/issues/1).
 
 ## Setting up a checkout
 

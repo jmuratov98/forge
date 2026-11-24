@@ -22,6 +22,12 @@ Forge's assembler.
 **fold**:
 Forge's linker, also invocable under compatibility names such as `ld.fold`, `fld` and `fold-link.exe`.
 
+## C
+
+**C dialect**:
+The variant of C a compilation is checked against, selected by `-std=`: either an ISO standard (`c89`) or a GNU dialect, which is a standard plus GCC's extensions (`gnu89`).
+_Avoid_: standard (for a GNU dialect), language mode
+
 ## Intermediate representations
 
 **AST**:
@@ -46,3 +52,25 @@ The translation of a program from one IR layer to the next, which removes one ki
 **Block argument**:
 A value that a FIR or MIR block receives from each predecessor's branch, in place of a φ-node.
 _Avoid_: φ-node, phi
+
+## Development
+
+**dev script**:
+The developer entry point (`dev.py` and its `dev`, `dev.bat` and `dev.ps1` shims) that sets up, builds, tests and lints Forge. It is not part of Forge's shipped tools.
+_Avoid_: the wrapper, forge.py
+
+## Source locations
+
+**Spelling location**:
+Where a token's characters are written in the source.
+_Avoid_: source location (when this one specifically is meant)
+
+**Expansion location**:
+Where the macro that produced a token was used; for nested expansions, each level has its own.
+_Avoid_: instantiation location, use site
+
+## Host tools
+
+**Host assembler**:
+The platform's own assembler, which `forge` runs to produce object files until fas exists.
+_Avoid_: system `as` (when the platform-neutral role is meant)
