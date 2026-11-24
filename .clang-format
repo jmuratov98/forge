@@ -1,0 +1,17 @@
+# Forge's formatting. See docs/coding-standards.md; pinned to clang-format 23.1.4.
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 100
+PointerAlignment: Right
+DerivePointerAlignment: false
+AccessModifierOffset: -4
+InsertBraces: true
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+IncludeBlocks: Regroup
+# The file's own header first (priority 0, via IncludeIsMainRegex), then Forge headers, then std.
+IncludeCategories:
+  - Regex: '^"'
+    Priority: 1
+  - Regex: '^<'
+    Priority: 2
