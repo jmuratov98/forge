@@ -64,6 +64,10 @@ The value an edge passes for one block parameter.
 One successor of a FIR or MIR terminator: a target block and one block argument per parameter of that block.
 _Avoid_: branch target (which leaves out the arguments)
 
+**Parallel move**:
+A set of moves that read all their sources before any destination is written: what one edge's block arguments become when register allocation removes them.
+_Avoid_: phi copies, swap
+
 **Module**:
 One IR layer's representation of a translation unit: its globals and functions. HIR and MCIR modules keep every function's body; FIR and MIR modules keep only signatures, and their bodies come and go one function at a time.
 _Avoid_: translation unit (the C source), object file (what an MCIR module becomes)
@@ -92,6 +96,10 @@ _Avoid_: temporary
 A register of the target machine, which a MIR operand names once register allocation has run or where the ABI fixes it.
 _Avoid_: hardware register, machine register
 
+**Scratch register**:
+A physical register that register allocation never assigns, kept for the moves and address computations that register allocation and frame lowering insert.
+_Avoid_: reserved register (one the platform forbids, such as `x18`)
+
 **Register class**:
 The kind of value a virtual register holds, which fixes its width and which physical registers can hold it.
 _Avoid_: register type, register bank
@@ -103,6 +111,10 @@ _Avoid_: hint, precolouring
 **Frame object**:
 A region of a function's stack frame that a MIR body names by index: the caller's argument area, the area for its own calls' arguments, or a spill slot.
 _Avoid_: stack slot (alone)
+
+**Spill slot**:
+The frame object that holds one virtual register's value wherever no register holds it.
+_Avoid_: stack slot, spill area
 
 **MIR state**:
 How far register allocation and frame lowering have rewritten a MIR body: before allocation, after it, or after frame lowering.
