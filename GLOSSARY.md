@@ -57,6 +57,14 @@ The translation of a program from one IR layer to the next, which removes one ki
 A value that a FIR or MIR block receives from each predecessor's branch, in place of a φ-node.
 _Avoid_: φ-node, phi
 
+**Module**:
+One IR layer's representation of a translation unit: its globals and functions. HIR and MCIR modules keep every function's body; FIR and MIR modules keep only signatures, and their bodies come and go one function at a time.
+_Avoid_: translation unit (the C source), object file (what an MCIR module becomes)
+
+**Body**:
+One function's code in an IR layer, as distinct from its signature in the module.
+_Avoid_: function body (the C syntax), function IR
+
 ## Development
 
 **dev script**:
