@@ -1,0 +1,78 @@
+# Forge's static analysis. See docs/coding-standards.md; pinned to clang-tidy 23.1.4.
+# Disabling a check later takes a PR and a one-line reason here.
+Checks: >
+  -*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  google-runtime-int,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-use-nodiscard,
+  -modernize-use-trailing-return-type,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-magic-numbers
+# Reasons for the disabled checks:
+#   easily-swappable-parameters, identifier-length, cognitive-complexity: noise.
+#   avoid-do-while: FORGE_ASSERT and friends use do { } while (0).
+#   magic-numbers: opcodes and encodings are full of literals.
+#   non-private-member-variables-in-classes: aggregates have public fields.
+#   owning-memory: needs GSL.
+#   pro-bounds-pointer-arithmetic, pro-type-reinterpret-cast, pro-type-union-access:
+#     allocators, containers and object writers need them.
+#   no-recursion: recursive-descent parsers and tree walkers recurse.
+#   use-nodiscard: [[nodiscard]] goes where it matters, not everywhere.
+#   use-trailing-return-type: not Forge's style.
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'
+ExcludeHeaderFilterRegex: '.*/_deps/.*'
+CheckOptions:
+  # Banned headers: <iostream> (static init, speed) and <coroutine> (coroutines are banned).
+  portability-restrict-system-includes.Includes: '*,-iostream,-coroutine'
+  cppcoreguidelines-macro-usage.AllowedRegexp: '^FORGE_'
+  # Naming: snake_case like std; PascalCase template parameters.
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.ClassCase: lower_case
+  readability-identifier-naming.StructCase: lower_case
+  readability-identifier-naming.UnionCase: lower_case
+  readability-identifier-naming.EnumCase: lower_case
+  readability-identifier-naming.TypeAliasCase: lower_case
+  readability-identifier-naming.TypedefCase: lower_case
+  readability-identifier-naming.ConceptCase: lower_case
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+  readability-identifier-naming.FunctionCase: lower_case
+  readability-identifier-naming.MethodCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.EnumConstantCase: lower_case
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.MacroDefinitionPrefix: FORGE_
+  # Prefixes: g_ namespace scope, s_ static storage in classes and functions, m_ non-public members.
+  readability-identifier-naming.GlobalVariableCase: lower_case
+  readability-identifier-naming.GlobalVariablePrefix: g_
+  readability-identifier-naming.GlobalConstantCase: lower_case
+  readability-identifier-naming.GlobalConstantPrefix: g_
+  readability-identifier-naming.ClassMemberCase: lower_case
+  readability-identifier-naming.ClassMemberPrefix: s_
+  readability-identifier-naming.ClassConstantCase: lower_case
+  readability-identifier-naming.ClassConstantPrefix: s_
+  readability-identifier-naming.StaticVariableCase: lower_case
+  readability-identifier-naming.StaticVariablePrefix: s_
+  readability-identifier-naming.PrivateMemberCase: lower_case
+  readability-identifier-naming.PrivateMemberPrefix: m_
+  readability-identifier-naming.ProtectedMemberCase: lower_case
+  readability-identifier-naming.ProtectedMemberPrefix: m_
+  readability-identifier-naming.PublicMemberCase: lower_case
