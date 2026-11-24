@@ -116,6 +116,14 @@ _Avoid_: stack slot (alone)
 The frame object that holds one virtual register's value wherever no register holds it.
 _Avoid_: stack slot, spill area
 
+**Frame record**:
+The saved frame pointer and return address that a function which makes calls keeps at the top of its stack frame, and that the frame pointer points at.
+_Avoid_: frame pointer (the register that points at it), stack frame (the whole frame)
+
+**Leaf function**:
+A function that makes no calls, and so keeps no frame record.
+_Avoid_: frameless function (a leaf can still have a frame for its spill slots)
+
 **MIR state**:
 How far register allocation and frame lowering have rewritten a MIR body: before allocation, after it, or after frame lowering.
 _Avoid_: phase (the driver's), stage

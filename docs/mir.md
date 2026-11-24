@@ -61,7 +61,7 @@ An operand is an 8-byte record `{kind, flags, aux, payload}`.
 
 - **Flags.** `def` marks a def, and a use otherwise. `implicit` marks an operand that isn't written in the assembly.
 - **Order.** An instruction's operands are its explicit operands in assembly order, defs first, then its implicit uses, then its implicit defs.
-- **Address operands.** `ldr_ui`, `str_ui`, `ldp_ui` and `stp_ui` end with a base and an offset, written `[base, offset]`. The base is a register or a frame index, and the offset is an immediate or a `pageoff` or `gotpageoff` symbol.
+- **Address operands.** `ldr_ui` and `str_ui` end with a base and an offset, written `[base, offset]`. The base is a register or a frame index, and the offset is an immediate or a `pageoff` or `gotpageoff` symbol. `stp_pre` and `ldp_post` end with `sp` and an immediate, written `[sp, #-16]!` and `[sp], #16`.
 - **Condition codes** are `eq ne lt le gt ge lo ls hi hs`. FIR's predicates map `eq`→`eq`, `ne`→`ne`, `slt`→`lt`, `sle`→`le`, `sgt`→`gt`, `sge`→`ge`, `ult`→`lo`, `ule`→`ls`, `ugt`→`hi` and `uge`→`hs`.
 - **Symbol modifiers** are `none` (for a call), `page`, `pageoff`, `gotpage` and `gotpageoff`. Darwin's spelling (`@PAGE`, the leading `_`) is MCIR's.
 
@@ -83,6 +83,7 @@ Effects fixed by the opcode don't appear as operands. They are in a `constexpr` 
 | `b_cond`, `cset` | uses `nzcv` |
 | `bl` | defines `x30`; clobbers `x0`–`x17` and `nzcv` |
 | `ret` | uses `x30` |
+| `stp_pre`, `ldp_post` | write the adjusted address back to `sp` |
 
 ## Opcodes
 
@@ -107,7 +108,7 @@ An opcode is one AArch64 encoding form, and no instruction is a pseudo-instructi
 | `adrp` | def `gpr64`, symbol | modifier `page` or `gotpage` |
 | `ldr_ui` | def, address | |
 | `str_ui` | use, address | |
-| `ldp_ui`, `stp_ui` | def or use, def or use, address | two `gpr64`, in frame lowering only |
+| `stp_pre`, `ldp_post` | use, use, address / def, def, address | two `gpr64`, in the prologue and the epilogue only ([docs/frame-lowering.md](frame-lowering.md)) |
 | `bl` | symbol | the callee, then implicit operands |
 | `b`, `b_cond`, `cbz`, `cbnz`, `ret` | see [Terminators and edges](#terminators-and-edges) | |
 
@@ -116,9 +117,9 @@ An opcode is one AArch64 encoding form, and no instruction is a pseudo-instructi
 - `add_ri`, `sub_ri` and `cmp_ri` take 0–4095, or a multiple of 4096 up to `0xFFF000` (the assembler writes the second as `lsl #12`).
 - `lsl_ri`, `lsr_ri` and `asr_ri` take 0–31.
 - `mov_ri` takes a 32-bit value that is one 16-bit chunk at bit 0 or bit 16, or the bitwise complement of one. `movz` and `movk` take a 16-bit chunk.
-- `ldr_ui` and `str_ui` take a multiple of the access size, up to 4095 times that size. `ldp_ui` and `stp_ui` take a multiple of 8 from 0 to 504.
+- `ldr_ui` and `str_ui` take a multiple of the access size, up to 4095 times that size. `stp_pre` and `ldp_post` take a multiple of 8 from −512 to 504, and the slice uses only −16 and 16.
 
-**Semantics.** Arithmetic wraps modulo 2³². Division, remainder and shifts that FIR leaves unspecified (division by zero, `INT_MIN` by −1, a count outside 0–31) do what AArch64 does. Only `ldr_ui`, `str_ui` and `bl` touch memory, and no layer reorders them relative to each other. Everything else is pure.
+**Semantics.** Arithmetic wraps modulo 2³². Division, remainder and shifts that FIR leaves unspecified (division by zero, `INT_MIN` by −1, a count outside 0–31) do what AArch64 does. Only `ldr_ui`, `str_ui`, `stp_pre`, `ldp_post` and `bl` touch memory, and no layer reorders them relative to each other. Everything else is pure.
 
 ## Terminators and edges
 
@@ -154,7 +155,7 @@ A body has a table of frame objects, each `{kind, alignment, size}`, and an inst
 | `outgoing` | the call area at the bottom of the frame, at most one | instruction selection, when a call has more than eight arguments; the largest call's stack arguments, rounded up to 8 |
 | `spill` | the slot of one virtual register that crosses a block boundary or that register allocation spills | register allocation |
 
-The ABI fixes the offsets inside `incoming` and `outgoing`, so instruction selection writes them: the k-th argument past the eighth is at offset 4 × (k − 9) of the `outgoing` object of a call, and of the `incoming` object in a callee. Where an object sits in the frame isn't known until after allocation. Frame lowering assigns every object an `sp`-relative offset and rewrites each `frame_index` operand into an `sp` base with the sum as its offset, so a `final` body has none. The layout of the frame, and how every resulting offset stays encodable, belong to [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35).
+The ABI fixes the offsets inside `incoming` and `outgoing`, so instruction selection writes them: the k-th argument past the eighth is at offset 4 × (k − 9) of the `outgoing` object of a call, and of the `incoming` object in a callee. Where an object sits in the frame isn't known until after allocation. Frame lowering assigns every object an `sp`-relative offset and rewrites each `frame_index` operand into an `sp` base with the sum as its offset, so a `final` body has none. The layout of the frame, and how every resulting offset stays encodable, are in [docs/frame-lowering.md](frame-lowering.md).
 
 ## Calling convention
 
@@ -163,7 +164,7 @@ The ABI fixes the offsets inside `incoming` and `outgoing`, so instruction selec
 - Arguments one to eight are passed in `w0`–`w7`. The rest go on the stack in order, lowest address first, each in a packed 4-byte slot at `sp` at the call. Every value is 32 bits, so Apple's rule that the caller extends narrower arguments never comes up.
 - The result is in `w0`.
 - `x0`–`x17` are caller-saved; `x19`–`x28`, `x29` and `sp` are callee-saved; `x18` is reserved.
-- `bl` writes `x30`. A function that contains a `bl` keeps a frame record, `x29` and `x30` stored at the frame's top. A leaf may skip it.
+- `bl` writes `x30`. A function that contains a `bl` keeps a frame record, `x29` and `x30` stored at the top of its frame, and `x29` points at it. A leaf function skips it ([docs/frame-lowering.md](frame-lowering.md#leaf-functions)).
 - `sp` is 16-byte aligned wherever it is used.
 
 ## From FIR
@@ -228,7 +229,7 @@ A global is defined when it is defined in this translation unit, internal or ext
 
 Register allocation reads a body in `ssa` and writes one in `allocated` ([docs/register-allocation.md](register-allocation.md)). In the slice it is local, like clang's at `-O0` ([ADR 0018](adr/0018-the-slices-register-allocator-is-local-and-values-that-cross-a-block-live-in-spill-slots.md)): every value that crosses a block boundary has a `spill` frame object, stored after its def and reloaded in each other block that uses it, and each block is allocated on its own by one walk from its terminator up. It gives every virtual register a physical register of its class, honouring fixed constraints, ties and the opcode table's clobbers, and spills every value live across a `bl`. It turns each edge's arguments into one parallel move into the target's parameter slots and puts it where the [terminator rules](#terminators-and-edges) allow. The instructions it adds are `mov_rr`, `ldr_ui`, `str_ui` and the `b` of a new block. None of them writes `nzcv`, so the flags rule holds without register allocation knowing about flags, and they take the location of the instruction they serve.
 
-Frame lowering reads `allocated` and writes `final`. It assigns every frame object an offset and rewrites frame indices, adds the prologue and the epilogue (before every `ret`), keeps a frame record in a function that contains a `bl`, and saves the callee-saved registers the body writes, which in the slice are none (ADR 0018). The prologue and epilogue take the function's location. Its layout is [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35).
+Frame lowering reads `allocated` and writes `final` ([docs/frame-lowering.md](frame-lowering.md)). A function that contains a `bl` pushes its frame record first, with `stp_pre`, and then lowers `sp` for the rest of its frame. A leaf function keeps no frame record, and lowers `sp` only for its spill slots. Every frame object is addressed from `sp` ([ADR 0020](adr/0020-frame-lowering-pushes-the-frame-record-first-and-addresses-every-frame-object-from-sp.md)). The spill slots go upward from the outgoing area at `sp`, in frame-index order, with the frame record above them. An offset that its instruction can't reach is split through an `add_ri` into the load's own destination or into a free scratch register. The epilogue goes before every `ret`. No callee-saved register is saved, because the slice writes none (ADR 0018). The prologue and epilogue take the function's location.
 
 ## Locations
 
@@ -239,7 +240,7 @@ Every MIR entity has a location, following the rules in [docs/ir-data-layout.md]
 - A **block** has no stored location: it takes its first instruction's.
 - A **frame object** takes the function's location for `incoming`, the first call that needs it for `outgoing`, and its virtual register's for a `spill`.
 - A function or a global takes its FIR entity's.
-- Register allocation's moves and spills take the location of the instruction they serve, and an edge's moves that of its terminator ([docs/register-allocation.md](register-allocation.md#the-allocated-body) says which instruction each serves). The prologue and epilogue take the function's.
+- Register allocation's moves and spills take the location of the instruction they serve, and an edge's moves that of its terminator ([docs/register-allocation.md](register-allocation.md#the-allocated-body) says which instruction each serves). The prologue and epilogue take the function's, and the `add_ri` of a split offset takes that of the access it serves.
 
 ## Printed form
 
@@ -253,7 +254,7 @@ Every MIR entity has a location, following the rules in [docs/ir-data-layout.md]
 - **Constraints** print in brackets after their operand: `[w0]` for a fixed one and `[=%5]` for a tie.
 - **Immediates** are `#N` in signed decimal. `movk` prints its shift as `lsl #16`.
 - **Symbols** are `@sink`, `@g@page`, `@g@pageoff`, `@g@gotpage` and `@g@gotpageoff`. A frame object is `fi0`. A condition code prints bare.
-- **Addresses** are `[base, offset]`.
+- **Addresses** are `[base, offset]`, and `[sp, #-16]!` and `[sp], #16` for `stp_pre` and `ldp_post`.
 - **Edges** are `bb1(%0, %6)`, or `bb1` when there are no arguments, as in `b bb1(%0, %6)`, `b_cond gt, bb2, bb3` and `cbnz %0, bb1, bb2`.
 - **Globals** print as in FIR: `global @hits = zerofill`.
 - Fixed effects of an opcode (`nzcv`, call clobbers) aren't printed.
@@ -276,8 +277,12 @@ These checks run after the structural checks every verifier starts with ([docs/i
   - Every edge passes one `vreg` for each parameter of its target, of the same class.
   - A `bl` names a function of the module. Its argument uses are fixed to `w0` onward in order with no gap, and its def, if any, to `w0`. A `ret` has an implicit use fixed to `w0` exactly when the function isn't `void`.
 - **`allocated` and `final`:** there are no virtual registers, block parameters or edge arguments, and every implicit operand is a physical register.
-- **`final`:** there are no frame indices, and every stack adjustment and every `sp`-relative offset is one the assembler accepts, with `sp` adjusted in multiples of 16.
-  A function that contains a `bl` keeps a frame record: an `stp_ui` of `x29` and `x30`, and an `add_ri` that sets `x29`, come before its first `bl`.
+- **`final`:** there are no frame indices, and every stack adjustment and every `sp`-relative offset is one the assembler accepts, with `sp` adjusted in multiples of 16. The prologue and the epilogue are the fixed patterns of [docs/frame-lowering.md](frame-lowering.md#the-prologue-and-the-epilogue):
+  - The entry block of a function that contains a `bl` begins with `stp_pre x29, x30, [sp, #-16]!`, `add_ri x29, sp, #0` and the `sub_ri`s for its frame. A leaf function's entry block begins with the `sub_ri`s for its frame, if it has one.
+  - Every `ret` comes right after the matching epilogue.
+  - No other instruction writes `sp` or `x29`, and only `bl` and `ldp_post` write `x30`.
+  - `x19`–`x28` never appear.
+  - Every `[sp, #off]` access lies inside the outgoing and spill area, which ends at the last spill slot, or inside the incoming area. None lies inside the frame record or the padding.
 - **Not checked:** that allocation preserved the program's values, which is the allocation checker's job ([docs/register-allocation.md](register-allocation.md#the-allocation-checker) lists what it asserts; how it is built is still open), that blocks are reachable, and that a virtual register nothing uses is defined.
 
 ## What MIR removes, and what MCIR receives
@@ -303,15 +308,14 @@ What MCIR's design has to handle:
   | `cset cc` | `csinc rd, zr, zr, !cc` |
   | `lsl_rr`, `lsr_rr`, `asr_rr` | `lslv`, `lsrv`, `asrv` |
   | `ldr_ui`, `str_ui` | `ldr_imm`, `str_imm` |
-  | `ldp_ui`, `stp_ui` | `ldp_offset`, `stp_offset` |
-  | `sdiv`, `udiv`, `msub`, `movz`, `movk`, `adrp`, `bl`, `ret` | the same name |
+  | `sdiv`, `udiv`, `msub`, `movz`, `movk`, `adrp`, `stp_pre`, `ldp_post`, `bl`, `ret` | the same name |
 
 - **Symbols and operands.** Implicit operands and the state aren't part of the assembly. A symbol operand keeps its modifier. A function becomes a named symbol, global for an external function and local for an internal one, and a declaration becomes an undefined one. Internal names need not be unique in FIR, so MCIR makes them unique. A global becomes `__DATA,__data` or, when it is zerofill, `__DATA,__bss`.
 - **Locations** are the instruction's.
 
 ## Worked examples
 
-Ids come from the rules above: a virtual register for every FIR parameter and result in value order, then temporaries in the order instruction selection makes them. `docs/ir-data-layout.md` shows `add` in memory. Each example is shown in `ssa` and after register allocation, in `allocated` (which no flag prints), by the rules in [docs/register-allocation.md](register-allocation.md). Frame lowering's `final` forms belong to [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35), except for `add`, where it inserts nothing.
+Ids come from the rules above: a virtual register for every FIR parameter and result in value order, then temporaries in the order instruction selection makes them. `docs/ir-data-layout.md` shows `add` in memory. Each example is shown in `ssa` and after register allocation, in `allocated` (which no flag prints), by the rules in [docs/register-allocation.md](register-allocation.md). Frame lowering's `final` forms are in [docs/frame-lowering.md](frame-lowering.md#worked-examples), except for `add`, where it inserts nothing.
 
 `int add(int a, int b) { return a + b; }`, whose FIR is in [docs/fir.md](fir.md#worked-examples):
 
