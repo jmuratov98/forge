@@ -65,6 +65,18 @@ _Avoid_: translation unit (the C source), object file (what an MCIR module becom
 One function's code in an IR layer, as distinct from its signature in the module.
 _Avoid_: function body (the C syntax), function IR
 
+**Local**:
+A parameter or automatic variable of one function in HIR. A C `static` local is not a local: it becomes a global.
+_Avoid_: variable (alone), temporary
+
+**Global**:
+A variable of the module rather than of one function, including a C `static` local hoisted out of its function.
+_Avoid_: static (which names a linkage), file-scope variable
+
+**Label**:
+A position in a HIR body that `goto` and `switch` jump to. Each C `case` and `default` becomes an unnamed label.
+_Avoid_: case, case label (in HIR)
+
 ## Development
 
 **dev script**:
