@@ -4,7 +4,7 @@ MIR gets the calling convention's registers through constraints on the operands 
 
 ## Considered Options
 
-- **Copies to and from physical registers** (LLVM's `COPY $w0`), with the allocator coalescing them away. Constraints on the operands stay one mechanism, while copies make every call and entry a place where the allocator has to recover the obvious assignment, and they put `copy` pseudo-instructions in MIR (ADR 0015).
+- **Copies to and from physical registers** (LLVM's `COPY $w0`), with the allocator coalescing them away. Constraints on the operands stay one mechanism, while copies make every call and entry a place where the allocator has to recover the obvious assignment, and they put `copy` pseudo-instructions in MIR (ADR 0016).
 - **An `args` pseudo-instruction** that defines the incoming registers, so block parameters never carry constraints. Rejected for the same reason, and because the entry block's parameters already are the function's parameters in FIR.
 - **Fused `cmp_br` and `cmp_cset` pseudo-instructions,** with no flags register at all. Nothing in MIR would model the flags, but each would expand to two real instructions, and it hides a dependency that is real hardware state.
 

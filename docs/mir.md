@@ -2,7 +2,7 @@
 
 What MIR holds in the first slice, what it means, how FIR → MIR builds it, how register allocation and frame lowering rewrite it, how it is printed and what its verifier checks. MIR is the target-specific layer between FIR and MCIR ([ADR 0008](adr/0008-five-fixed-ir-layers-each-lowering-removes-one-kind-of-structure.md)): AArch64 instructions for `aarch64-apple-darwin` over virtual registers, still SSA with block parameters. FIR → MIR removes target independence. Register allocation removes the block parameters and the virtual registers, and frame lowering adds the prologue and epilogue and turns frame objects into stack offsets. Storage follows [docs/ir-data-layout.md](ir-data-layout.md) and isn't restated; terms follow [GLOSSARY.md](../GLOSSARY.md).
 
-Three decisions are recorded as ADRs: terminators keep their edges and MIR → MCIR picks the branch form ([ADR 0014](adr/0014-mir-terminators-keep-their-edges-and-mir-to-mcir-picks-the-branch-form.md)), opcodes are one per encoding with no pseudo-instructions ([ADR 0015](adr/0015-mir-opcodes-are-one-per-encoding-and-mir-has-no-pseudo-instructions.md)), and the ABI and the condition flags are operand constraints and implicit operands ([ADR 0016](adr/0016-the-abi-and-the-condition-flags-are-operand-constraints-and-implicit-operands.md)).
+Three decisions are recorded as ADRs: terminators keep their edges and MIR → MCIR picks the branch form ([ADR 0015](adr/0015-mir-terminators-keep-their-edges-and-mir-to-mcir-picks-the-branch-form.md)), opcodes are one per encoding with no pseudo-instructions ([ADR 0016](adr/0016-mir-opcodes-are-one-per-encoding-and-mir-has-no-pseudo-instructions.md)), and the ABI and the condition flags are operand constraints and implicit operands ([ADR 0017](adr/0017-the-abi-and-the-condition-flags-are-operand-constraints-and-implicit-operands.md)).
 
 ## Entities
 
@@ -86,7 +86,7 @@ Effects fixed by the opcode don't appear as operands. They are in a `constexpr` 
 
 ## Opcodes
 
-An opcode is one AArch64 encoding form, and no instruction is a pseudo-instruction: every non-terminator prints as exactly one AArch64 instruction ([ADR 0015](adr/0015-mir-opcodes-are-one-per-encoding-and-mir-has-no-pseudo-instructions.md)). Width comes from the register class, so `add_rr` adds `w` or `x` registers (all of one class). A suffix names the form, `rr` for registers, `ri` for a register and an immediate and `ui` for an unsigned scaled offset, on mnemonics that AArch64 has in several forms. The aliases are opcodes of their own, which is why `wzr` is never an operand. A constexpr table gives each opcode its operand shape, and the verifier checks every instruction against it.
+An opcode is one AArch64 encoding form, and no instruction is a pseudo-instruction: every non-terminator prints as exactly one AArch64 instruction ([ADR 0016](adr/0016-mir-opcodes-are-one-per-encoding-and-mir-has-no-pseudo-instructions.md)). Width comes from the register class, so `add_rr` adds `w` or `x` registers (all of one class). A suffix names the form, `rr` for registers, `ri` for a register and an immediate and `ui` for an unsigned scaled offset, on mnemonics that AArch64 has in several forms. The aliases are opcodes of their own, which is why `wzr` is never an operand. A constexpr table gives each opcode its operand shape, and the verifier checks every instruction against it.
 
 | Opcode | Operands | Notes |
 |---|---|---|
@@ -277,18 +277,36 @@ These checks run after the structural checks every verifier starts with ([docs/i
   - A `bl` names a function of the module. Its argument uses are fixed to `w0` onward in order with no gap, and its def, if any, to `w0`. A `ret` has an implicit use fixed to `w0` exactly when the function isn't `void`.
 - **`allocated` and `final`:** there are no virtual registers, block parameters or edge arguments, and every implicit operand is a physical register.
 - **`final`:** there are no frame indices, and every stack adjustment and every `sp`-relative offset is one the assembler accepts, with `sp` adjusted in multiples of 16.
+  A function that contains a `bl` keeps a frame record: an `stp_ui` of `x29` and `x30`, and an `add_ri` that sets `x29`, come before its first `bl`.
 - **Not checked:** that allocation preserved the program's values (the allocation checker is still open), that blocks are reachable, and that a virtual register nothing uses is defined.
 
 ## What MIR removes, and what MCIR receives
 
-ADR 0008 asks each layer to say which lowering removes the structure it adds. Register allocation removes the block parameters, the virtual registers and SSA, and frame lowering removes the frame indices. MIR → MCIR removes the CFG: blocks become labels in layout order, and each terminator becomes one or two branch instructions.
+ADR 0008 asks each layer to say which lowering removes the structure it adds. Register allocation removes the block parameters, the virtual registers and SSA, and frame lowering removes the frame indices. MIR → MCIR removes the CFG: blocks become labels in layout order, and each terminator becomes one or two branch instructions. It also removes the alias opcodes. MCIR stores only the ARM ARM's base forms ([docs/mcir.md](https://github.com/jmuratov98/forge/blob/docs/mcir/docs/mcir.md)), and MIR keeps aliases on purpose so that a dump reads like the assembly and instruction selection stays simple ([ADR 0016](adr/0016-mir-opcodes-are-one-per-encoding-and-mir-has-no-pseudo-instructions.md)). So MIR → MCIR is a translation, not a copy, and ADR 0008's table names both.
 
 What MCIR's design has to handle:
 
 - **Blocks** are emitted in layout order, each as a temporary label that takes the block's location, since Darwin's conditional branches need `L` labels in the same function.
 - **Terminators** print as the branch forms in [Terminators and edges](#terminators-and-edges). A `b_cond` isn't one MCIR instruction.
-- **Instructions** keep their opcode, physical registers, immediates, symbols with modifiers and condition codes. Implicit operands and the state aren't part of the assembly.
-- **Symbols.** A function becomes a named symbol, global for an external function and local for an internal one, and a declaration becomes an undefined one. Internal names need not be unique in FIR, so MCIR makes them unique. A global becomes `__DATA,__data` or, when it is zerofill, `__DATA,__bss`.
+- **Opcodes.** Every MIR opcode maps to one MCIR form, with the register slots filled in and the width flag set from the operands' class. A register is its number, `zr` or `sp`. Eighteen of the 37 need more than a rename:
+
+  | MIR | MCIR |
+  |---|---|
+  | `add_rr`, `sub_rr`, `and_rr`, `orr_rr`, `eor_rr` | `add_shifted`, `sub_shifted`, `and_shifted`, `orr_shifted`, `eor_shifted`, with shift `lsl #0` |
+  | `add_ri`, `sub_ri` | `add_imm`, `sub_imm`, with the value split into imm12 and shift: up to 4095 is (v, 0), and a larger multiple of 4096 is (v ÷ 4096, 12) |
+  | `mul` | `madd` with `zr` as the addend |
+  | `lsl_ri n` | `ubfm rd, rn, (32 − n) mod 32, 31 − n` |
+  | `lsr_ri n`, `asr_ri n` | `ubfm rd, rn, n, 31` and `sbfm rd, rn, n, 31` |
+  | `neg`, `mvn`, `mov_rr` | `sub_shifted`, `orn_shifted`, `orr_shifted`, each from `zr` |
+  | `mov_ri v` | `movz rd, c, s` when `v` is the 16-bit chunk `c` at shift `s` (0 or 16), otherwise `movn rd, c, s` with `v` = ~(`c` << `s`) |
+  | `cmp_rr`, `cmp_ri` | `subs_shifted`, `subs_imm`, into `zr` |
+  | `cset cc` | `csinc rd, zr, zr, !cc` |
+  | `lsl_rr`, `lsr_rr`, `asr_rr` | `lslv`, `lsrv`, `asrv` |
+  | `ldr_ui`, `str_ui` | `ldr_imm`, `str_imm` |
+  | `ldp_ui`, `stp_ui` | `ldp_offset`, `stp_offset` |
+  | `sdiv`, `udiv`, `msub`, `movz`, `movk`, `adrp`, `bl`, `ret` | the same name |
+
+- **Symbols and operands.** Implicit operands and the state aren't part of the assembly. A symbol operand keeps its modifier. A function becomes a named symbol, global for an external function and local for an internal one, and a declaration becomes an undefined one. Internal names need not be unique in FIR, so MCIR makes them unique. A global becomes `__DATA,__data` or, when it is zerofill, `__DATA,__bss`.
 - **Locations** are the instruction's.
 
 ## Worked examples

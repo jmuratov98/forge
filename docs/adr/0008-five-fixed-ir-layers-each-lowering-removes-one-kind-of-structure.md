@@ -8,7 +8,7 @@ Forge compiles through five fixed IR layers, AST → HIR → FIR → MIR → MCI
 | HIR → FIR | structured control flow and mutable variables: FIR is an SSA CFG with block arguments, built directly by Braun et al.'s algorithm |
 | FIR → MIR | target independence: target instructions over virtual registers, still SSA |
 | MIR register allocation and frame lowering | SSA and virtual registers |
-| MIR → MCIR | the CFG: linear, labelled instructions and data in an object module |
+| MIR → MCIR | the CFG and the alias opcodes: linear, labelled instructions in their base forms, and data, in an object module |
 
 ## Considered Options
 
