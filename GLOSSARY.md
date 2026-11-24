@@ -51,3 +51,13 @@ The representation closest to encoded machine instructions, from which object fi
 **dev script**:
 The developer entry point (`dev.py` and its `dev`, `dev.bat` and `dev.ps1` shims) that sets up, builds, tests and lints Forge. It is not part of Forge's shipped tools.
 _Avoid_: the wrapper, forge.py
+
+## Source locations
+
+**Spelling location**:
+Where a token's characters are written in the source.
+_Avoid_: source location (when this one specifically is meant)
+
+**Expansion location**:
+Where the macro that produced a token was used; for nested expansions, each level has its own.
+_Avoid_: instantiation location, use site
