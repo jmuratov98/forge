@@ -22,6 +22,12 @@ Forge's assembler.
 **fold**:
 Forge's linker, also invocable under compatibility names such as `ld.fold`, `fld` and `fold-link.exe`.
 
+## C
+
+**C dialect**:
+The variant of C a compilation is checked against, selected by `-std=`: either an ISO standard (`c89`) or a GNU dialect, which is a standard plus GCC's extensions (`gnu89`).
+_Avoid_: standard (for a GNU dialect), language mode
+
 ## Intermediate representations
 
 **AST**:
@@ -39,6 +45,12 @@ A target-specific representation of instructions over virtual or physical regist
 
 **MCIR** (Machine Code IR):
 The representation closest to encoded machine instructions, from which object files and assembly are emitted.
+
+## Development
+
+**dev script**:
+The developer entry point (`dev.py` and its `dev`, `dev.bat` and `dev.ps1` shims) that sets up, builds, tests and lints Forge. It is not part of Forge's shipped tools.
+_Avoid_: the wrapper, forge.py
 
 ## Source locations
 
