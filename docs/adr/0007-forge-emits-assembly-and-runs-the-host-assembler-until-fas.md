@@ -10,6 +10,6 @@ Until fas exists, `forge -c` does not write object files itself. MCIR is printed
 ## Consequences
 
 - MCIR is the seam fas will reuse: fas will be an assembly parser that produces MCIR, followed by an encoder and object writer. So MCIR models a whole object module (sections, symbols and their binding, labels, instructions with symbolic operands and relocation modifiers, data), not just one function's instructions. The slice only fills in what C codegen needs.
-- MCIR records what kind each label is (temporary label, private symbol, named symbol) and stores C-level names. Target-specific spelling (Darwin's leading `_`, `L` temporaries, `l_.str.N`) happens only in the assembly printer, and later in the object writer.
+- MCIR records what kind each label is (temporary label, private symbol, named symbol) and stores C-level names. Target-specific spelling (Darwin's leading `_`, `L` temporaries, `l_.str.N`) happens only in the assembly printer, and later in the object writer. MCIR calls all three kinds **symbols**: named, private and temporary. "Label" is HIR's term (GLOSSARY.md), and MCIR doesn't use it. (Decided in [MCIR's printed form and instruction encoding model](https://github.com/jmuratov98/forge/issues/28), [docs/mcir.md](../mcir.md).)
 - The host assembler resolves branches and fixups. Darwin has no relocation for conditional branches, so their targets must be `L` temporaries within the same function.
 - Tests on hosts without a host assembler for the target assemble `forge -S` output with `llvm-mc` themselves.

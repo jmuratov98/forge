@@ -108,6 +108,14 @@ _Avoid_: stack slot (alone)
 How far register allocation and frame lowering have rewritten a MIR body: before allocation, after it, or after frame lowering.
 _Avoid_: phase (the driver's), stage
 
+**Symbol**:
+A name in an MCIR module for a position in a section, or for something another object defines. A named symbol carries a C-level name into the object's symbol table, a private one reaches the table but is never exported, and a temporary one never leaves the assembler.
+_Avoid_: label (in MCIR; Label is HIR's), local label
+
+**Atom**:
+A contiguous run of one section's contents, starting at its symbol, that the linker moves or strips as a unit: in the slice, one function's code or one global's data.
+_Avoid_: fragment, chunk, subsection
+
 ## Development
 
 **dev script**:

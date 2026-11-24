@@ -2,7 +2,7 @@
 
 How every IR layer, from the AST to MCIR, stores what it holds. The reasoning is in [ADR 0011](adr/0011-ir-entities-live-in-dense-arrays-named-by-typed-ids.md); terms follow [GLOSSARY.md](../GLOSSARY.md). Each per-layer design (its node or instruction set, records and printed syntax) builds on these rules and doesn't restate them.
 
-An **entity** is anything a layer refers to: AST and HIR nodes and declarations; FIR values, instructions and blocks; MIR instructions, virtual registers, blocks and frame objects; MCIR sections, symbols, labels and instructions.
+An **entity** is anything a layer refers to: AST and HIR nodes and declarations; FIR values, instructions and blocks; MIR instructions, virtual registers, blocks and frame objects; MCIR sections, atoms, symbols, instructions and data items.
 
 ## Containers and lifetimes
 
@@ -14,7 +14,7 @@ Each lifetime is one container object. It owns its entities' arrays as plain `st
 | HIR module | the translation unit | globals, functions and every body |
 | FIR module, MIR module | the translation unit | globals and function signatures |
 | FIR body, MIR body | one function | that function's blocks, instructions and values, or virtual registers and frame objects |
-| MCIR module | the translation unit | sections, symbols, labels, instructions and data |
+| MCIR module | the translation unit | sections, atoms, symbols, instructions and data items |
 
 The FIR and MIR bodies are cleared rather than destroyed once their function has been appended to MCIR, so their capacity carries over and they stop allocating after the largest function.
 
@@ -34,8 +34,8 @@ An entity is named by a `forge::id<Entity, T>`: an index into the array that hol
 ### Where an id is valid
 
 - **Body ids** (FIR values, instructions and blocks; MIR virtual registers, instructions, blocks and frame objects) mean nothing once the body is cleared for the next function.
-- **Module ids** (functions and globals; MCIR sections, symbols and labels) last for the translation unit, and any body of that module may hold them. AST and HIR ids also last for the translation unit.
-- **No cross-layer ids.** No layer stores another layer's ids. A lowering keeps its mappings (HIR declaration → FIR global, FIR value → MIR virtual register, MIR block → MCIR label) in side tables and drops them when it finishes. Location ids and interned-string ids are shared infrastructure, not IR, so any layer may hold them.
+- **Module ids** (functions and globals; every MCIR id, since the MCIR module is MCIR's only container) last for the translation unit, and any body of that module may hold them. AST and HIR ids also last for the translation unit.
+- **No cross-layer ids.** No layer stores another layer's ids. A lowering keeps its mappings (HIR declaration → FIR global, FIR value → MIR virtual register, MIR block → MCIR temporary symbol) in side tables and drops them when it finishes. Location ids and interned-string ids are shared infrastructure, not IR, so any layer may hold them.
 - **Rewrites.** A copying rewrite keeps the ids of everything it doesn't reorder (blocks, values, virtual registers) and gives instructions new ids. A side table keyed by instruction ids doesn't survive a rewrite.
 
 ## Records, pools and columns
@@ -62,6 +62,7 @@ An entity is named by a `forge::id<Entity, T>`: an index into the array that hol
 ## Locations
 
 - Every entity has a location, a 32-bit opaque handle kept in a column. How it is encoded (spelling and expansion locations, `#line`) belongs to the shared source-location infrastructure.
+- An MCIR section has none. It serves the whole translation unit and stands for no source position, so it has no location column and the verifiers don't ask for one (see [docs/mcir.md](mcir.md#locations)).
 - Everything a lowering creates for an entity gets that entity's location. `%` lowered to `sdiv` + `msub` gives both the `%`'s location.
 - Code with no single source entity takes the location of what it serves. Register allocation's moves take the location of the instruction they were added for, the prologue and epilogue take the function's, and `main`'s implicit `return 0` takes its closing brace.
 - There is no "unknown" location, so the verifiers check that every entity has one. A layer may derive an entity's location instead of storing it (an instruction's result value from its instruction); each layer's design says which. A value that stands for no source entity has none: FIR's constants and `undef` are shared by all their uses (see [docs/fir.md](fir.md#locations)).
@@ -156,10 +157,12 @@ MIR    body of add, before register allocation (state ssa; docs/mir.md)
        frame lowering: a leaf with no saved registers, so nothing is inserted and nothing is copied (state final)
 
 MCIR   module "t.c" (lives for the translation unit)
-         sections  [0] __TEXT,__text   [0] add w0, w0, w1   1:34
-                                       [1] ret              1:25
-         symbols   [0] add  named, global, section s0 @ insn 0, align 4    1:5
-       isel's FIR value → MIR vreg map and the MIR block → MCIR label map
+         sections  [0] __TEXT,__text  regular  pure_instructions      (no location)
+         atoms     [0] s0  align 2  symbol 0  insts [0, 2)            (its symbol's location)
+         symbols   [0] add  named  global  atom 0 + 0                 1:5
+         insts     [0] add_shifted  w  lsl  w0 w0 w1 0                1:34
+                   [1] ret          x       x30                       1:25
+       isel's FIR value → MIR vreg map and the MIR block → MCIR temporary symbol map
        are side tables that are dropped when each lowering finishes.
 ```
 

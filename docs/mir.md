@@ -282,11 +282,11 @@ These checks run after the structural checks every verifier starts with ([docs/i
 
 ## What MIR removes, and what MCIR receives
 
-ADR 0008 asks each layer to say which lowering removes the structure it adds. Register allocation removes the block parameters, the virtual registers and SSA, and frame lowering removes the frame indices. MIR → MCIR removes the CFG: blocks become labels in layout order, and each terminator becomes one or two branch instructions. It also removes the alias opcodes. MCIR stores only the ARM ARM's base forms ([docs/mcir.md](https://github.com/jmuratov98/forge/blob/docs/mcir/docs/mcir.md)), and MIR keeps aliases on purpose so that a dump reads like the assembly and instruction selection stays simple ([ADR 0016](adr/0016-mir-opcodes-are-one-per-encoding-and-mir-has-no-pseudo-instructions.md)). So MIR → MCIR is a translation, not a copy, and ADR 0008's table names both.
+ADR 0008 asks each layer to say which lowering removes the structure it adds. Register allocation removes the block parameters, the virtual registers and SSA, and frame lowering removes the frame indices. MIR → MCIR removes the CFG: blocks become temporary symbols in layout order, and each terminator becomes one or two branch instructions. It also removes the alias opcodes. MCIR stores only the ARM ARM's base forms ([docs/mcir.md](mcir.md)), and MIR keeps aliases on purpose so that a dump reads like the assembly and instruction selection stays simple ([ADR 0016](adr/0016-mir-opcodes-are-one-per-encoding-and-mir-has-no-pseudo-instructions.md)). So MIR → MCIR is a translation, not a copy, and ADR 0008's table names both.
 
 What MCIR's design has to handle:
 
-- **Blocks** are emitted in layout order, each as a temporary label that takes the block's location, since Darwin's conditional branches need `L` labels in the same function.
+- **Blocks** are emitted in layout order. A block that a branch targets gets a temporary symbol that takes the block's location, since Darwin's conditional branches need `L` labels in the same function, and a block reached only by falling through gets none.
 - **Terminators** print as the branch forms in [Terminators and edges](#terminators-and-edges). A `b_cond` isn't one MCIR instruction.
 - **Opcodes.** Every MIR opcode maps to one MCIR form, with the register slots filled in and the width flag set from the operands' class. A register is its number, `zr` or `sp`. Eighteen of the 37 need more than a rename:
 
