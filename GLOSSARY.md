@@ -16,6 +16,10 @@ _Avoid_: Forge (unqualified), forge-lang
 The compiler driver binary; the command users invoke in place of `gcc`, `clang` or `cl`.
 _Avoid_: fcc, the compiler (when the driver specifically is meant)
 
+**fcc1**:
+Forge's C compiler proper: the program that turns C source into assembly. `forge` runs it in-process or as a separate process.
+_Avoid_: cc1 (GCC's), the frontend (fcc1 runs the backend too)
+
 **fas**:
 Forge's assembler.
 
@@ -74,3 +78,13 @@ _Avoid_: instantiation location, use site
 **Host assembler**:
 The platform's own assembler, which `forge` runs to produce object files until fas exists.
 _Avoid_: system `as` (when the platform-neutral role is meant)
+
+## Driver
+
+**Phase**:
+One step a driver input passes through: preprocess, compile, assemble or link. An input starts at the phase its type implies and stops at the phase its mode names.
+_Avoid_: stage, pass (a pass transforms IR)
+
+**Job**:
+One concrete unit of driver work produced from the phases: an in-process call or a subprocess command line.
+_Avoid_: task, step
