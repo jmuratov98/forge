@@ -18,7 +18,7 @@ MIR has two containers. The **MIR module** lives for the translation unit and ho
 | frame object | `frame_object_id` | kind, alignment, size | location |
 
 - **Pools.** The module has `std::vector<type>` (parameter types). A body has `std::vector<operand>`, shared by block parameters, instruction operands and edge arguments, and `std::vector<edge>`. Operands and edges are records in those pools, not entities with ids.
-- **Layout.** A body keeps its **layout** like a FIR body does: the block ids in the order their instruction ranges were written, entry block first, and the entry block is block 0. Instruction selection makes one MIR block for each FIR block with the same id, so FIR's layout carries over. The blocks it adds for a `switch` take new ids and go right after the `switch`'s block, and register allocation's new blocks are new too.
+- **Layout.** A body keeps its **layout** like a FIR body does: the block ids in the order their instruction ranges were written, entry block first, and the entry block is block 0. Instruction selection makes one MIR block for each FIR block with the same id, so FIR's layout carries over. The blocks it adds for a `switch` take new ids and go right after the `switch`'s block. Register allocation's new blocks take new ids too, and each goes right after the block whose edge it sits on ([docs/register-allocation.md](register-allocation.md#edges)).
 - **Declarations.** The module has a function entity for every function, declarations included, and a global entity for every global, made in FIR's order. The FIR → MIR mapping is a side table that instruction selection drops when it finishes.
 - **Names** are interned-string ids, and a function's or global's name is its linkage name, as in FIR. Virtual registers have no names.
 - **Types.** A signature uses `i32` and `void`, as in FIR. A virtual register has a **register class** (see [Registers](#registers)), not a type.
@@ -44,7 +44,7 @@ A body has a `state`, and each rewrite sets the next one. The records are the sa
 - **Physical registers** are `x0` to `x30`, `sp` and `nzcv`, as a `std::uint8_t` `enum class`. There is one for each hardware register: `w0` and `x0` are the same physical register, and the class of the operand picks the view. `nzcv` is the condition flags and is never allocated.
 - **The zero register** is never an operand. Opcodes imply it (`neg`, `mvn`, `mov_*` and `cmp_*`).
 - **`sp`, `x29` and `x30`** are operands only in frame lowering's instructions, as the base of a resolved frame object, and as implicit operands of `bl` and `ret`.
-- **`x18` is reserved** by Apple's ABI and is never allocatable. The rest of the allocatable set, including whether `x16` and `x17` are scratch, belongs to [Register allocation for the slice](https://github.com/jmuratov98/forge/issues/34).
+- **Allocatable registers** are `x0`–`x15` ([docs/register-allocation.md](register-allocation.md#registers)). `x16` and `x17` are scratch registers that register allocation never assigns, kept for the moves it inserts and for frame lowering ([ADR 0019](adr/0019-x16-and-x17-are-scratch-registers-that-register-allocation-never-assigns.md)). `x18` is reserved by Apple's ABI. The slice never uses the callee-saved `x19`–`x28` ([ADR 0018](adr/0018-the-slices-register-allocator-is-local-and-values-that-cross-a-block-live-in-spill-slots.md)).
 
 ## Operands
 
@@ -131,7 +131,7 @@ Every block ends in exactly one terminator, and a terminator names its successor
 | `cbz`, `cbnz` | a register | taken (zero for `cbz`, non-zero for `cbnz`), then not taken |
 | `ret` | the returned value, implicit | none |
 
-- **Arguments.** In `ssa` an edge passes one `vreg` use for each parameter of its target, all read before any parameter takes its new value, as in FIR. An edge argument is never an immediate. In `allocated` and `final` edges carry no arguments, and an edge's moves have been placed by register allocation: at the end of its block, at the start of its target, or in a new block on the edge when it is a critical edge.
+- **Arguments.** In `ssa` an edge passes one `vreg` use for each parameter of its target, all read before any parameter takes its new value, as in FIR. An edge argument is never an immediate. In `allocated` and `final` edges carry no arguments, and an edge's moves have been placed by register allocation: at the end of its block, at the start of its target, or in a new block on the edge when it is a critical edge ([docs/register-allocation.md](register-allocation.md#edges)).
 - **No fall-through is recorded.** A terminator doesn't say which successor comes next. MIR → MCIR knows the layout and chooses the branch form:
 
   | Layout | `b_cond cc, T, F` prints as |
@@ -152,7 +152,7 @@ A body has a table of frame objects, each `{kind, alignment, size}`, and an inst
 |---|---|---|
 | `incoming` | the caller's stack-argument area, at most one | instruction selection, when the function has more than eight parameters; 4 bytes for each parameter past the eighth |
 | `outgoing` | the call area at the bottom of the frame, at most one | instruction selection, when a call has more than eight arguments; the largest call's stack arguments, rounded up to 8 |
-| `spill` | one slot for a spilled virtual register | register allocation |
+| `spill` | the slot of one virtual register that crosses a block boundary or that register allocation spills | register allocation |
 
 The ABI fixes the offsets inside `incoming` and `outgoing`, so instruction selection writes them: the k-th argument past the eighth is at offset 4 × (k − 9) of the `outgoing` object of a call, and of the `incoming` object in a callee. Where an object sits in the frame isn't known until after allocation. Frame lowering assigns every object an `sp`-relative offset and rewrites each `frame_index` operand into an `sp` base with the sum as its offset, so a `final` body has none. The layout of the frame, and how every resulting offset stays encodable, belong to [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35).
 
@@ -226,9 +226,9 @@ A global is defined when it is defined in this translation unit, internal or ext
 
 ## Register allocation and frame lowering
 
-Register allocation reads a body in `ssa` and writes one in `allocated`. It gives every virtual register a physical register of its class, honouring fixed constraints, ties and the opcode table's clobbers. It turns each edge's arguments into moves (`mov_rr`) and puts them where the [terminator rules](#terminators-and-edges) allow. It spills by adding `spill` frame objects and `str_ui`/`ldr_ui`. The instructions it adds never write `nzcv`, so the flags rule holds without register allocation knowing about flags, and they take the location of the instruction they serve. Its algorithm, the allocatable set and its checker are [Register allocation for the slice](https://github.com/jmuratov98/forge/issues/34).
+Register allocation reads a body in `ssa` and writes one in `allocated` ([docs/register-allocation.md](register-allocation.md)). In the slice it is local, like clang's at `-O0` ([ADR 0018](adr/0018-the-slices-register-allocator-is-local-and-values-that-cross-a-block-live-in-spill-slots.md)): every value that crosses a block boundary has a `spill` frame object, stored after its def and reloaded in each other block that uses it, and each block is allocated on its own by one walk from its terminator up. It gives every virtual register a physical register of its class, honouring fixed constraints, ties and the opcode table's clobbers, and spills every value live across a `bl`. It turns each edge's arguments into one parallel move into the target's parameter slots and puts it where the [terminator rules](#terminators-and-edges) allow. The instructions it adds are `mov_rr`, `ldr_ui`, `str_ui` and the `b` of a new block. None of them writes `nzcv`, so the flags rule holds without register allocation knowing about flags, and they take the location of the instruction they serve.
 
-Frame lowering reads `allocated` and writes `final`. It assigns every frame object an offset and rewrites frame indices, adds the prologue and the epilogue (before every `ret`), keeps a frame record in a function that contains a `bl`, and saves the callee-saved registers the body writes. The prologue and epilogue take the function's location. Its layout is [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35).
+Frame lowering reads `allocated` and writes `final`. It assigns every frame object an offset and rewrites frame indices, adds the prologue and the epilogue (before every `ret`), keeps a frame record in a function that contains a `bl`, and saves the callee-saved registers the body writes, which in the slice are none (ADR 0018). The prologue and epilogue take the function's location. Its layout is [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35).
 
 ## Locations
 
@@ -239,7 +239,7 @@ Every MIR entity has a location, following the rules in [docs/ir-data-layout.md]
 - A **block** has no stored location: it takes its first instruction's.
 - A **frame object** takes the function's location for `incoming`, the first call that needs it for `outgoing`, and its virtual register's for a `spill`.
 - A function or a global takes its FIR entity's.
-- Register allocation's moves and spills take the location of the instruction they serve, and an edge's moves that of its terminator. The prologue and epilogue take the function's.
+- Register allocation's moves and spills take the location of the instruction they serve, and an edge's moves that of its terminator ([docs/register-allocation.md](register-allocation.md#the-allocated-body) says which instruction each serves). The prologue and epilogue take the function's.
 
 ## Printed form
 
@@ -278,7 +278,7 @@ These checks run after the structural checks every verifier starts with ([docs/i
 - **`allocated` and `final`:** there are no virtual registers, block parameters or edge arguments, and every implicit operand is a physical register.
 - **`final`:** there are no frame indices, and every stack adjustment and every `sp`-relative offset is one the assembler accepts, with `sp` adjusted in multiples of 16.
   A function that contains a `bl` keeps a frame record: an `stp_ui` of `x29` and `x30`, and an `add_ri` that sets `x29`, come before its first `bl`.
-- **Not checked:** that allocation preserved the program's values (the allocation checker is still open), that blocks are reachable, and that a virtual register nothing uses is defined.
+- **Not checked:** that allocation preserved the program's values, which is the allocation checker's job ([docs/register-allocation.md](register-allocation.md#the-allocation-checker) lists what it asserts; how it is built is still open), that blocks are reachable, and that a virtual register nothing uses is defined.
 
 ## What MIR removes, and what MCIR receives
 
@@ -311,7 +311,7 @@ What MCIR's design has to handle:
 
 ## Worked examples
 
-Ids come from the rules above: a virtual register for every FIR parameter and result in value order, then temporaries in the order instruction selection makes them. `docs/ir-data-layout.md` shows `add` in memory.
+Ids come from the rules above: a virtual register for every FIR parameter and result in value order, then temporaries in the order instruction selection makes them. `docs/ir-data-layout.md` shows `add` in memory. Each example is shown in `ssa` and after register allocation, in `allocated` (which no flag prints), by the rules in [docs/register-allocation.md](register-allocation.md). Frame lowering's `final` forms belong to [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35), except for `add`, where it inserts nothing.
 
 `int add(int a, int b) { return a + b; }`, whose FIR is in [docs/fir.md](fir.md#worked-examples):
 
@@ -351,26 +351,35 @@ bb3:
 ```
 
 ```
-func @sum(i32) -> i32 final {
+func @sum(i32) -> i32 allocated {
+  fi0: spill, size 4, align 4
+  fi1: spill, size 4, align 4
 bb0:
-  mov_ri w1, #0
+  mov_ri w8, #0
+  str_ui w0, [fi0, #0]
+  str_ui w8, [fi1, #0]
   b bb1
 bb1:
-  cmp_ri w0, #0
+  ldr_ui w8, [fi0, #0]
+  cmp_ri w8, #0
   b_cond gt, bb2, bb3
 bb2:
-  add_rr w1, w1, w0
-  sub_ri w0, w0, #1
+  ldr_ui w8, [fi0, #0]
+  ldr_ui w9, [fi1, #0]
+  add_rr w9, w9, w8
+  sub_ri w8, w8, #1
+  str_ui w8, [fi0, #0]
+  str_ui w9, [fi1, #0]
   b bb1
 bb3:
-  mov_rr w0, w1
+  ldr_ui w0, [fi1, #0]
   ret implicit w0
 }
 ```
 
-This is one valid allocation, with every edge's moves already in place and a `mov_rr` where `ret` needs `w0`. The `b bb1` in `bb0` is dropped by MIR → MCIR because `bb1` follows, and `b_cond gt, bb2, bb3` prints as `b.le bb3` because `bb2` follows.
+`bb1`'s parameters cross block boundaries, so they live in `fi0` and `fi1`, and each edge into `bb1` stores its arguments there before its `b`. The `b bb1` in `bb0` is dropped by MIR → MCIR because `bb1` follows, and `b_cond gt, bb2, bb3` prints as `b.le bb3` because `bb2` follows.
 
-A callee with ten parameters. Its FIR is `%10 = add i32 %a, %i`, `%11 = add i32 %10, %j` and `ret %11`. Parameters nine and ten come from the `incoming` object and are virtual registers 8 and 9, in FIR's value order. It is a leaf with no saved registers, so frame lowering inserts nothing:
+A callee with ten parameters. Its FIR is `%10 = add i32 %a, %i`, `%11 = add i32 %10, %j` and `ret %11`. Parameters nine and ten come from the `incoming` object and are virtual registers 8 and 9, in FIR's value order. Nothing crosses a block or a call, so register allocation inserts nothing:
 
 ```
 func @callee(i32, i32, i32, i32, i32, i32, i32, i32, i32, i32) -> i32 ssa {
@@ -385,12 +394,13 @@ bb0(%0:gpr32 [w0], %1:gpr32 [w1], %2:gpr32 [w2], %3:gpr32 [w3], %4:gpr32 [w4], %
 ```
 
 ```
-func @callee(i32, i32, i32, i32, i32, i32, i32, i32, i32, i32) -> i32 final {
+func @callee(i32, i32, i32, i32, i32, i32, i32, i32, i32, i32) -> i32 allocated {
+  fi0: incoming, size 8, align 4
 bb0:
-  ldr_ui w8, [sp, #0]
-  ldr_ui w9, [sp, #4]
-  add_rr w0, w0, w8
-  add_rr w0, w0, w9
+  ldr_ui w8, [fi0, #0]
+  ldr_ui w9, [fi0, #4]
+  add_rr w8, w0, w8
+  add_rr w0, w8, w9
   ret implicit w0
 }
 ```
@@ -430,20 +440,18 @@ bb0(%0:gpr32 [w0]):
 }
 ```
 
-After frame lowering the function keeps a frame record and 16 bytes for the stack arguments, all in one 32-byte frame. This is one valid layout, and the frame ticket owns the choice:
+Register allocation inserts nothing either: `%0` is used before the call and not after it, and each constant passed in a register is defined straight into the register its argument is fixed to:
 
 ```
 func @sink(i32, i32, i32, i32, i32, i32, i32, i32, i32, i32) -> i32
 
-func @caller(i32) -> i32 final {
+func @caller(i32) -> i32 allocated {
+  fi0: outgoing, size 8, align 4
 bb0:
-  sub_ri sp, sp, #32
-  stp_ui x29, x30, [sp, #16]
-  add_ri x29, sp, #16
   add_ri w8, w0, #9
   mov_ri w9, #8
-  str_ui w9, [sp, #0]
-  str_ui w8, [sp, #4]
+  str_ui w9, [fi0, #0]
+  str_ui w8, [fi0, #4]
   mov_ri w1, #1
   mov_ri w2, #2
   mov_ri w3, #3
@@ -452,8 +460,6 @@ bb0:
   mov_ri w6, #6
   mov_ri w7, #7
   bl @sink, implicit w0, implicit w1, implicit w2, implicit w3, implicit w4, implicit w5, implicit w6, implicit w7, implicit-def w0
-  ldp_ui x29, x30, [sp, #16]
-  add_ri sp, sp, #32
   ret implicit w0
 }
 ```
@@ -521,11 +527,14 @@ bb1:
 ```
 global @hits = zerofill
 
-func @pick(i32) -> i32 final {
+func @pick(i32) -> i32 allocated {
+  fi0: spill, size 4, align 4
 bb0:
+  str_ui w0, [fi0, #0]
   cmp_ri w0, #0
   b_cond eq, bb2, bb4
 bb4:
+  ldr_ui w0, [fi0, #0]
   cmp_ri w0, #7
   b_cond eq, bb3, bb1
 bb2:
@@ -544,4 +553,4 @@ bb1:
 }
 ```
 
-The layout is `bb0 bb4 bb2 bb3 bb1`, so MIR → MCIR prints `bb0`'s `b_cond` as `b.eq` to `bb2`, because `bb4` follows. It prints `bb4`'s as `b.eq` to `bb3` and then `b` to `bb1`, because neither follows.
+`%0` is used in `bb4` as well as `bb0`, so it crosses a block boundary: it is stored at the top of the entry block and reloaded in `bb4`. The layout is `bb0 bb4 bb2 bb3 bb1`, so MIR → MCIR prints `bb0`'s `b_cond` as `b.eq` to `bb2`, because `bb4` follows. It prints `bb4`'s as `b.eq` to `bb3` and then `b` to `bb1`, because neither follows.
