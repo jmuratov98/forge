@@ -22,6 +22,12 @@ Forge's assembler.
 **fold**:
 Forge's linker, also invocable under compatibility names such as `ld.fold`, `fld` and `fold-link.exe`.
 
+## C
+
+**C dialect**:
+The variant of C a compilation is checked against, selected by `-std=`: either an ISO standard (`c89`) or a GNU dialect, which is a standard plus GCC's extensions (`gnu89`).
+_Avoid_: standard (for a GNU dialect), language mode
+
 ## Intermediate representations
 
 **AST**:
