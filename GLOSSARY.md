@@ -53,9 +53,16 @@ The representation closest to encoded machine instructions, from which object fi
 **Lowering**:
 The translation of a program from one IR layer to the next, which removes one kind of structure.
 
-**Block argument**:
-A value that a FIR or MIR block receives from each predecessor's branch, in place of a φ-node.
+**Block parameter**:
+A value that a FIR or MIR block receives from each predecessor's edge, in place of a φ-node.
 _Avoid_: φ-node, phi
+
+**Block argument**:
+The value an edge passes for one block parameter.
+
+**Edge**:
+One successor of a FIR or MIR terminator: a target block and one block argument per parameter of that block.
+_Avoid_: branch target (which leaves out the arguments)
 
 **Module**:
 One IR layer's representation of a translation unit: its globals and functions. HIR and MCIR modules keep every function's body; FIR and MIR modules keep only signatures, and their bodies come and go one function at a time.
