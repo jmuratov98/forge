@@ -99,7 +99,7 @@ Unreachable blocks are allocated like any other, and reach the object file as de
 
 - **A copying rewrite** ([docs/ir-data-layout.md](ir-data-layout.md#order)): block ids stay, instructions get new ids, and new blocks get new ids. The layout is the original one with each new block right after its source.
 - **Operands.** Every virtual-register operand becomes a physical register of its class, implicit operands included, so the checker can see them. Block parameters and edge arguments are gone.
-- **Frame objects.** The `spill` objects follow the `incoming` and `outgoing` objects that instruction selection made. Where they sit in the frame is [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35).
+- **Frame objects.** The `spill` objects follow the `incoming` and `outgoing` objects that instruction selection made. Where they sit in the frame is [docs/frame-lowering.md](frame-lowering.md#the-frame).
 - **Locations.** A store after a def, a copy around an instruction and a reload after one take that instruction's location. A reload at the top of a block takes that of the first instruction in the block that uses the value. A store or move at the top of the entry block takes its parameter's virtual register's location. An edge's moves, wherever they go, and a new block's `b` take the location of the edge's terminator.
 
 ## The allocation checker
@@ -118,7 +118,7 @@ Unreachable blocks aren't checked.
 
 ## Worked examples
 
-The `ssa` forms are in [docs/mir.md](mir.md#worked-examples) or below. The `allocated` state isn't printed by any flag, but it prints as `final` does, with its frame objects listed first. Frame lowering's `final` forms of these examples are [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35)'s.
+The `ssa` forms are in [docs/mir.md](mir.md#worked-examples) or below. The `allocated` state isn't printed by any flag, but it prints as `final` does, with its frame objects listed first. Frame lowering's `final` forms of these examples are in [docs/frame-lowering.md](frame-lowering.md#worked-examples).
 
 `add` is unchanged: `%0` and `%2` take `w0` and `%1` takes `w1`, so allocation inserts nothing (`add_rr w0, w0, w1` in [docs/ir-data-layout.md](ir-data-layout.md#worked-example)).
 
