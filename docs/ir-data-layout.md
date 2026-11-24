@@ -115,15 +115,16 @@ AST    tree "t.c" (lives for the translation unit)
          sema's side table (handed to AST → HIR):  type  n2..n4 → int
 
 HIR    module "t.c" (lives for the translation unit, keeps every body)
-         functions  [0] add (s32, s32) -> s32   body n6
-         nodes  [0] param    a s32                   1:13
-                [1] param    b s32                   1:20
-                [2] ref      n0                      1:32
-                [3] ref      n1                      1:36
-                [4] add.s32  n2 n3                   1:34
-                [5] return   n4                      1:25
-                [6] block    pool[2,3)               1:23
-         pool<node_id>  [n0 n1 | n5]
+         functions  [0] add (s32, s32) -> s32   types[0,2)  body b0   1:5
+         bodies     [0] root s1  locals from l0  labels from 0
+         locals     [0] a  s32                       1:13
+                    [1] b  s32                       1:20
+         exprs      [0] read_local  l0               1:32
+                    [1] read_local  l1               1:36
+                    [2] add.s32     e0 e1            1:34
+         stmts      [0] return      e2               1:25
+                    [1] block       pool[0,1)        1:23
+         pool<stmt_id>  [s0]    pool<type>  [s32 s32]
 
 FIR    module: functions [0] add (i32, i32) -> i32      (signatures only)
        body of add (cleared once it reaches MCIR)
