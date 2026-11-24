@@ -2,7 +2,7 @@
 
 How every IR layer, from the AST to MCIR, stores what it holds. The reasoning is in [ADR 0011](adr/0011-ir-entities-live-in-dense-arrays-named-by-typed-ids.md); terms follow [GLOSSARY.md](../GLOSSARY.md). Each per-layer design (its node or instruction set, records and printed syntax) builds on these rules and doesn't restate them.
 
-An **entity** is anything a layer refers to: AST and HIR nodes and declarations; FIR values, instructions and blocks; MIR instructions, virtual registers and blocks; MCIR sections, atoms, symbols, instructions and data items.
+An **entity** is anything a layer refers to: AST and HIR nodes and declarations; FIR values, instructions and blocks; MIR instructions, virtual registers, blocks and frame objects; MCIR sections, atoms, symbols, instructions and data items.
 
 ## Containers and lifetimes
 
@@ -13,7 +13,7 @@ Each lifetime is one container object. It owns its entities' arrays as plain `st
 | AST | the translation unit | the C frontend's tree |
 | HIR module | the translation unit | globals, functions and every body |
 | FIR module, MIR module | the translation unit | globals and function signatures |
-| FIR body, MIR body | one function | that function's blocks, instructions and values or virtual registers |
+| FIR body, MIR body | one function | that function's blocks, instructions and values, or virtual registers and frame objects |
 | MCIR module | the translation unit | sections, atoms, symbols, instructions and data items |
 
 The FIR and MIR bodies are cleared rather than destroyed once their function has been appended to MCIR, so their capacity carries over and they stop allocating after the largest function.
@@ -33,7 +33,7 @@ An entity is named by a `forge::id<Entity, T>`: an index into the array that hol
 
 ### Where an id is valid
 
-- **Body ids** (FIR values, instructions and blocks; MIR virtual registers, instructions and blocks) mean nothing once the body is cleared for the next function.
+- **Body ids** (FIR values, instructions and blocks; MIR virtual registers, instructions, blocks and frame objects) mean nothing once the body is cleared for the next function.
 - **Module ids** (functions and globals; every MCIR id, since the MCIR module is MCIR's only container) last for the translation unit, and any body of that module may hold them. AST and HIR ids also last for the translation unit.
 - **No cross-layer ids.** No layer stores another layer's ids. A lowering keeps its mappings (HIR declaration → FIR global, FIR value → MIR virtual register, MIR block → MCIR temporary symbol) in side tables and drops them when it finishes. Location ids and interned-string ids are shared infrastructure, not IR, so any layer may hold them.
 - **Rewrites.** A copying rewrite keeps the ids of everything it doesn't reorder (blocks, values, virtual registers) and gives instructions new ids. A side table keyed by instruction ids doesn't survive a rewrite.
@@ -140,15 +140,21 @@ FIR    module: functions [0] add (i32, i32) -> i32      (signatures only)
                    %2 = add i32 %a, %b
                    ret %2
 
-MIR    body of add, before register allocation
-         blocks  [0] bb0  params pool[0,2)  insts [i0, i2)      layout [bb0]
+MIR    body of add, before register allocation (state ssa; docs/mir.md)
+         blocks  [0] bb0  params ops[0,2)  insts [i0, i2)       layout [bb0]
          vregs   [0] gpr32  [1] gpr32  [2] gpr32
-         insts   [0] add.w  ops pool[0,3) = def %2, use %0, use %1     1:34
-                 [1] ret    ops pool[3,4) = use %2 [w0]                1:25
-       body of add, after register allocation (copied into a new instruction array; bb0 keeps its id)
-         insts   [0] add.w  w0, w0, w1                                 1:34
-                 [1] ret                                               1:25
-       frame lowering: a leaf with no saved registers, so nothing is inserted and nothing is copied
+         ops     [0] def v0 [w0]  [1] def v1 [w1]               the block's parameters
+                 [2] def v2  [3] use v0  [4] use v1             add_rr
+                 [5] use v2 [w0], implicit                      ret
+         insts   [0] add_rr  ops[2,5)                           1:34
+                 [1] ret     ops[5,6)                           1:25
+         printed:  bb0(%0:gpr32 [w0], %1:gpr32 [w1]):
+                     %2:gpr32 = add_rr %0, %1
+                     ret implicit %2 [w0]
+       body of add, after register allocation (state allocated; copied into a new instruction array; bb0 keeps its id)
+         insts   [0] add_rr  ops[0,3) = def w0, use w0, use w1         1:34
+                 [1] ret     ops[3,4) = use w0, implicit               1:25
+       frame lowering: a leaf with no saved registers, so nothing is inserted and nothing is copied (state final)
 
 MCIR   module "t.c" (lives for the translation unit)
          sections  [0] __TEXT,__text  regular  pure_instructions      (no location)
