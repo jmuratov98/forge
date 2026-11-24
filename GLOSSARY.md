@@ -39,3 +39,15 @@ A target-specific representation of instructions over virtual or physical regist
 
 **MCIR** (Machine Code IR):
 The representation closest to encoded machine instructions, from which object files and assembly are emitted.
+
+**Local**:
+A parameter or automatic variable of one function in HIR. A C `static` local is not a local: it becomes a global.
+_Avoid_: variable (alone), temporary
+
+**Global**:
+A variable of the module rather than of one function, including a C `static` local hoisted out of its function.
+_Avoid_: static (which names a linkage), file-scope variable
+
+**Label**:
+A position in a HIR body that `goto` and `switch` jump to. Each C `case` and `default` becomes an unnamed label.
+_Avoid_: case, case label (in HIR)
