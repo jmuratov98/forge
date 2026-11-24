@@ -84,6 +84,30 @@ _Avoid_: static (which names a linkage), file-scope variable
 A position in a HIR body that `goto` and `switch` jump to. Each C `case` and `default` becomes an unnamed label.
 _Avoid_: case, case label (in HIR)
 
+**Virtual register**:
+A value in a MIR body before register allocation, of one register class and defined exactly once.
+_Avoid_: temporary
+
+**Physical register**:
+A register of the target machine, which a MIR operand names once register allocation has run or where the ABI fixes it.
+_Avoid_: hardware register, machine register
+
+**Register class**:
+The kind of value a virtual register holds, which fixes its width and which physical registers can hold it.
+_Avoid_: register type, register bank
+
+**Constraint**:
+A requirement on where a MIR operand lives: a particular physical register, or the same register as another operand of its instruction.
+_Avoid_: hint, precolouring
+
+**Frame object**:
+A region of a function's stack frame that a MIR body names by index: the caller's argument area, the area for its own calls' arguments, or a spill slot.
+_Avoid_: stack slot (alone)
+
+**MIR state**:
+How far register allocation and frame lowering have rewritten a MIR body: before allocation, after it, or after frame lowering.
+_Avoid_: phase (the driver's), stage
+
 ## Development
 
 **dev script**:
