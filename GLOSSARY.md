@@ -61,3 +61,9 @@ _Avoid_: source location (when this one specifically is meant)
 **Expansion location**:
 Where the macro that produced a token was used; for nested expansions, each level has its own.
 _Avoid_: instantiation location, use site
+
+## Host tools
+
+**Host assembler**:
+The platform's own assembler, which `forge` runs to produce object files until fas exists.
+_Avoid_: system `as` (when the platform-neutral role is meant)
