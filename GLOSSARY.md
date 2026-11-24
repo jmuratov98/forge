@@ -46,6 +46,13 @@ A target-specific representation of instructions over virtual or physical regist
 **MCIR** (Machine Code IR):
 The representation closest to encoded machine instructions, from which object files and assembly are emitted.
 
+**Lowering**:
+The translation of a program from one IR layer to the next, which removes one kind of structure.
+
+**Block argument**:
+A value that a FIR or MIR block receives from each predecessor's branch, in place of a φ-node.
+_Avoid_: φ-node, phi
+
 ## Development
 
 **dev script**:
