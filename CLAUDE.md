@@ -11,3 +11,7 @@ Default five-label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, 
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Coding standards
+
+Forge's C++ follows `docs/coding-standards.md`, enforced by the root `.clang-format` and `.clang-tidy`.
