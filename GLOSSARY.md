@@ -39,3 +39,11 @@ A target-specific representation of instructions over virtual or physical regist
 
 **MCIR** (Machine Code IR):
 The representation closest to encoded machine instructions, from which object files and assembly are emitted.
+
+**Module**:
+One IR layer's representation of a translation unit: its globals and functions. HIR and MCIR modules keep every function's body; FIR and MIR modules keep only signatures, and their bodies come and go one function at a time.
+_Avoid_: translation unit (the C source), object file (what an MCIR module becomes)
+
+**Body**:
+One function's code in an IR layer, as distinct from its signature in the module.
+_Avoid_: function body (the C syntax), function IR
