@@ -11,6 +11,6 @@ Register allocation never assigns `x16` or `x17`. They are kept for the instruct
 ## Consequences
 
 - The parallel-move resolver never runs out of registers: it breaks one cycle at a time through `x16`, and a slot-to-slot move goes through `x17`.
-- Frame lowering may use both, except inside a slot-to-slot move within a cycle, where the allocator is already using both. There, no register is left for an out-of-range offset, so [Stack frames and frame lowering for the slice](https://github.com/jmuratov98/forge/issues/35) has to keep spill slots within reach of those instructions.
+- Frame lowering may use both, except inside a slot-to-slot move within a cycle, where the allocator is already using both. There, no register is left for an out-of-range offset. Frame lowering places those slots as close to `sp` as the outgoing area allows, and a slot still out of reach is a limit in Forge ([ADR 0020](0020-frame-lowering-pushes-the-frame-record-first-and-addresses-every-frame-object-from-sp.md)).
 - The allocation checker asserts that `x16` and `x17` appear only in instructions the allocator added ([docs/register-allocation.md](../register-allocation.md#the-allocation-checker)).
 - An allocator that gives them back would gain two registers, and frame lowering's out-of-range handling would have to change with it.
